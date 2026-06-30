@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import configuration from './config/app.config';
+import { environmentValidationSchema } from './config/environment.validation';
 import { AppController } from './app.controller';
 
 @Module({
@@ -9,6 +10,7 @@ import { AppController } from './app.controller';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
+      validationSchema: environmentValidationSchema,
     }),
   ],
   controllers: [AppController],
