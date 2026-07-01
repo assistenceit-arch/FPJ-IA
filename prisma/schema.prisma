@@ -8,19 +8,15 @@ datasource db {
 }
 
 model Usuario {
-  id         Int      @id @default(autoincrement())
-  uuid       String   @unique @default(uuid())
+  id          Int      @id @default(autoincrement())
+  nombres     String
+  apellidos   String
+  identificacion String @unique
+  correo      String   @unique
+  password    String
+  rol         String
+  activo      Boolean  @default(true)
 
-  nombres    String
-  apellidos  String
-
-  documento  String   @unique
-  correo     String   @unique
-
-  password   String
-
-  activo     Boolean  @default(true)
-
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
