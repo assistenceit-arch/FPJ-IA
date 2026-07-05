@@ -1,5 +1,12 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Get,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './guards/jwt-auth/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -20,5 +27,13 @@ export class AuthController {
     );
 
     return this.authService.login(usuario);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('perfil')
+  perfil() {
+    return {
+      mensaje: 'Acceso autorizado',
+    };
   }
 }

@@ -3,8 +3,10 @@ import { JwtModule } from '@nestjs/jwt';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { JwtStrategy } from './strategies/jwt/jwt.strategy';
 
 import { UsuariosModule } from '../usuarios/usuarios.module';
+import { StrategiesModule } from './strategies/strategies.module';
 
 @Module({
   imports: [
@@ -15,8 +17,12 @@ import { UsuariosModule } from '../usuarios/usuarios.module';
         expiresIn: '8h',
       },
     }),
+    StrategiesModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [
+    AuthService,
+    JwtStrategy,
+  ],
 })
 export class AuthModule {}
