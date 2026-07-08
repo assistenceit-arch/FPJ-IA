@@ -16,13 +16,21 @@ export class ProcedimientosService {
   });
 }
 
-  findAll() {
-    return 'This action returns all procedimientos';
-  }
+ findAll() {
+  return this.prisma.procedimiento.findMany({
+    orderBy: {
+      fechaCreacion: 'desc',
+    },
+  });
+}
 
-  findOne(id: number) {
-    return `This action returns a #${id} procedimiento`;
-  }
+findOne(id: string) {
+  return this.prisma.procedimiento.findUnique({
+    where: {
+      id,
+    },
+  });
+}
 
   update(id: number, updateProcedimientoDto: UpdateProcedimientoDto) {
     return `This action updates a #${id} procedimiento`;
