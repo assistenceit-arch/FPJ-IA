@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProcedimientosModule } from './procedimientos/procedimientos.module';
+import { FormularioMaestroModule } from './formulario-maestro/formulario-maestro.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ProcedimientosModule } from './procedimientos/procedimientos.module';
     UsuariosModule,
     PrismaModule,
     ProcedimientosModule,
+    FormularioMaestroModule,
   ],
   controllers: [AppController],
   providers: [],
