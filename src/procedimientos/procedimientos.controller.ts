@@ -22,13 +22,16 @@ findOne(@Param('id') id: string) {
   return this.procedimientosService.findOne(id);
 }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProcedimientoDto: UpdateProcedimientoDto) {
-    return this.procedimientosService.update(+id, updateProcedimientoDto);
-  }
+ @Patch(':id')
+update(
+  @Param('id') id: string,
+  @Body() updateProcedimientoDto: UpdateProcedimientoDto,
+) {
+  return this.procedimientosService.update(id, updateProcedimientoDto);
+}
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.procedimientosService.remove(+id);
-  }
+@Delete(':id')
+remove(@Param('id') id: string) {
+  return this.procedimientosService.remove(id);
+}
 }

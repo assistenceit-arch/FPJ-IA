@@ -32,11 +32,19 @@ findOne(id: string) {
   });
 }
 
-  update(id: number, updateProcedimientoDto: UpdateProcedimientoDto) {
-    return `This action updates a #${id} procedimiento`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} procedimiento`;
-  }
+  update(id: string, updateProcedimientoDto: UpdateProcedimientoDto) {
+  return this.prisma.procedimiento.update({
+    where: {
+      id,
+    },
+    data: updateProcedimientoDto,
+  });
+}
+remove(id: string) {
+  return this.prisma.procedimiento.delete({
+    where: {
+      id,
+    },
+  });
+}
 }
