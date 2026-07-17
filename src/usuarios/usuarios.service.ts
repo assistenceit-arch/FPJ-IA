@@ -33,7 +33,7 @@ export class UsuariosService {
     });
   }
 
-  async buscarPorId(id: number) {
+  async buscarPorId(id: string) {
     return this.prisma.usuario.findUnique({
       where: {
         id,
