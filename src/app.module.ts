@@ -14,12 +14,13 @@ import { CompaneroPatrullaModule } from './companero-patrulla/companero-patrulla
 import { LugarProcedimientoModule } from './lugar-procedimiento/lugar-procedimiento.module';
 import { CapturadosModule } from './capturados/capturados.module';
 import { ElementosIncautadosModule } from './elementos-incautados/elementos-incautados.module';
+import { ActuacionesProcedimientoModule } from './actuaciones-procedimiento/actuaciones-procedimiento.module';
 // NOTA (Fase 0 - corrección de arquitectura):
 // FormularioMaestroModule fue retirado porque su modelo (FormularioMaestro,
 // basado en columnas JSON) no correspondía al Modelo de Datos V1 documentado.
 // Fase 1 completa: funcionario-actuante (✔), companero-patrulla (✔),
-// lugar-procedimiento (✔), capturados (✔), elementos-incautados (✔).
-// Pendiente: actuaciones-procedimiento (Fase 2).
+// lugar-procedimiento (✔), capturados (✔), elementos-incautados (✔),
+// actuaciones-procedimiento (✔).
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ElementosIncautadosModule } from './elementos-incautados/elementos-inca
     LugarProcedimientoModule,
     CapturadosModule,
     ElementosIncautadosModule,
+    ActuacionesProcedimientoModule,
   ],
   controllers: [AppController],
   providers: [],
