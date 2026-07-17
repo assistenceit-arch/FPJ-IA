@@ -155,6 +155,7 @@ model Capturado {
   numeroDocumento      String?
   expedicionDocumento  String?
   fechaNacimiento      DateTime
+  lugarNacimiento      String? // Adenda: campo opcional agregado a solicitud del usuario (2026-07-17). No siempre se aporta este dato en campo.
   edad                 Int // calculada, solo lectura
   genero               String
   estadoCivil          String?

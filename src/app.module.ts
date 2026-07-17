@@ -12,12 +12,13 @@ import { AuditoriaModule } from './auditoria/auditoria.module';
 import { FuncionarioActuanteModule } from './funcionario-actuante/funcionario-actuante.module';
 import { CompaneroPatrullaModule } from './companero-patrulla/companero-patrulla.module';
 import { LugarProcedimientoModule } from './lugar-procedimiento/lugar-procedimiento.module';
+import { CapturadosModule } from './capturados/capturados.module';
 // NOTA (Fase 0 - corrección de arquitectura):
 // FormularioMaestroModule fue retirado porque su modelo (FormularioMaestro,
 // basado en columnas JSON) no correspondía al Modelo de Datos V1 documentado.
 // Se está reemplazando en la Fase 1 por módulos independientes y normalizados:
 // funcionario-actuante (✔), companero-patrulla (✔), lugar-procedimiento (✔),
-// capturados, elementos-incautados y actuaciones-procedimiento.
+// capturados (✔), elementos-incautados y actuaciones-procedimiento.
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { LugarProcedimientoModule } from './lugar-procedimiento/lugar-procedimie
     FuncionarioActuanteModule,
     CompaneroPatrullaModule,
     LugarProcedimientoModule,
+    CapturadosModule,
   ],
   controllers: [AppController],
   providers: [],
