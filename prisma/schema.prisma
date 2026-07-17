@@ -7,53 +7,384 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ════════════════════════════════════════
+// NÚCLEO COMÚN — USUARIOS Y AUTENTICACIÓN
+// ════════════════════════════════════════
 model Usuario {
-  id             Int     @id @default(autoincrement())
+  id             String  @id @default(uuid()) // RT-001: UUID como PK
   nombres        String
   apellidos      String
   identificacion String  @unique
-  correo         String  @unique
+  correo         String  @unique // WF-AUT-001: correo único
   password       String
   rol            String
   activo         Boolean @default(true)
 
+  procedimientos Procedimiento[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("usuarios")
 }
 
+// ════════════════════════════════════════
+// ENTIDAD PRINCIPAL
+// ════════════════════════════════════════
 model Procedimiento {
   id                     String   @id @default(uuid())
+  numeroInterno          String?  @unique // EST-AAAA-CONSECUTIVO (FLUJO 1.1)
   fechaCreacion          DateTime @default(now())
-  nunc                   String?
+  nunc                   String? // RN-008: editable después de generar documentos
   fechaCaptura           DateTime
   horaCaptura            String
   fechaDisposicion       DateTime
   horaDisposicion        String
   delito                 String
-  tipoProcedimiento      String
-  estado                 String
+  tipoProcedimiento      String // ESTÁNDAR | COMPLEJO (PC-001)
+  estado                 String // Borrador | Finalizado
   observacionesGenerales String?
 
-  createdAt  DateTime           @default(now())
-  updatedAt  DateTime           @updatedAt
-  formulario FormularioMaestro?
+  // RT-006 / AT-005: no eliminación física. `activo=false` = eliminación
+  // lógica autorizada por el administrador.
+  activo        Boolean   @default(true)
+  eliminadoEn   DateTime?
+
+  usuarioId String // WF-AUT-005: cada usuario ve solo sus procedimientos
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  funcionarioActuante  FuncionarioActuante?
+  companeroPatrulla    CompaneroPatrulla?
+  lugarProcedimiento   LugarProcedimiento?
+  actuacionesProcedimiento ActuacionesProcedimiento?
+  capturados           Capturado[]
+  documentosGenerados  DocumentoGenerado[]
+  pago                 Pago?
+  asesoriaCompleja     AsesoriaCompleja?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("procedimientos")
 }
 
-model FormularioMaestro {
+// ════════════════════════════════════════
+// FUNCIONARIO ACTUANTE (1:1 con Procedimiento)
+// ════════════════════════════════════════
+model FuncionarioActuante {
   id String @id @default(uuid())
 
   procedimientoId String        @unique
   procedimiento   Procedimiento @relation(fields: [procedimientoId], references: [id], onDelete: Cascade)
 
-  informacionOperativa Json?
-  ubicacion            Json?
-  capturados           Json?
-  victimas             Json?
-  bienesIncautados     Json?
-  testigos             Json?
-  actuaciones          Json?
-  observaciones        Json?
+  nombreCompleto String
+  documento      String
+  entidad        String
+  cargo          String
+  telefono       String
+  correo         String
+  placa          String
+  zonaAtencion   String
+  estacion       String
+  servicio       String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("funcionario_actuante")
+}
+
+// ════════════════════════════════════════
+// COMPAÑERO DE PATRULLA (1:1 con Procedimiento)
+// ════════════════════════════════════════
+model CompaneroPatrulla {
+  id String @id @default(uuid())
+
+  procedimientoId String        @unique
+  procedimiento   Procedimiento @relation(fields: [procedimientoId], references: [id], onDelete: Cascade)
+
+  nombreCompleto String
+  documento      String
+  placa          String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("companero_patrulla")
+}
+
+// ════════════════════════════════════════
+// LUGAR DEL PROCEDIMIENTO (1:1 con Procedimiento)
+// ════════════════════════════════════════
+model LugarProcedimiento {
+  id String @id @default(uuid())
+
+  procedimientoId String        @unique
+  procedimiento   Procedimiento @relation(fields: [procedimientoId], references: [id], onDelete: Cascade)
+
+  departamento    String
+  municipio       String
+  localidad       String?
+  barrio          String
+  direccion       String
+  caracteristicas String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("lugares_procedimiento")
+}
+
+// ════════════════════════════════════════
+// CAPTURADO / APREHENDIDO (1:N con Procedimiento)
+// ════════════════════════════════════════
+model Capturado {
+  id String @id @default(uuid())
+
+  procedimientoId String        @map("procedimiento_id")
+  procedimiento   Procedimiento @relation(fields: [procedimientoId], references: [id], onDelete: Cascade)
+
+  // Calculado automáticamente por el sistema (WF-M2, nunca ingresado manualmente)
+  tipoInterviniente String // CAPTURADO | APREHENDIDO
+
+  primerNombre        String
+  segundoNombre        String?
+  primerApellido       String
+  segundoApellido      String?
+  tipoDocumento        String?
+  numeroDocumento      String?
+  expedicionDocumento  String?
+  fechaNacimiento      DateTime
+  edad                 Int // calculada, solo lectura
+  genero               String
+  estadoCivil          String?
+  ocupacion            String?
+  correo               String?
+  direccion            String?
+  telefono             String?
+  senalesParticulares  String?
+  nombrePadres         String?
+  telefonoPadres       String?
+
+  // Exclusivo para APREHENDIDO (menor de edad) — Formulario Maestro V2
+  nombreAcudiente    String?
+  parentescoAcudiente String?
+  telefonoAcudiente  String?
+
+  contactoNotificacion ContactoNotificacion?
+  elementosIncautados  ElementoIncautado[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // RI-021 (UI-021): no puede haber dos intervinientes con mismo tipo+número
+  // de documento dentro del mismo procedimiento.
+  @@unique([procedimientoId, tipoDocumento, numeroDocumento])
+  @@map("capturados")
+}
+
+// ════════════════════════════════════════
+// CONTACTO DE NOTIFICACIÓN (1:1 con Capturado)
+// ════════════════════════════════════════
+model ContactoNotificacion {
+  id String @id @default(uuid())
+
+  capturadoId String    @unique
+  capturado   Capturado @relation(fields: [capturadoId], references: [id], onDelete: Cascade)
+
+  nombre                        String?
+  telefono                      String?
+  comunicacionExitosa           Boolean
+  horaComunicacion               String?
+  justificacionNoComunicacion    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("contactos_notificacion")
+}
+
+// ════════════════════════════════════════
+// ELEMENTOS INCAUTADOS (1:N con Capturado)
+// ════════════════════════════════════════
+model ElementoIncautado {
+  id String @id @default(uuid())
+
+  procedimientoId String
+  capturadoId     String
+  capturado       Capturado @relation(fields: [capturadoId], references: [id], onDelete: Cascade)
+
+  tipoElemento        String // SUSTANCIA | DINERO | CELULAR | OTRO
+  descripcionBase     String // RN-006/RN-007: única, generada automáticamente
+  ubicacionHallazgo   String
+  direccionIncautacion String
+
+  detalleSustancia DetalleSustancia?
+  detalleDinero    DetalleDinero?
+  detalleCelular   DetalleCelular?
+  detalleOtro      DetalleOtroElemento?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("elementos_incautados")
+}
+
+model DetalleSustancia {
+  id                String            @id @default(uuid())
+  elementoId        String            @unique
+  elemento          ElementoIncautado @relation(fields: [elementoId], references: [id], onDelete: Cascade)
+  cantidadEmpaques  Int
+  tipoSustancia     String
+  color             String
+  caracteristicas   String
+
+  @@map("detalle_sustancias")
+}
+
+model DetalleDinero {
+  id             String            @id @default(uuid())
+  elementoId     String            @unique
+  elemento       ElementoIncautado @relation(fields: [elementoId], references: [id], onDelete: Cascade)
+  valorTotal     Decimal
+  denominaciones String
+
+  @@map("detalle_dinero")
+}
+
+model DetalleCelular {
+  id         String            @id @default(uuid())
+  elementoId String            @unique
+  elemento   ElementoIncautado @relation(fields: [elementoId], references: [id], onDelete: Cascade)
+  marca      String
+  color      String
+  imei       String?
+
+  @@map("detalle_celulares")
+}
+
+model DetalleOtroElemento {
+  id                String            @id @default(uuid())
+  elementoId        String            @unique
+  elemento          ElementoIncautado @relation(fields: [elementoId], references: [id], onDelete: Cascade)
+  descripcionManual String
+
+  @@map("detalle_otros_elementos")
+}
+
+// ════════════════════════════════════════
+// ACTUACIONES PROCEDIMENTALES (1:1 con Procedimiento)
+// ════════════════════════════════════════
+model ActuacionesProcedimiento {
+  id String @id @default(uuid())
+
+  procedimientoId String        @unique
+  procedimiento   Procedimiento @relation(fields: [procedimientoId], references: [id], onDelete: Cascade)
+
+  derechosLeidos     Boolean
+  fechaDerechos      DateTime
+  horaDerechos       String
+  comprendeDerechos  Boolean
+
+  usoEsposas          Boolean
+  justificacionEsposas String?
+
+  presentaLesiones     Boolean
+  descripcionLesiones  String?
+
+  trasladoCentroAsistencial Boolean
+  centroAsistencial         String?
+  motivoTraslado            String?
+
+  autoridadReceptora String
+
+  demoraExistente       Boolean
+  justificacionDemora   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("actuaciones_procedimiento")
+}
+
+// ════════════════════════════════════════
+// DOCUMENTOS GENERADOS (1:N con Procedimiento)
+// ════════════════════════════════════════
+model DocumentoGenerado {
+  id String @id @default(uuid())
+
+  procedimientoId String        @map("procedimiento_id")
+  procedimiento   Procedimiento @relation(fields: [procedimientoId], references: [id])
+
+  tipoDocumento String // FPJ5 | FPJ6 | ACTA | FPJ7 | FPJ8
+  capturadoId   String?
+  elementoId    String?
+
+  fechaGeneracion     DateTime @default(now())
+  version             Int      @default(1)
+  procedimientoVersion Int
+  rutaArchivo         String
+  estado              String // Generado | Regenerado | Anulado
+
+  createdAt DateTime @default(now())
+
+  @@map("documentos_generados")
+}
+
+// ════════════════════════════════════════
+// PAGOS (1:1 con Procedimiento)
+// ════════════════════════════════════════
+model Pago {
+  id String @id @default(uuid())
+
+  procedimientoId String        @unique
+  procedimiento   Procedimiento @relation(fields: [procedimientoId], references: [id])
+
+  fechaPago        DateTime
+  valor            Decimal
+  medioPago        String
+  referenciaPago   String
+  comprobantePago  String?
+  estadoPago       String // Pendiente | Verificado | Rechazado
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("pagos")
+}
+
+// ════════════════════════════════════════
+// ASESORÍA COMPLEJA (1:1 con Procedimiento COMPLEJO) — Adenda V1.1
+// ════════════════════════════════════════
+model AsesoriaCompleja {
+  id String @id @default(uuid())
+
+  procedimientoId String        @unique
+  procedimiento   Procedimiento @relation(fields: [procedimientoId], references: [id])
+
+  numeroTicket        String  @unique // TK-AAAA-CONSECUTIVO (PC-005)
+  motivoConsulta      String // obligatorio (PC-003)
+  observacionesCaso   String?
+  fechaSolicitud      DateTime @default(now())
+  estadoAsesoria      String // Pendiente | En Proceso | Finalizada
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("asesoria_compleja")
+}
+
+// ════════════════════════════════════════
+// AUDITORÍA (RT-007 / AT-004) — no permite eliminación de registros
+// ════════════════════════════════════════
+model AuditoriaEvento {
+  id                String   @id @default(uuid())
+  fechaEvento       DateTime @default(now())
+  usuario           String
+  accion            String // Crear | Modificar | Regenerar | Anular | Eliminar (lógico)
+  tablaAfectada     String
+  registroAfectado  String
+  descripcionEvento String
+
+  @@map("auditoria_eventos")
 }

@@ -8,7 +8,13 @@ import { AuthModule } from './auth/auth.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProcedimientosModule } from './procedimientos/procedimientos.module';
-import { FormularioMaestroModule } from './formulario-maestro/formulario-maestro.module';
+import { AuditoriaModule } from './auditoria/auditoria.module';
+// NOTA (Fase 0 - corrección de arquitectura):
+// FormularioMaestroModule fue retirado porque su modelo (FormularioMaestro,
+// basado en columnas JSON) no correspondía al Modelo de Datos V1 documentado.
+// Será reemplazado en la Fase 1 por módulos independientes y normalizados:
+// funcionario-actuante, companero-patrulla, lugar-procedimiento, capturados,
+// elementos-incautados y actuaciones-procedimiento.
 
 @Module({
   imports: [
@@ -21,7 +27,7 @@ import { FormularioMaestroModule } from './formulario-maestro/formulario-maestro
     UsuariosModule,
     PrismaModule,
     ProcedimientosModule,
-    FormularioMaestroModule,
+    AuditoriaModule,
   ],
   controllers: [AppController],
   providers: [],
