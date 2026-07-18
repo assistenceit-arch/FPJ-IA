@@ -30,4 +30,22 @@ export class ProcedimientoAccesoService {
     }
     return procedimiento;
   }
+
+  /**
+   * Confirma solo que el procedimiento existe y está activo, SIN exigir
+   * que pertenezca al usuario que consulta. Uso exclusivo de acciones
+   * administrativas que deben poder operar sobre procedimientos de
+   * cualquier funcionario (ej. verificar un pago), y que ya están
+   * protegidas por RolesGuard a nivel de controlador.
+   */
+  async verificarExiste(procedimientoId: string) {
+    const procedimiento = await this.prisma.procedimiento.findUnique({
+      where: { id: procedimientoId },
+    });
+
+    if (!procedimiento || !procedimiento.activo) {
+      throw new NotFoundException('Procedimiento no encontrado');
+    }
+    return procedimiento;
+  }
 }
