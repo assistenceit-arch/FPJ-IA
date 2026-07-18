@@ -16,12 +16,15 @@ import { CapturadosModule } from './capturados/capturados.module';
 import { ElementosIncautadosModule } from './elementos-incautados/elementos-incautados.module';
 import { ActuacionesProcedimientoModule } from './actuaciones-procedimiento/actuaciones-procedimiento.module';
 import { AsesoriaComplejaModule } from './asesoria-compleja/asesoria-compleja.module';
+import { ConfiguracionPagosModule } from './configuracion-pagos/configuracion-pagos.module';
+import { PagosModule } from './pagos/pagos.module';
 // Fase 1 completa: funcionario-actuante, companero-patrulla,
 // lugar-procedimiento, capturados, elementos-incautados,
 // actuaciones-procedimiento (todos ✔).
-// Fase 2 en curso: asesoria-compleja (✔ ticket + motivo de consulta).
-// Pendiente: valor de la asesoría (se conecta con el módulo de Pagos,
-// Fase 3, cuando exista un panel de administración para configurarlo).
+// Fase 2 completa: asesoria-compleja (✔ ticket + motivo de consulta).
+// Fase 3 en curso: configuracion-pagos + pagos (✔ valor calculado
+// automáticamente, sin panel de administración todavía — la configuración
+// se actualiza vía API por un usuario con rol ADMINISTRADOR).
 
 @Module({
   imports: [
@@ -42,6 +45,8 @@ import { AsesoriaComplejaModule } from './asesoria-compleja/asesoria-compleja.mo
     ElementosIncautadosModule,
     ActuacionesProcedimientoModule,
     AsesoriaComplejaModule,
+    ConfiguracionPagosModule,
+    PagosModule,
   ],
   controllers: [AppController],
   providers: [],

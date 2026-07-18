@@ -376,6 +376,20 @@ model AsesoriaCompleja {
 }
 
 // ════════════════════════════════════════
+// CONFIGURACIÓN DE PAGOS (singleton, editable solo por ADMINISTRADOR)
+// PC-004: el valor de la asesoría (y del procedimiento) es configurable.
+// ════════════════════════════════════════
+model ConfiguracionPagos {
+  id             String   @id @default(uuid())
+  valorEstandar  Decimal
+  valorComplejo  Decimal
+  actualizadoPor String
+  updatedAt      DateTime @updatedAt
+
+  @@map("configuracion_pagos")
+}
+
+// ════════════════════════════════════════
 // AUDITORÍA (RT-007 / AT-004) — no permite eliminación de registros
 // ════════════════════════════════════════
 model AuditoriaEvento {
