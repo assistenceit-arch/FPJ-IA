@@ -18,13 +18,10 @@ import { ActuacionesProcedimientoModule } from './actuaciones-procedimiento/actu
 import { AsesoriaComplejaModule } from './asesoria-compleja/asesoria-compleja.module';
 import { ConfiguracionPagosModule } from './configuracion-pagos/configuracion-pagos.module';
 import { PagosModule } from './pagos/pagos.module';
-// Fase 1 completa: funcionario-actuante, companero-patrulla,
-// lugar-procedimiento, capturados, elementos-incautados,
-// actuaciones-procedimiento (todos ✔).
-// Fase 2 completa: asesoria-compleja (✔ ticket + motivo de consulta).
-// Fase 3 en curso: configuracion-pagos + pagos (✔ valor calculado
-// automáticamente, sin panel de administración todavía — la configuración
-// se actualiza vía API por un usuario con rol ADMINISTRADOR).
+import { DocumentosModule } from './documentos/documentos.module';
+// Fases 0-3 completas. Fase 4 en curso: motor de generación de documentos
+// Word. Primer documento: Acta de Incautación de Elementos (por
+// interviniente). Pendientes: FPJ-5, FPJ-6, FPJ-7, FPJ-8.
 
 @Module({
   imports: [
@@ -47,6 +44,7 @@ import { PagosModule } from './pagos/pagos.module';
     AsesoriaComplejaModule,
     ConfiguracionPagosModule,
     PagosModule,
+    DocumentosModule,
   ],
   controllers: [AppController],
   providers: [],

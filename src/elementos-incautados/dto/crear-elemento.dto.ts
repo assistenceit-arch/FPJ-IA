@@ -26,6 +26,10 @@ export class CrearElementoDto {
   @IsString()
   direccionIncautacion!: string;
 
+  @IsOptional()
+  @IsString()
+  observaciones?: string;
+
   // ── Exclusivos de SUSTANCIA ──
   @ValidateIf((o) => o.tipoElemento === 'SUSTANCIA')
   @IsNotEmpty()

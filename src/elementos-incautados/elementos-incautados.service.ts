@@ -115,6 +115,7 @@ export class ElementosIncautadosService {
         descripcionBase,
         ubicacionHallazgo: dto.ubicacionHallazgo?.trim() || NO_SUMINISTRADO,
         direccionIncautacion: dto.direccionIncautacion,
+        observaciones: dto.observaciones?.trim() || null,
         ...detalle,
       },
       include: {
