@@ -59,3 +59,4 @@ coverage
 /generated/prisma
 
 /generated/prisma
+storage/

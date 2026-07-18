@@ -219,6 +219,7 @@ model ElementoIncautado {
   descripcionBase     String // RN-006/RN-007: única, generada automáticamente
   ubicacionHallazgo   String
   direccionIncautacion String
+  observaciones       String? // Adenda 2026-07-18: observaciones puntuales del funcionario sobre este elemento, reflejadas en el Acta de Incautación.
 
   detalleSustancia DetalleSustancia?
   detalleDinero    DetalleDinero?
