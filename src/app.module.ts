@@ -15,12 +15,13 @@ import { LugarProcedimientoModule } from './lugar-procedimiento/lugar-procedimie
 import { CapturadosModule } from './capturados/capturados.module';
 import { ElementosIncautadosModule } from './elementos-incautados/elementos-incautados.module';
 import { ActuacionesProcedimientoModule } from './actuaciones-procedimiento/actuaciones-procedimiento.module';
-// NOTA (Fase 0 - corrección de arquitectura):
-// FormularioMaestroModule fue retirado porque su modelo (FormularioMaestro,
-// basado en columnas JSON) no correspondía al Modelo de Datos V1 documentado.
-// Fase 1 completa: funcionario-actuante (✔), companero-patrulla (✔),
-// lugar-procedimiento (✔), capturados (✔), elementos-incautados (✔),
-// actuaciones-procedimiento (✔).
+import { AsesoriaComplejaModule } from './asesoria-compleja/asesoria-compleja.module';
+// Fase 1 completa: funcionario-actuante, companero-patrulla,
+// lugar-procedimiento, capturados, elementos-incautados,
+// actuaciones-procedimiento (todos ✔).
+// Fase 2 en curso: asesoria-compleja (✔ ticket + motivo de consulta).
+// Pendiente: valor de la asesoría (se conecta con el módulo de Pagos,
+// Fase 3, cuando exista un panel de administración para configurarlo).
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ActuacionesProcedimientoModule } from './actuaciones-procedimiento/actu
     CapturadosModule,
     ElementosIncautadosModule,
     ActuacionesProcedimientoModule,
+    AsesoriaComplejaModule,
   ],
   controllers: [AppController],
   providers: [],
