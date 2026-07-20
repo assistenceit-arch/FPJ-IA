@@ -233,6 +233,7 @@ export class CapturadosService {
 
     const datos = {
       nombre: dto.nombre?.trim() || NO_APORTO,
+      identificacion: dto.identificacion?.trim() || NO_APORTO,
       telefono: dto.telefono?.trim() || NO_APORTO,
       comunicacionExitosa: dto.comunicacionExitosa,
       horaComunicacion: dto.horaComunicacion,
