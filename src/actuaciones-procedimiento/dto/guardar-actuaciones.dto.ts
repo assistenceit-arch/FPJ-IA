@@ -68,7 +68,7 @@ export class GuardarActuacionesDto {
   // demoraExistente YA NO se recibe del cliente: el sistema lo calcula
   // automáticamente comparando la hora de captura (sincronizada con la
   // hora de derechos) y la hora de puesta a disposición del procedimiento,
-  // usando el umbral de 4 horas definido por el usuario del sistema.
+  // usando el umbral de 5 horas definido por el CORE_TRANSVERSAL.
   @IsOptional()
   @IsString()
   justificacionDemora?: string;

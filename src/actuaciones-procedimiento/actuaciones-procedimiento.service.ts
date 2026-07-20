@@ -4,10 +4,13 @@ import { AuditoriaService } from '../auditoria/auditoria.service';
 import { ProcedimientoAccesoService } from '../procedimientos/procedimiento-acceso.service';
 import { GuardarActuacionesDto } from './dto/guardar-actuaciones.dto';
 
-// Umbral definido por el usuario del sistema (2026-07-17): si transcurren
-// 4 horas o más entre la captura/aprehensión y la puesta a disposición,
-// la justificación de la demora es obligatoria.
-const UMBRAL_DEMORA_HORAS = 4;
+// Umbral corregido (2026-07-20): el Prompt CORE del generador de informes
+// (CORE_TRANSVERSAL, numerales 14 y 17) establece "más de 5 horas" como
+// el límite para exigir justificación de la demora en la puesta a
+// disposición. En la Fase 1 se había implementado erróneamente con 4h;
+// se corrige aquí a 5h para mantener consistencia con la narrativa
+// generada por IA.
+const UMBRAL_DEMORA_HORAS = 5;
 
 @Injectable()
 export class ActuacionesProcedimientoService {
@@ -93,7 +96,7 @@ export class ActuacionesProcedimientoService {
   /**
    * Calcula automáticamente si hubo demora en la puesta a disposición,
    * comparando la hora de captura (ya sincronizada con la de derechos) y
-   * la hora de puesta a disposición del procedimiento. Umbral: 4 horas.
+   * la hora de puesta a disposición del procedimiento. Umbral: 5 horas.
    */
   private calcularDemora(
     procedimiento: {
