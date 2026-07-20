@@ -63,6 +63,10 @@ export class CrearCapturadoDto {
 
   @IsOptional()
   @IsString()
+  redesSociales?: string;
+
+  @IsOptional()
+  @IsString()
   direccion?: string;
 
   @IsOptional()

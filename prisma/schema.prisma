@@ -161,6 +161,7 @@ model Capturado {
   estadoCivil          String?
   ocupacion            String?
   correo               String?
+  redesSociales        String? // Adenda 2026-07-19: requerido por el FPJ-6 (Acta de Derechos)
   direccion            String?
   telefono             String?
   senalesParticulares  String?
@@ -194,6 +195,7 @@ model ContactoNotificacion {
   capturado   Capturado @relation(fields: [capturadoId], references: [id], onDelete: Cascade)
 
   nombre                        String?
+  identificacion                String? // Adenda 2026-07-19: requerido por el FPJ-6 (Acta de Derechos)
   telefono                      String?
   comunicacionExitosa           Boolean
   horaComunicacion               String?

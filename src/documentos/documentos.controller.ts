@@ -31,6 +31,20 @@ export class DocumentosController {
     );
   }
 
+  @Post('procedimientos/:procedimientoId/capturados/:capturadoId/documentos/fpj6-acta-derechos')
+  generarFpj6(
+    @Param('procedimientoId') procedimientoId: string,
+    @Param('capturadoId') capturadoId: string,
+    @CurrentUser() usuario: JwtPayload,
+  ) {
+    return this.service.generarFpj6ActaDerechos(
+      procedimientoId,
+      capturadoId,
+      usuario.sub,
+      usuario.correo,
+    );
+  }
+
   @Get('procedimientos/:procedimientoId/documentos')
   listar(
     @Param('procedimientoId') procedimientoId: string,

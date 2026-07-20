@@ -13,6 +13,10 @@ export class GuardarContactoNotificacionDto {
 
   @IsOptional()
   @IsString()
+  identificacion?: string;
+
+  @IsOptional()
+  @IsString()
   telefono?: string;
 
   @IsNotEmpty()
