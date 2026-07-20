@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
@@ -8,6 +9,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { DocumentosService } from './documentos.service';
+import { GenerarFpj5Dto } from './dto/generar-fpj5.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/decorators/current-user.decorator';
@@ -42,6 +44,25 @@ export class DocumentosController {
       capturadoId,
       usuario.sub,
       usuario.correo,
+    );
+  }
+
+  // La narración de los hechos (sección 9) se genera automáticamente por
+  // IA. Si falta información o hay una inconsistencia según las reglas del
+  // CORE, responde 409 con la pregunta exacta (ver AclaracionRequeridaException)
+  // y NO genera ningún documento. Reenviar la solicitud agregando la
+  // respuesta del funcionario en `aclaraciones`.
+  @Post('procedimientos/:procedimientoId/documentos/fpj5-informe-captura')
+  generarFpj5(
+    @Param('procedimientoId') procedimientoId: string,
+    @Body() dto: GenerarFpj5Dto,
+    @CurrentUser() usuario: JwtPayload,
+  ) {
+    return this.service.generarFpj5Informe(
+      procedimientoId,
+      usuario.sub,
+      usuario.correo,
+      dto.aclaraciones ?? [],
     );
   }
 

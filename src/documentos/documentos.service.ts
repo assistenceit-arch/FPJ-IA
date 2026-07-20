@@ -1,10 +1,16 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  NotImplementedException,
+} from '@nestjs/common';
 import { Packer } from 'docx';
 import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { ProcedimientoAccesoService } from '../procedimientos/procedimiento-acceso.service';
+import { NarrativaService } from '../narrativa/narrativa.service';
 import { construirActaIncautacion } from './plantillas/acta-incautacion.plantilla';
 import {
   rellenarPlantillaWord,
@@ -12,6 +18,8 @@ import {
   digitosFecha,
   digitosHora,
 } from './plantillas/rellenar-plantilla-word';
+import { AclaracionRequeridaException } from './excepciones/aclaracion-requerida.exception';
+import type { ContextoNarracionFpj5 } from '../narrativa/interfaces/contexto-narracion.interface';
 
 // RT-005: los documentos generados se almacenan físicamente en el servidor.
 const CARPETA_ALMACENAMIENTO = path.join(process.cwd(), 'storage', 'documentos-generados');
@@ -26,6 +34,7 @@ export class DocumentosService {
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
     private readonly acceso: ProcedimientoAccesoService,
+    private readonly narrativa: NarrativaService,
   ) {}
 
   async generarActaIncautacion(
@@ -268,6 +277,147 @@ export class DocumentosService {
     });
 
     return documentoGenerado;
+  }
+
+  /**
+   * Genera el FPJ-5 (Informe de Captura en Flagrancia). RN-001 / REGLA
+   * INV-FPJ5-003: se genera UN ÚNICO FPJ-5 por procedimiento, relacionando
+   * a todos los intervinientes (no uno por cada capturado, a diferencia
+   * del FPJ-6 y del Acta de Incautación).
+   *
+   * La sección 9 (narración de los hechos) se genera automáticamente por
+   * IA. Si el modelo detecta información faltante o inconsistente según
+   * las reglas del CORE (CORE_TRANSVERSAL + ESTUPEFACIENTES), este método
+   * lanza AclaracionRequeridaException (409) con la pregunta exacta, SIN
+   * generar ni guardar ningún documento. El cliente debe reenviar la
+   * solicitud agregando la respuesta del funcionario en `aclaraciones`.
+   */
+  async generarFpj5Informe(
+    procedimientoId: string,
+    usuarioId: string,
+    correoUsuario: string,
+    aclaraciones: string[] = [],
+  ) {
+    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+
+    const [funcionarioActuante, companeroPatrulla, lugarProcedimiento, actuaciones, capturados] =
+      await Promise.all([
+        this.prisma.funcionarioActuante.findUnique({ where: { procedimientoId } }),
+        this.prisma.companeroPatrulla.findUnique({ where: { procedimientoId } }),
+        this.prisma.lugarProcedimiento.findUnique({ where: { procedimientoId } }),
+        this.prisma.actuacionesProcedimiento.findUnique({ where: { procedimientoId } }),
+        this.prisma.capturado.findMany({
+          where: { procedimientoId },
+          include: { elementosIncautados: true },
+          orderBy: { createdAt: 'asc' },
+        }),
+      ]);
+
+    if (!funcionarioActuante) {
+      throw new BadRequestException('Debe registrar el funcionario actuante antes de generar el FPJ-5.');
+    }
+    if (!lugarProcedimiento) {
+      throw new BadRequestException('Debe registrar el lugar del procedimiento antes de generar el FPJ-5.');
+    }
+    if (!actuaciones) {
+      throw new BadRequestException(
+        'Debe registrar las actuaciones procedimentales antes de generar el FPJ-5.',
+      );
+    }
+    if (capturados.length === 0) {
+      throw new BadRequestException('Debe registrar al menos un interviniente antes de generar el FPJ-5.');
+    }
+
+    const contexto: ContextoNarracionFpj5 = {
+      procedimiento: {
+        delito: procedimiento.delito,
+        tipoProcedimiento: procedimiento.tipoProcedimiento,
+        fechaCaptura: procedimiento.fechaCaptura.toISOString(),
+        horaCaptura: procedimiento.horaCaptura,
+        fechaDisposicion: procedimiento.fechaDisposicion.toISOString(),
+        horaDisposicion: procedimiento.horaDisposicion,
+      },
+      funcionario: {
+        nombreCompleto: funcionarioActuante.nombreCompleto,
+        cargo: funcionarioActuante.cargo,
+        placa: funcionarioActuante.placa,
+        servicio: funcionarioActuante.servicio,
+        estacion: funcionarioActuante.estacion,
+      },
+      companero: companeroPatrulla
+        ? { nombreCompleto: companeroPatrulla.nombreCompleto, placa: companeroPatrulla.placa }
+        : null,
+      lugar: {
+        departamento: lugarProcedimiento.departamento,
+        municipio: lugarProcedimiento.municipio,
+        barrio: lugarProcedimiento.barrio,
+        direccion: lugarProcedimiento.direccion,
+        caracteristicas: lugarProcedimiento.caracteristicas,
+      },
+      intervinientes: capturados.map((c) => ({
+        tipoInterviniente: c.tipoInterviniente,
+        nombreCompleto: [c.primerNombre, c.segundoNombre, c.primerApellido, c.segundoApellido]
+          .filter(Boolean)
+          .join(' '),
+        edad: c.edad,
+        tipoDocumento: c.tipoDocumento,
+        numeroDocumento: c.numeroDocumento,
+        elementos: c.elementosIncautados.map((e) => ({
+          tipoElemento: e.tipoElemento,
+          descripcionBase: e.descripcionBase,
+          ubicacionHallazgo: e.ubicacionHallazgo,
+          direccionIncautacion: e.direccionIncautacion,
+          observaciones: e.observaciones,
+        })),
+      })),
+      actuaciones: {
+        derechosLeidos: actuaciones.derechosLeidos,
+        fechaDerechos: actuaciones.fechaDerechos.toISOString(),
+        horaDerechos: actuaciones.horaDerechos,
+        comprendeDerechos: actuaciones.comprendeDerechos,
+        usoEsposas: actuaciones.usoEsposas,
+        justificacionEsposas: actuaciones.justificacionEsposas,
+        presentaLesiones: actuaciones.presentaLesiones,
+        descripcionLesiones: actuaciones.descripcionLesiones,
+        trasladoCentroAsistencial: actuaciones.trasladoCentroAsistencial,
+        centroAsistencial: actuaciones.centroAsistencial,
+        motivoTraslado: actuaciones.motivoTraslado,
+        autoridadReceptora: actuaciones.autoridadReceptora,
+        demoraExistente: actuaciones.demoraExistente,
+        justificacionDemora: actuaciones.justificacionDemora,
+      },
+    };
+
+    const resultado = await this.narrativa.generarNarracion(contexto, aclaraciones);
+
+    if (resultado.tipo === 'aclaracion_requerida') {
+      throw new AclaracionRequeridaException(resultado.pregunta);
+    }
+
+    // ⚠️ BLOQUEADO (2026-07-20): las plantillas Word del FPJ-5
+    // (fpj5-plantilla-capturado.docx / fpj5-plantilla-aprehendido.docx)
+    // todavía no existen físicamente en assets/documentos/ — se
+    // construyeron en una sesión anterior de Claude, pero el sandbox donde
+    // se generaron no persiste entre sesiones y el parche correspondiente
+    // nunca se aplicó al repositorio. Deben reconstruirse a partir del
+    // FPJ-5 oficial del usuario con python-docx (mismo procedimiento que
+    // fpj6-plantilla-*.docx), insertando los marcadores {{TOKEN}} descritos
+    // en 8.2 MAPA-DOCUMENTAL-FPJ5-V1 y el nuevo marcador
+    // {{NARRACION_HECHOS}} en la sección 9 (tabla 34), más los dos párrafos
+    // centinela %%%BLOQUE_INTERVINIENTE_INICIO%%% / ...FIN%%% alrededor de
+    // la sección 4 (información del capturado/aprehendido), para poder
+    // usar `rellenarPlantillaConBloqueRepetible`.
+    //
+    // La narración ya se generó correctamente en este punto (`resultado.texto`)
+    // y no se pierde: se devuelve en el mensaje de la excepción para que
+    // pueda conservarse mientras se completan las plantillas.
+    throw new NotImplementedException(
+      'La narración de los hechos se generó correctamente, pero el ensamblado ' +
+        'final del documento FPJ-5 está pendiente de las plantillas Word ' +
+        '(fpj5-plantilla-capturado.docx / fpj5-plantilla-aprehendido.docx). ' +
+        'Narración generada:\n\n' +
+        resultado.texto,
+    );
   }
 
   async obtenerArchivo(documentoId: string, usuarioId: string) {
