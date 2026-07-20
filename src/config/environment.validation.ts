@@ -10,4 +10,8 @@ export const environmentValidationSchema = Joi.object({
   DATABASE_URL: Joi.string().required(),
 
   JWT_SECRET: Joi.string().required(),
+
+  // Requerida por el módulo de narrativa (generación IA de la narración de
+  // los hechos del FPJ-5). Se crea en console.anthropic.com.
+  ANTHROPIC_API_KEY: Joi.string().required(),
 });
