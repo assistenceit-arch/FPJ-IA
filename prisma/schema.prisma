@@ -167,6 +167,8 @@ model Capturado {
   senalesParticulares  String?
   nombrePadres         String?
   telefonoPadres       String?
+  escolaridad          String? // Adenda 2026-07-20: requerido por el FPJ-5 (sección 4, "Escolaridad").
+  alias                String? // Adenda 2026-07-20: requerido por el FPJ-5 (sección 4, "Alias, seudónimo o apodo").
 
   // Exclusivo para APREHENDIDO (menor de edad) — Formulario Maestro V2
   nombreAcudiente    String?
