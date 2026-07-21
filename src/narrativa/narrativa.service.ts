@@ -43,7 +43,7 @@ export class NarrativaService {
 
     const respuesta = await this.cliente.messages.create({
       model: this.modelo,
-      max_tokens: 2000,
+      max_tokens: 8192,
       system: this.systemPrompt,
       messages: [{ role: 'user', content: mensajeUsuario }],
     });
@@ -57,6 +57,26 @@ export class NarrativaService {
       const pregunta = texto.slice(MARCADOR_ACLARACION.length).trim();
       this.logger.log('El modelo solicitó aclaración antes de generar la narración.');
       return { tipo: 'aclaracion_requerida', pregunta };
+    }
+
+    if (!texto) {
+      // Nunca debe generarse un FPJ-5 con la sección 9 en blanco: si la
+      // respuesta del modelo llega vacía (por ejemplo, por corte de
+      // max_tokens u otra falla de la API), es preferible fallar aquí con
+      // un error explícito que silenciosamente producir un documento
+      // incompleto. Ver bug reportado 2026-07-21.
+      const tiposDeBloque = respuesta.content.map((b) => b.type).join(', ');
+      this.logger.error(
+        `La API de Anthropic devolvió una respuesta vacía. ` +
+          `stop_reason=${respuesta.stop_reason}, ` +
+          `tokens_salida=${respuesta.usage?.output_tokens}, ` +
+          `tipos_de_bloque=[${tiposDeBloque}]`,
+      );
+      throw new Error(
+        'El modelo de IA devolvió una respuesta vacía al generar la narración. ' +
+          'Intente de nuevo; si el problema persiste, puede deberse a un límite ' +
+          `de tokens alcanzado (stop_reason: ${respuesta.stop_reason}).`,
+      );
     }
 
     return { tipo: 'narracion', texto };
@@ -77,6 +97,28 @@ export class NarrativaService {
     const especializado = leer('estupefacientes-prompt-especializado.md');
     const validaciones = leer('estupefacientes-validaciones.md');
     const flujo = leer('estupefacientes-flujo-operativo.md');
+
+    const capaRedaccion = `
+INSTRUCCIONES ADICIONALES DE REDACCIÓN
+(aplican siempre, prevalecen sobre cualquier tendencia a generalizar o
+resumir cuando hay más de un interviniente)
+
+- Cuando haya más de un interviniente, NUNCA sumes ni generalices los
+  elementos hallados entre ellos. Especifica individualmente, por
+  nombre, qué elemento(s) se le halló a cada persona. Si el listado de
+  elementos no distingue a quién corresponde cada uno, trátalo como un
+  vacío crítico y solicita aclaración en vez de asumir una distribución.
+- Al narrar la puesta a disposición, indica explícitamente ante qué
+  autoridad queda cada interviniente (pueden ser autoridades distintas:
+  por ejemplo Fiscalía para el mayor de edad y el CESPA u otra autoridad
+  del Sistema de Responsabilidad Penal para Adolescentes para el
+  adolescente), y aclara que los elementos hallados a esa persona quedan
+  a disposición de esa misma autoridad junto con ella.
+- Los datos del funcionario actuante (placa, estación, entidad, unidad)
+  se mencionan ÚNICAMENTE en el fragmento que describe quién realizó el
+  procedimiento (el inicio de la narración). No los repitas ni los
+  insertes sueltos en otras partes del relato.
+`.trim();
 
     const capaTecnica = `
 INSTRUCCIÓN TÉCNICA DE FORMATO DE RESPUESTA
@@ -103,7 +145,7 @@ ${MARCADOR_ACLARACION} <aquí la pregunta o preguntas específicas y concretas d
 No mezcles ambos formatos en una misma respuesta.
 `.trim();
 
-    return [core, especializado, validaciones, flujo, capaTecnica].join(
+    return [core, especializado, validaciones, flujo, capaRedaccion, capaTecnica].join(
       '\n\n---\n\n',
     );
   }

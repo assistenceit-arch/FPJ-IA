@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  NotImplementedException,
 } from '@nestjs/common';
 import { Packer } from 'docx';
 import * as fs from 'fs';
@@ -14,6 +13,7 @@ import { NarrativaService } from '../narrativa/narrativa.service';
 import { construirActaIncautacion } from './plantillas/acta-incautacion.plantilla';
 import {
   rellenarPlantillaWord,
+  rellenarPlantillaConBloqueRepetible,
   oNoAporta,
   digitosFecha,
   digitosHora,
@@ -26,6 +26,8 @@ const CARPETA_ALMACENAMIENTO = path.join(process.cwd(), 'storage', 'documentos-g
 const CARPETA_ASSETS = path.join(process.cwd(), 'assets', 'documentos');
 const PLANTILLA_FPJ6_CAPTURADO = path.join(CARPETA_ASSETS, 'fpj6-plantilla-capturado.docx');
 const PLANTILLA_FPJ6_APREHENDIDO = path.join(CARPETA_ASSETS, 'fpj6-plantilla-aprehendido.docx');
+const PLANTILLA_FPJ5_CAPTURADO = path.join(CARPETA_ASSETS, 'fpj5-plantilla-capturado.docx');
+const PLANTILLA_FPJ5_APREHENDIDO = path.join(CARPETA_ASSETS, 'fpj5-plantilla-aprehendido.docx');
 const OBSERVACIONES_VACIAS = '_'.repeat(94); // igual longitud que la línea original en blanco
 
 @Injectable()
@@ -394,30 +396,140 @@ export class DocumentosService {
       throw new AclaracionRequeridaException(resultado.pregunta);
     }
 
-    // ⚠️ BLOQUEADO (2026-07-20): las plantillas Word del FPJ-5
-    // (fpj5-plantilla-capturado.docx / fpj5-plantilla-aprehendido.docx)
-    // todavía no existen físicamente en assets/documentos/ — se
-    // construyeron en una sesión anterior de Claude, pero el sandbox donde
-    // se generaron no persiste entre sesiones y el parche correspondiente
-    // nunca se aplicó al repositorio. Deben reconstruirse a partir del
-    // FPJ-5 oficial del usuario con python-docx (mismo procedimiento que
-    // fpj6-plantilla-*.docx), insertando los marcadores {{TOKEN}} descritos
-    // en 8.2 MAPA-DOCUMENTAL-FPJ5-V1 y el nuevo marcador
-    // {{NARRACION_HECHOS}} en la sección 9 (tabla 34), más los dos párrafos
-    // centinela %%%BLOQUE_INTERVINIENTE_INICIO%%% / ...FIN%%% alrededor de
-    // la sección 4 (información del capturado/aprehendido), para poder
-    // usar `rellenarPlantillaConBloqueRepetible`.
-    //
-    // La narración ya se generó correctamente en este punto (`resultado.texto`)
-    // y no se pierde: se devuelve en el mensaje de la excepción para que
-    // pueda conservarse mientras se completan las plantillas.
-    throw new NotImplementedException(
-      'La narración de los hechos se generó correctamente, pero el ensamblado ' +
-        'final del documento FPJ-5 está pendiente de las plantillas Word ' +
-        '(fpj5-plantilla-capturado.docx / fpj5-plantilla-aprehendido.docx). ' +
-        'Narración generada:\n\n' +
-        resultado.texto,
+    const esAprehendido = capturados[0].tipoInterviniente === 'APREHENDIDO';
+    // Procedimientos MIXTOS (adultos + adolescentes): se usa la plantilla
+    // del PRIMER interviniente registrado. Limitación conocida — los datos
+    // individuales de cada persona son correctos, pero el texto genérico
+    // circundante (capturado/aprehendido) podría no coincidir para todos
+    // si están mezclados. Pendiente de decisión del usuario (ver
+    // RESUMEN_TECNICO_FPJ_IA.md punto 1).
+    const plantilla = esAprehendido ? PLANTILLA_FPJ5_APREHENDIDO : PLANTILLA_FPJ5_CAPTURADO;
+
+    const hoy = new Date();
+    const anexos = await this.prisma.documentoGenerado.groupBy({
+      by: ['tipoDocumento'],
+      where: { procedimientoId },
+      _count: { _all: true },
+    });
+    const contarAnexo = (tipo: string) =>
+      String(anexos.find((a) => a.tipoDocumento === tipo)?._count._all ?? 0);
+
+    const elementosGlobales = capturados.flatMap((c) => c.elementosIncautados);
+    const descripcionElementos =
+      elementosGlobales.length > 0
+        ? elementosGlobales.map((e, i) => `${i + 1}. ${e.descripcionBase}`).join('\n')
+        : 'No se registraron elementos incautados.';
+
+    const digitosPrefijados = (
+      obj: Record<string, string>,
+      prefijo: string,
+    ): Record<string, string> =>
+      Object.fromEntries(Object.entries(obj).map(([k, v]) => [`${prefijo}_${k}`, v]));
+
+    const datosGlobales: Record<string, string> = {
+      DEPARTAMENTO: lugarProcedimiento.departamento,
+      MUNICIPIO: lugarProcedimiento.municipio,
+      FECHA_INFORME_ANIO: String(hoy.getUTCFullYear()),
+      FECHA_INFORME_MES: String(hoy.getUTCMonth() + 1).padStart(2, '0'),
+      FECHA_INFORME_DIA: String(hoy.getUTCDate()).padStart(2, '0'),
+      DESTINO_INFORME: actuaciones.autoridadReceptora,
+      DIRECCION: lugarProcedimiento.direccion,
+      BARRIO: lugarProcedimiento.barrio,
+      LOCALIDAD: oNoAporta(lugarProcedimiento.localidad),
+      VEREDA: '', // N/A si no aplica (Mapa Documental FPJ5, sección 3)
+      CARACTERISTICAS_LUGAR: oNoAporta(lugarProcedimiento.caracteristicas),
+      DESCRIPCION_ELEMENTOS: descripcionElementos,
+      NARRACION_HECHOS: resultado.texto,
+      ANEXO_FPJ6_CANTIDAD: contarAnexo('FPJ6'),
+      ANEXO_FPJ7_CANTIDAD: contarAnexo('FPJ7'),
+      ANEXO_FPJ8_CANTIDAD: contarAnexo('FPJ8'),
+      ANEXO_ACTA_CANTIDAD: contarAnexo('ACTA'),
+      FUNCIONARIO_NOMBRE: funcionarioActuante.nombreCompleto,
+      FUNCIONARIO_IDENTIFICACION: funcionarioActuante.documento,
+      FUNCIONARIO_ENTIDAD: funcionarioActuante.entidad,
+      FUNCIONARIO_CARGO: funcionarioActuante.cargo,
+      FUNCIONARIO_TELEFONO: funcionarioActuante.telefono,
+      FUNCIONARIO_CORREO: funcionarioActuante.correo,
+      ...digitosPrefijados(digitosFecha(procedimiento.fechaCaptura), 'CAP'),
+      ...digitosPrefijados(digitosHora(procedimiento.horaCaptura), 'CAP'),
+      ...digitosPrefijados(digitosFecha(procedimiento.fechaDisposicion), 'DISP'),
+      ...digitosPrefijados(digitosHora(procedimiento.horaDisposicion), 'DISP'),
+    };
+
+    const bloquesIntervinientes = capturados.map((c, i) => {
+      const tipoDocNormalizado = (c.tipoDocumento ?? '').toUpperCase();
+      const esCC = tipoDocNormalizado.includes('CC') || tipoDocNormalizado.includes('C.C');
+      const generoM = (c.genero ?? '').toUpperCase().startsWith('M');
+
+      return {
+        ETIQUETA_INTERVINIENTE:
+          capturados.length > 1
+            ? `Interviniente ${i + 1} de ${capturados.length}`
+            : '',
+        PRIMER_NOMBRE: c.primerNombre,
+        SEGUNDO_NOMBRE: oNoAporta(c.segundoNombre) === 'No aporta' ? '' : c.segundoNombre!,
+        PRIMER_APELLIDO: c.primerApellido,
+        SEGUNDO_APELLIDO: oNoAporta(c.segundoApellido) === 'No aporta' ? '' : c.segundoApellido!,
+        ALIAS: c.alias ?? '',
+        DOC_CHECK_CC: c.tipoDocumento ? (esCC ? 'X' : '') : '',
+        DOC_CHECK_OTRA: c.tipoDocumento ? (esCC ? '' : 'X') : '',
+        NUMERO_DOCUMENTO: oNoAporta(c.numeroDocumento),
+        LUGAR_EXPEDICION: oNoAporta(c.expedicionDocumento),
+        ...digitosPrefijados({ D1: String(c.edad).padStart(2, '0')[0], D2: String(c.edad).padStart(2, '0')[1] }, 'EDAD'),
+        GENERO_CHECK_M: generoM ? 'X' : '',
+        GENERO_CHECK_F: generoM ? '' : 'X',
+        ...digitosPrefijados(digitosFecha(c.fechaNacimiento), 'FN'),
+        LUGAR_NACIMIENTO: oNoAporta(c.lugarNacimiento),
+        ESTADO_CIVIL: oNoAporta(c.estadoCivil),
+        ESCOLARIDAD: oNoAporta(c.escolaridad),
+        OCUPACION: oNoAporta(c.ocupacion),
+        CORREO_REDES: oNoAporta(
+          [c.correo, c.redesSociales].filter(Boolean).join(' / ') || undefined,
+        ),
+        SENALES_PARTICULARES: c.senalesParticulares ?? '', // en blanco si no se capturó (excepción a "No aporta")
+        NOMBRE_PADRES: oNoAporta(c.nombrePadres),
+        PADRES_CONTACTO: oNoAporta(c.telefonoPadres),
+      };
+    });
+
+    const buffer = rellenarPlantillaConBloqueRepetible(
+      plantilla,
+      datosGlobales,
+      bloquesIntervinientes,
     );
+
+    const version =
+      (await this.prisma.documentoGenerado.count({
+        where: { procedimientoId, tipoDocumento: 'FPJ5' },
+      })) + 1;
+
+    const carpetaDestino = path.join(CARPETA_ALMACENAMIENTO, procedimientoId);
+    fs.mkdirSync(carpetaDestino, { recursive: true });
+    const nombreArchivo = `FPJ5-${procedimientoId}-v${version}.docx`;
+    const rutaArchivo = path.join(carpetaDestino, nombreArchivo);
+    fs.writeFileSync(rutaArchivo, buffer);
+
+    const documentoGenerado = await this.prisma.documentoGenerado.create({
+      data: {
+        procedimientoId,
+        tipoDocumento: 'FPJ5',
+        fechaGeneracion: new Date(),
+        version,
+        procedimientoVersion: 1,
+        rutaArchivo,
+        estado: version > 1 ? 'Regenerado' : 'Generado',
+      },
+    });
+
+    await this.auditoria.registrar({
+      usuario: correoUsuario,
+      accion: version > 1 ? 'Regenerar' : 'Crear',
+      tablaAfectada: 'documentos_generados',
+      registroAfectado: documentoGenerado.id,
+      descripcionEvento: `FPJ-5 generado (v${version}) para el procedimiento ${procedimientoId} con narración automática por IA.`,
+    });
+
+    return documentoGenerado;
   }
 
   async obtenerArchivo(documentoId: string, usuarioId: string) {

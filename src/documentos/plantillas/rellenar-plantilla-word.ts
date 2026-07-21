@@ -66,10 +66,24 @@ export function digitosHora(hora: string) {
 const MARCADOR_INICIO_BLOQUE_DEFECTO = '%%%BLOQUE_INTERVINIENTE_INICIO%%%';
 const MARCADOR_FIN_BLOQUE_DEFECTO = '%%%BLOQUE_INTERVINIENTE_FIN%%%';
 
+/**
+ * Igual que escaparXml, pero además convierte saltos de línea reales
+ * ("\n") en un salto de línea de Word (<w:br/>) dentro del mismo párrafo,
+ * en vez de perderse como espacio en blanco. Útil para tokens que deben
+ * listar varios elementos en líneas separadas dentro de una misma celda
+ * (ej. {{DESCRIPCION_ELEMENTOS}}), sin necesitar un bloque repetible.
+ */
+function escaparXmlConSaltos(valor: string): string {
+  return valor
+    .split('\n')
+    .map((linea) => escaparXml(linea))
+    .join('</w:t></w:r><w:r><w:br/><w:t xml:space="preserve">');
+}
+
 function rellenarFragmento(xml: string, datos: Record<string, string>): string {
   let resultado = xml;
   for (const [clave, valor] of Object.entries(datos)) {
-    resultado = resultado.split(`{{${clave}}}`).join(escaparXml(valor));
+    resultado = resultado.split(`{{${clave}}}`).join(escaparXmlConSaltos(valor));
   }
   return resultado;
 }

@@ -85,6 +85,14 @@ export class CrearCapturadoDto {
   @IsString()
   telefonoPadres?: string;
 
+  @IsOptional()
+  @IsString()
+  escolaridad?: string;
+
+  @IsOptional()
+  @IsString()
+  alias?: string;
+
   // Solo aplican si, tras calcular la edad, la persona resulta menor de
   // edad (Aprehendido). Si se envían para un mayor de edad, el servicio
   // los ignora.
