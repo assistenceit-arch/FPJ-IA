@@ -94,6 +94,28 @@ export class NarrativaService {
     const validaciones = leer('estupefacientes-validaciones.md');
     const flujo = leer('estupefacientes-flujo-operativo.md');
 
+    const capaRedaccion = `
+INSTRUCCIONES ADICIONALES DE REDACCIÓN
+(aplican siempre, prevalecen sobre cualquier tendencia a generalizar o
+resumir cuando hay más de un interviniente)
+
+- Cuando haya más de un interviniente, NUNCA sumes ni generalices los
+  elementos hallados entre ellos. Especifica individualmente, por
+  nombre, qué elemento(s) se le halló a cada persona. Si el listado de
+  elementos no distingue a quién corresponde cada uno, trátalo como un
+  vacío crítico y solicita aclaración en vez de asumir una distribución.
+- Al narrar la puesta a disposición, indica explícitamente ante qué
+  autoridad queda cada interviniente (pueden ser autoridades distintas:
+  por ejemplo Fiscalía para el mayor de edad y el CESPA u otra autoridad
+  del Sistema de Responsabilidad Penal para Adolescentes para el
+  adolescente), y aclara que los elementos hallados a esa persona quedan
+  a disposición de esa misma autoridad junto con ella.
+- Los datos del funcionario actuante (placa, estación, entidad, unidad)
+  se mencionan ÚNICAMENTE en el fragmento que describe quién realizó el
+  procedimiento (el inicio de la narración). No los repitas ni los
+  insertes sueltos en otras partes del relato.
+`.trim();
+
     const capaTecnica = `
 INSTRUCCIÓN TÉCNICA DE FORMATO DE RESPUESTA
 (obligatoria, prevalece sobre cualquier otra indicación de formato de las
@@ -119,7 +141,7 @@ ${MARCADOR_ACLARACION} <aquí la pregunta o preguntas específicas y concretas d
 No mezcles ambos formatos en una misma respuesta.
 `.trim();
 
-    return [core, especializado, validaciones, flujo, capaTecnica].join(
+    return [core, especializado, validaciones, flujo, capaRedaccion, capaTecnica].join(
       '\n\n---\n\n',
     );
   }
