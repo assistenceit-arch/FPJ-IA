@@ -43,7 +43,7 @@ export class NarrativaService {
 
     const respuesta = await this.cliente.messages.create({
       model: this.modelo,
-      max_tokens: 4096,
+      max_tokens: 8192,
       system: this.systemPrompt,
       messages: [{ role: 'user', content: mensajeUsuario }],
     });
@@ -65,8 +65,12 @@ export class NarrativaService {
       // max_tokens u otra falla de la API), es preferible fallar aquí con
       // un error explícito que silenciosamente producir un documento
       // incompleto. Ver bug reportado 2026-07-21.
+      const tiposDeBloque = respuesta.content.map((b) => b.type).join(', ');
       this.logger.error(
-        `La API de Anthropic devolvió una respuesta vacía. stop_reason=${respuesta.stop_reason}`,
+        `La API de Anthropic devolvió una respuesta vacía. ` +
+          `stop_reason=${respuesta.stop_reason}, ` +
+          `tokens_salida=${respuesta.usage?.output_tokens}, ` +
+          `tipos_de_bloque=[${tiposDeBloque}]`,
       );
       throw new Error(
         'El modelo de IA devolvió una respuesta vacía al generar la narración. ' +
