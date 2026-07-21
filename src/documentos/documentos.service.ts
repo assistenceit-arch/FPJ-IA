@@ -417,7 +417,7 @@ export class DocumentosService {
     const elementosGlobales = capturados.flatMap((c) => c.elementosIncautados);
     const descripcionElementos =
       elementosGlobales.length > 0
-        ? elementosGlobales.map((e, i) => `${i + 1}. ${e.descripcionBase}`).join(' ')
+        ? elementosGlobales.map((e, i) => `${i + 1}. ${e.descripcionBase}`).join('\n')
         : 'No se registraron elementos incautados.';
 
     const digitosPrefijados = (
@@ -456,12 +456,16 @@ export class DocumentosService {
       ...digitosPrefijados(digitosHora(procedimiento.horaDisposicion), 'DISP'),
     };
 
-    const bloquesIntervinientes = capturados.map((c) => {
+    const bloquesIntervinientes = capturados.map((c, i) => {
       const tipoDocNormalizado = (c.tipoDocumento ?? '').toUpperCase();
       const esCC = tipoDocNormalizado.includes('CC') || tipoDocNormalizado.includes('C.C');
       const generoM = (c.genero ?? '').toUpperCase().startsWith('M');
 
       return {
+        ETIQUETA_INTERVINIENTE:
+          capturados.length > 1
+            ? `Interviniente ${i + 1} de ${capturados.length}`
+            : '',
         PRIMER_NOMBRE: c.primerNombre,
         SEGUNDO_NOMBRE: oNoAporta(c.segundoNombre) === 'No aporta' ? '' : c.segundoNombre!,
         PRIMER_APELLIDO: c.primerApellido,

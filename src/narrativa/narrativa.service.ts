@@ -43,7 +43,7 @@ export class NarrativaService {
 
     const respuesta = await this.cliente.messages.create({
       model: this.modelo,
-      max_tokens: 2000,
+      max_tokens: 4096,
       system: this.systemPrompt,
       messages: [{ role: 'user', content: mensajeUsuario }],
     });
@@ -57,6 +57,22 @@ export class NarrativaService {
       const pregunta = texto.slice(MARCADOR_ACLARACION.length).trim();
       this.logger.log('El modelo solicitó aclaración antes de generar la narración.');
       return { tipo: 'aclaracion_requerida', pregunta };
+    }
+
+    if (!texto) {
+      // Nunca debe generarse un FPJ-5 con la sección 9 en blanco: si la
+      // respuesta del modelo llega vacía (por ejemplo, por corte de
+      // max_tokens u otra falla de la API), es preferible fallar aquí con
+      // un error explícito que silenciosamente producir un documento
+      // incompleto. Ver bug reportado 2026-07-21.
+      this.logger.error(
+        `La API de Anthropic devolvió una respuesta vacía. stop_reason=${respuesta.stop_reason}`,
+      );
+      throw new Error(
+        'El modelo de IA devolvió una respuesta vacía al generar la narración. ' +
+          'Intente de nuevo; si el problema persiste, puede deberse a un límite ' +
+          `de tokens alcanzado (stop_reason: ${respuesta.stop_reason}).`,
+      );
     }
 
     return { tipo: 'narracion', texto };
