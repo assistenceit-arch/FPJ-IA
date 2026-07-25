@@ -13,6 +13,14 @@
 - ✅ `rellenarPlantillaConBloqueRepetible`: función genérica para repetir
   un bloque de la plantilla (sección "Información del capturado(s)") una
   vez por interviniente.
+- ✅ **2026-07-25**: se integraron 3 archivos del repo GENERADOR-INFORMES
+  que existían pero nunca se habían cargado al system prompt:
+  `PLANTILLA_INTELIGENTE.md` (cuestionario detallado con ejemplos de
+  redacción por campo) y `REGLAS-ADULTOS.md` / `REGLAS-SRPA.md` (reglas
+  diferenciadas mayor/menor de edad: terminología obligatoria, uso de
+  esposas, acudientes, autoridad competente, procedimientos mixtos).
+  Esto resuelve el pendiente de "reglas diferenciadas mayor/menor de
+  edad" que se había dejado para después.
 - ⛔ **Bloqueado**: el ensamblado final del `.docx` no está implementado.
   Faltan `assets/documentos/fpj5-plantilla-capturado.docx` y
   `fpj5-plantilla-aprehendido.docx`. Ver sección "Pendiente" abajo.

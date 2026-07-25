@@ -85,9 +85,11 @@ export class NarrativaService {
   /**
    * Arma el system prompt uniendo el CORE TRANSVERSAL (reglas universales
    * a todos los delitos) con las reglas propias de Estupefacientes (prompt
-   * especializado, validaciones y flujo operativo), más una capa técnica
-   * que obliga al modelo a responder en uno de dos formatos exactos y
-   * parseables por código, sin depender de interpretación humana.
+   * especializado, validaciones, flujo operativo y plantilla inteligente
+   * con ejemplos de redacción por campo), las reglas complementarias
+   * diferenciadas mayor/menor de edad (terminología, esposas, acudientes,
+   * autoridad competente, procedimientos mixtos), más las capas propias de
+   * redacción y de formato técnico de respuesta.
    */
   private construirSystemPrompt(): string {
     const leer = (nombre: string) =>
@@ -97,6 +99,9 @@ export class NarrativaService {
     const especializado = leer('estupefacientes-prompt-especializado.md');
     const validaciones = leer('estupefacientes-validaciones.md');
     const flujo = leer('estupefacientes-flujo-operativo.md');
+    const plantillaInteligente = leer('estupefacientes-plantilla-inteligente.md');
+    const reglasAdultos = leer('reglas-adultos.md');
+    const reglasSrpa = leer('reglas-srpa.md');
 
     const capaRedaccion = `
 INSTRUCCIONES ADICIONALES DE REDACCIÓN
@@ -145,9 +150,17 @@ ${MARCADOR_ACLARACION} <aquí la pregunta o preguntas específicas y concretas d
 No mezcles ambos formatos en una misma respuesta.
 `.trim();
 
-    return [core, especializado, validaciones, flujo, capaRedaccion, capaTecnica].join(
-      '\n\n---\n\n',
-    );
+    return [
+      core,
+      especializado,
+      validaciones,
+      flujo,
+      plantillaInteligente,
+      reglasAdultos,
+      reglasSrpa,
+      capaRedaccion,
+      capaTecnica,
+    ].join('\n\n---\n\n');
   }
 
   private construirMensajeUsuario(
