@@ -371,6 +371,10 @@ export class DocumentosService {
           direccionIncautacion: e.direccionIncautacion,
           observaciones: e.observaciones,
         })),
+        participacionHechos: c.participacionHechos,
+        comportamientoAbordaje: c.comportamientoAbordaje,
+        identificacionPlena: c.identificacionPlena,
+        formaIdentificacion: c.formaIdentificacion,
       })),
       actuaciones: {
         derechosLeidos: actuaciones.derechosLeidos,
@@ -387,6 +391,14 @@ export class DocumentosService {
         autoridadReceptora: actuaciones.autoridadReceptora,
         demoraExistente: actuaciones.demoraExistente,
         justificacionDemora: actuaciones.justificacionDemora,
+        observacionInicial: actuaciones.observacionInicial,
+        desarrolloIntervencion: actuaciones.desarrolloIntervencion,
+        circunstanciaRelevante: actuaciones.tieneCircunstanciaRelevante
+          ? actuaciones.circunstanciaRelevante
+          : null,
+        observacionAdicional: actuaciones.tieneObservacionAdicional
+          ? actuaciones.observacionAdicional
+          : null,
       },
     };
 
@@ -396,13 +408,11 @@ export class DocumentosService {
       throw new AclaracionRequeridaException(resultado.pregunta);
     }
 
-    const esAprehendido = capturados[0].tipoInterviniente === 'APREHENDIDO';
-    // Procedimientos MIXTOS (adultos + adolescentes): se usa la plantilla
-    // del PRIMER interviniente registrado. Limitación conocida — los datos
-    // individuales de cada persona son correctos, pero el texto genérico
-    // circundante (capturado/aprehendido) podría no coincidir para todos
-    // si están mezclados. Pendiente de decisión del usuario (ver
-    // RESUMEN_TECNICO_FPJ_IA.md punto 1).
+    // Selección de plantilla (decisión del usuario, 2026-07-22): en
+    // procedimientos MIXTOS (adultos + adolescentes) se usa siempre el
+    // texto genérico de CAPTURADO. Solo se usa APREHENDIDO cuando TODOS
+    // los intervinientes son adolescentes.
+    const esAprehendido = capturados.every((c) => c.tipoInterviniente === 'APREHENDIDO');
     const plantilla = esAprehendido ? PLANTILLA_FPJ5_APREHENDIDO : PLANTILLA_FPJ5_CAPTURADO;
 
     const hoy = new Date();

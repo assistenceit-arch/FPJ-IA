@@ -19,6 +19,12 @@ export interface IntervinienteNarracion {
   tipoDocumento?: string | null;
   numeroDocumento?: string | null;
   elementos: ElementoNarracion[];
+  // Adenda 2026-07-22 (Bloque 5/6): datos individuales para reducir la
+  // dependencia del ciclo de aclaraciones.
+  participacionHechos?: string | null;
+  comportamientoAbordaje?: string | null;
+  identificacionPlena: boolean;
+  formaIdentificacion?: string | null;
 }
 
 export interface ContextoNarracionFpj5 {
@@ -64,6 +70,11 @@ export interface ContextoNarracionFpj5 {
     autoridadReceptora: string;
     demoraExistente: boolean;
     justificacionDemora?: string | null;
+    // Adenda 2026-07-22 (Bloque 5/6):
+    observacionInicial?: string | null;
+    desarrolloIntervencion?: string | null;
+    circunstanciaRelevante?: string | null;
+    observacionAdicional?: string | null;
   };
 }
 
