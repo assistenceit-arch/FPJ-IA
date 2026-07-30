@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class GuardarFuncionarioActuanteDto {
   @IsNotEmpty()
@@ -40,4 +40,10 @@ export class GuardarFuncionarioActuanteDto {
   @IsNotEmpty()
   @IsString()
   servicio!: string;
+
+  // Adenda 2026-07-25: opcional para no romper registros existentes, pero
+  // requerido por los ejemplos de redacción aprobados ("CAI La Esperanza").
+  @IsOptional()
+  @IsString()
+  cai?: string;
 }

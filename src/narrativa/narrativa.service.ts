@@ -88,8 +88,10 @@ export class NarrativaService {
    * especializado, validaciones, flujo operativo y plantilla inteligente
    * con ejemplos de redacción por campo), las reglas complementarias
    * diferenciadas mayor/menor de edad (terminología, esposas, acudientes,
-   * autoridad competente, procedimientos mixtos), más las capas propias de
-   * redacción y de formato técnico de respuesta.
+   * autoridad competente, procedimientos mixtos), las reglas de estilo
+   * obligatorio y 3 ejemplos de redacción ya aprobados por el usuario
+   * (few-shot, para anclar tono/orden/terminología con máxima fidelidad),
+   * más las capas propias de redacción y de formato técnico de respuesta.
    */
   private construirSystemPrompt(): string {
     const leer = (nombre: string) =>
@@ -102,6 +104,8 @@ export class NarrativaService {
     const plantillaInteligente = leer('estupefacientes-plantilla-inteligente.md');
     const reglasAdultos = leer('reglas-adultos.md');
     const reglasSrpa = leer('reglas-srpa.md');
+    const estiloObligatorio = leer('estilo-obligatorio.md');
+    const ejemplosAprobados = leer('ejemplos-redaccion-aprobados.md');
 
     const capaRedaccion = `
 INSTRUCCIONES ADICIONALES DE REDACCIÓN
@@ -152,6 +156,7 @@ No mezcles ambos formatos en una misma respuesta.
 
     return [
       core,
+      estiloObligatorio,
       especializado,
       validaciones,
       flujo,
@@ -159,6 +164,7 @@ No mezcles ambos formatos en una misma respuesta.
       reglasAdultos,
       reglasSrpa,
       capaRedaccion,
+      ejemplosAprobados,
       capaTecnica,
     ].join('\n\n---\n\n');
   }

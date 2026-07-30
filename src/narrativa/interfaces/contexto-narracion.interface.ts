@@ -42,10 +42,12 @@ export interface ContextoNarracionFpj5 {
     placa: string;
     servicio: string;
     estacion: string;
+    cai?: string | null;
   };
   companero: {
     nombreCompleto: string;
     placa: string;
+    grado?: string | null;
   } | null;
   lugar: {
     departamento: string;

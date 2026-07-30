@@ -87,6 +87,7 @@ model FuncionarioActuante {
   zonaAtencion   String
   estacion       String
   servicio       String
+  cai            String? // Adenda 2026-07-25: requerido por los ejemplos de redacción aprobados ("CAI La Esperanza", "CAI Tintal"); PLANTILLA_INTELIGENTE.md lo lista como campo independiente de Estación y Zona de Atención.
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -106,6 +107,7 @@ model CompaneroPatrulla {
   nombreCompleto String
   documento      String
   placa          String
+  grado          String? // Adenda 2026-07-25: requerido para individualizar al compañero en la narración ("PT. Nombre Apellido, placa X"), tal como exigen los ejemplos de redacción aprobados.
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

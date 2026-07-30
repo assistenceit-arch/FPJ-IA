@@ -345,9 +345,14 @@ export class DocumentosService {
         placa: funcionarioActuante.placa,
         servicio: funcionarioActuante.servicio,
         estacion: funcionarioActuante.estacion,
+        cai: funcionarioActuante.cai,
       },
       companero: companeroPatrulla
-        ? { nombreCompleto: companeroPatrulla.nombreCompleto, placa: companeroPatrulla.placa }
+        ? {
+            nombreCompleto: companeroPatrulla.nombreCompleto,
+            placa: companeroPatrulla.placa,
+            grado: companeroPatrulla.grado,
+          }
         : null,
       lugar: {
         departamento: lugarProcedimiento.departamento,
