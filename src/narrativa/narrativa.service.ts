@@ -41,23 +41,31 @@ export class NarrativaService {
   ): Promise<ResultadoNarracion> {
     const mensajeUsuario = this.construirMensajeUsuario(contexto, aclaraciones);
 
-    const respuesta = await this.cliente.messages.create({
-      model: this.modelo,
-      // Claude Sonnet 5 tiene el pensamiento adaptativo activado por
-      // defecto, y max_tokens es un límite compartido entre ese
-      // pensamiento y el texto de la respuesta visible (a diferencia de
-      // versiones anteriores sin thinking). Con un system prompt grande
-      // (Prompt CORE + ejemplos ≈ 90KB), el modelo puede consumir buena
-      // parte del presupuesto pensando antes de escribir. Se deja bastante
-      // holgura para evitar que la narración quede cortada a la mitad
-      // (bug reportado 2026-07-30: la respuesta llegaba completa en
-      // apariencia pero truncada mid-oración, sin que stop_reason fuera
-      // detectado). Ver:
-      // https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-sonnet-5
-      max_tokens: 24576,
-      system: this.systemPrompt,
-      messages: [{ role: 'user', content: mensajeUsuario }],
-    });
+    // Con max_tokens=24576 y un system prompt grande, el SDK exige
+    // streaming (rechaza .create() con AnthropicError: "Streaming is
+    // required for operations that may take longer than 10 minutes").
+    // .stream(...).finalMessage() espera a que termine y devuelve el
+    // mismo objeto Message que .create(), sin necesidad de procesar
+    // eventos manualmente. Ver bug reportado 2026-07-30.
+    const respuesta = await this.cliente.messages
+      .stream({
+        model: this.modelo,
+        // Claude Sonnet 5 tiene el pensamiento adaptativo activado por
+        // defecto, y max_tokens es un límite compartido entre ese
+        // pensamiento y el texto de la respuesta visible (a diferencia de
+        // versiones anteriores sin thinking). Con un system prompt grande
+        // (Prompt CORE + ejemplos ≈ 90KB), el modelo puede consumir buena
+        // parte del presupuesto pensando antes de escribir. Se deja
+        // bastante holgura para evitar que la narración quede cortada a
+        // la mitad (bug reportado 2026-07-30: la respuesta llegaba
+        // completa en apariencia pero truncada mid-oración, sin que
+        // stop_reason fuera detectado). Ver:
+        // https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-sonnet-5
+        max_tokens: 24576,
+        system: this.systemPrompt,
+        messages: [{ role: 'user', content: mensajeUsuario }],
+      })
+      .finalMessage();
 
     const texto = respuesta.content
       .map((bloque) => (bloque.type === 'text' ? bloque.text : ''))
