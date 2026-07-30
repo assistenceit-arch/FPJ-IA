@@ -163,6 +163,19 @@ resumir cuando hay más de un interviniente)
   se mencionan ÚNICAMENTE en el fragmento que describe quién realizó el
   procedimiento (el inicio de la narración). No los repitas ni los
   insertes sueltos en otras partes del relato.
+- Al narrar lo hallado a cada interviniente, menciona ÚNICAMENTE la
+  cantidad encontrada a esa persona, como un hallazgo independiente. NO
+  hagas referencia a un total agregado ni uses construcciones como "X de
+  los Y elementos" (por ejemplo: si a una persona se le hallaron 8
+  empaques, escribe "hallé 8 empaques...", nunca "hallé 8 de los 12
+  empaques..."). El hecho de que dos hallazgos individuales sumen un
+  total no es algo que deba narrarse ni calcularse en el relato.
+- Evita frases de justificación jurídica genéricas y vacías de contenido
+  como "amparado en los motivos fundados observados" o similares. Si hay
+  un motivo concreto que justificó el abordaje o el registro (actitud
+  evasiva, transacciones sospechosas, información previa, etc.), ya
+  quedó narrado como hecho concreto antes; no lo repitas envuelto en una
+  frase jurídica adicional.
 `.trim();
 
     const capaTecnica = `
