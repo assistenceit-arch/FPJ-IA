@@ -43,7 +43,18 @@ export class NarrativaService {
 
     const respuesta = await this.cliente.messages.create({
       model: this.modelo,
-      max_tokens: 8192,
+      // Claude Sonnet 5 tiene el pensamiento adaptativo activado por
+      // defecto, y max_tokens es un límite compartido entre ese
+      // pensamiento y el texto de la respuesta visible (a diferencia de
+      // versiones anteriores sin thinking). Con un system prompt grande
+      // (Prompt CORE + ejemplos ≈ 90KB), el modelo puede consumir buena
+      // parte del presupuesto pensando antes de escribir. Se deja bastante
+      // holgura para evitar que la narración quede cortada a la mitad
+      // (bug reportado 2026-07-30: la respuesta llegaba completa en
+      // apariencia pero truncada mid-oración, sin que stop_reason fuera
+      // detectado). Ver:
+      // https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-sonnet-5
+      max_tokens: 24576,
       system: this.systemPrompt,
       messages: [{ role: 'user', content: mensajeUsuario }],
     });
@@ -53,6 +64,24 @@ export class NarrativaService {
       .join('\n')
       .trim();
 
+    // Validación PRIMERO por stop_reason, independientemente de si el
+    // texto quedó vacío o solo truncado a la mitad de una oración: un
+    // texto "casi completo" pero cortado es más peligroso que uno vacío,
+    // porque puede pasar desapercibido en una revisión rápida.
+    if (respuesta.stop_reason === 'max_tokens') {
+      const tiposDeBloque = respuesta.content.map((b) => b.type).join(', ');
+      this.logger.error(
+        `La respuesta de Anthropic se cortó por límite de tokens antes de ` +
+          `terminar. tokens_salida=${respuesta.usage?.output_tokens}, ` +
+          `tipos_de_bloque=[${tiposDeBloque}], longitud_texto=${texto.length}`,
+      );
+      throw new Error(
+        'La narración se cortó antes de terminar por un límite de tokens ' +
+          '(stop_reason: max_tokens). No se generó el documento para evitar ' +
+          'un FPJ-5 con la narración incompleta. Intente de nuevo.',
+      );
+    }
+
     if (texto.startsWith(MARCADOR_ACLARACION)) {
       const pregunta = texto.slice(MARCADOR_ACLARACION.length).trim();
       this.logger.log('El modelo solicitó aclaración antes de generar la narración.');
@@ -61,10 +90,9 @@ export class NarrativaService {
 
     if (!texto) {
       // Nunca debe generarse un FPJ-5 con la sección 9 en blanco: si la
-      // respuesta del modelo llega vacía (por ejemplo, por corte de
-      // max_tokens u otra falla de la API), es preferible fallar aquí con
-      // un error explícito que silenciosamente producir un documento
-      // incompleto. Ver bug reportado 2026-07-21.
+      // respuesta del modelo llega vacía por cualquier otra razón, es
+      // preferible fallar aquí con un error explícito que silenciosamente
+      // producir un documento incompleto. Ver bug reportado 2026-07-21.
       const tiposDeBloque = respuesta.content.map((b) => b.type).join(', ');
       this.logger.error(
         `La API de Anthropic devolvió una respuesta vacía. ` +
@@ -152,6 +180,12 @@ adicional antes o después, sin markdown y sin explicar tu razonamiento:
 ${MARCADOR_ACLARACION} <aquí la pregunta o preguntas específicas y concretas dirigidas al funcionario>
 
 No mezcles ambos formatos en una misma respuesta.
+
+El razonamiento previo a tu respuesta debe ser proporcional a la
+complejidad real del caso: úsalo para verificar contradicciones,
+vacíos críticos y la correcta aplicación de las reglas de mayor/menor
+de edad, pero no te extiendas más de lo necesario. Prioriza dejar
+suficiente espacio para escribir la narración completa.
 `.trim();
 
     return [
