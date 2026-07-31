@@ -80,6 +80,20 @@ export class DocumentosController {
     );
   }
 
+  @Post('procedimientos/:procedimientoId/elementos/:elementoId/documentos/fpj8-cadena-custodia')
+  generarFpj8(
+    @Param('procedimientoId') procedimientoId: string,
+    @Param('elementoId') elementoId: string,
+    @CurrentUser() usuario: JwtPayload,
+  ) {
+    return this.service.generarFpj8CadenaCustodia(
+      procedimientoId,
+      elementoId,
+      usuario.sub,
+      usuario.correo,
+    );
+  }
+
   @Get('procedimientos/:procedimientoId/documentos')
   listar(
     @Param('procedimientoId') procedimientoId: string,
