@@ -609,7 +609,7 @@ export class DocumentosService {
     const datos: Record<string, string> = {
       NUMERO_EMP_EF: numeroEmpEf,
       CANTIDAD_ELEMENTO: String(
-        elemento.detalleSustancia
+        elemento.tipoElemento === 'SUSTANCIA'
           ? await this.contarEmpaques(elementoId)
           : 1,
       ),
