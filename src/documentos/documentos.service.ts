@@ -29,6 +29,7 @@ const PLANTILLA_FPJ6_APREHENDIDO = path.join(CARPETA_ASSETS, 'fpj6-plantilla-apr
 const PLANTILLA_FPJ5_CAPTURADO = path.join(CARPETA_ASSETS, 'fpj5-plantilla-capturado.docx');
 const PLANTILLA_FPJ5_APREHENDIDO = path.join(CARPETA_ASSETS, 'fpj5-plantilla-aprehendido.docx');
 const PLANTILLA_FPJ7 = path.join(CARPETA_ASSETS, 'fpj7-plantilla.docx');
+const PLANTILLA_FPJ8 = path.join(CARPETA_ASSETS, 'fpj8-plantilla.docx');
 const OBSERVACIONES_VACIAS = '_'.repeat(94); // igual longitud que la línea original en blanco
 
 @Injectable()
@@ -678,6 +679,92 @@ export class DocumentosService {
       where: { elementoId },
     });
     return detalle?.cantidadEmpaques ?? 1;
+  }
+
+  /**
+   * Genera el FPJ-8 (Registro de Cadena de Custodia). REGLA
+   * INV-FPJ8-001/002/003: un único FPJ-8 por elemento incautado, con
+   * correspondencia directa con el FPJ-7 del mismo elemento (misma
+   * numeración EMP-XXX, misma descripción). Solo se diligencia el
+   * anverso (página 1); el reverso (página 2, registro de continuidad y
+   * PIPH) queda en blanco para diligenciamiento manual posterior
+   * (REGLA INV-FPJ8-014/015).
+   */
+  async generarFpj8CadenaCustodia(
+    procedimientoId: string,
+    elementoId: string,
+    usuarioId: string,
+    correoUsuario: string,
+  ) {
+    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+
+    const elemento = await this.prisma.elementoIncautado.findUnique({
+      where: { id: elementoId },
+      include: { capturado: true },
+    });
+    if (!elemento || elemento.procedimientoId !== procedimientoId) {
+      throw new NotFoundException('Elemento no encontrado en este procedimiento.');
+    }
+
+    const funcionarioActuante = await this.prisma.funcionarioActuante.findUnique({
+      where: { procedimientoId },
+    });
+    if (!funcionarioActuante) {
+      throw new BadRequestException('Debe registrar el funcionario actuante antes de generar el FPJ-8.');
+    }
+
+    // REGLA INV-FPJ8-008/009: únicamente fecha de captura/aprehensión,
+    // sin hora (el formato FPJ-8 no utiliza hora).
+    const fecha = procedimiento.fechaCaptura;
+    const fechaRecoleccion = [
+      fecha.getUTCFullYear(),
+      String(fecha.getUTCMonth() + 1).padStart(2, '0'),
+      String(fecha.getUTCDate()).padStart(2, '0'),
+    ].join('-');
+
+    const datos: Record<string, string> = {
+      FUNCIONARIO_NOMBRE: funcionarioActuante.nombreCompleto,
+      FUNCIONARIO_DOCUMENTO: funcionarioActuante.documento,
+      FUNCIONARIO_ENTIDAD: funcionarioActuante.entidad,
+      FECHA_RECOLECCION: fechaRecoleccion,
+      DESCRIPCION_ELEMENTO: elemento.descripcionBase,
+    };
+
+    const buffer = rellenarPlantillaWord(PLANTILLA_FPJ8, datos);
+
+    const version =
+      (await this.prisma.documentoGenerado.count({
+        where: { elementoId, tipoDocumento: 'FPJ8' },
+      })) + 1;
+
+    const carpetaDestino = path.join(CARPETA_ALMACENAMIENTO, procedimientoId);
+    fs.mkdirSync(carpetaDestino, { recursive: true });
+    const nombreArchivo = `FPJ8-${elemento.id}-v${version}.docx`;
+    const rutaArchivo = path.join(carpetaDestino, nombreArchivo);
+    fs.writeFileSync(rutaArchivo, buffer);
+
+    const documentoGenerado = await this.prisma.documentoGenerado.create({
+      data: {
+        procedimientoId,
+        tipoDocumento: 'FPJ8',
+        elementoId,
+        fechaGeneracion: new Date(),
+        version,
+        procedimientoVersion: 1,
+        rutaArchivo,
+        estado: version > 1 ? 'Regenerado' : 'Generado',
+      },
+    });
+
+    await this.auditoria.registrar({
+      usuario: correoUsuario,
+      accion: version > 1 ? 'Regenerar' : 'Crear',
+      tablaAfectada: 'documentos_generados',
+      registroAfectado: documentoGenerado.id,
+      descripcionEvento: `FPJ-8 generado (v${version}) para el elemento ${elementoId}.`,
+    });
+
+    return documentoGenerado;
   }
 
   async obtenerArchivo(documentoId: string, usuarioId: string) {
