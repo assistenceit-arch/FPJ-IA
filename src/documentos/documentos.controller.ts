@@ -66,6 +66,20 @@ export class DocumentosController {
     );
   }
 
+  @Post('procedimientos/:procedimientoId/elementos/:elementoId/documentos/fpj7-rotulo')
+  generarFpj7(
+    @Param('procedimientoId') procedimientoId: string,
+    @Param('elementoId') elementoId: string,
+    @CurrentUser() usuario: JwtPayload,
+  ) {
+    return this.service.generarFpj7Rotulo(
+      procedimientoId,
+      elementoId,
+      usuario.sub,
+      usuario.correo,
+    );
+  }
+
   @Get('procedimientos/:procedimientoId/documentos')
   listar(
     @Param('procedimientoId') procedimientoId: string,
