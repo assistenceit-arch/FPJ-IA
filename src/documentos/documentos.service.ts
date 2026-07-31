@@ -28,6 +28,7 @@ const PLANTILLA_FPJ6_CAPTURADO = path.join(CARPETA_ASSETS, 'fpj6-plantilla-captu
 const PLANTILLA_FPJ6_APREHENDIDO = path.join(CARPETA_ASSETS, 'fpj6-plantilla-aprehendido.docx');
 const PLANTILLA_FPJ5_CAPTURADO = path.join(CARPETA_ASSETS, 'fpj5-plantilla-capturado.docx');
 const PLANTILLA_FPJ5_APREHENDIDO = path.join(CARPETA_ASSETS, 'fpj5-plantilla-aprehendido.docx');
+const PLANTILLA_FPJ7 = path.join(CARPETA_ASSETS, 'fpj7-plantilla.docx');
 const OBSERVACIONES_VACIAS = '_'.repeat(94); // igual longitud que la línea original en blanco
 
 @Injectable()
@@ -545,6 +546,138 @@ export class DocumentosService {
     });
 
     return documentoGenerado;
+  }
+
+  /**
+   * Genera el FPJ-7 (Rótulo de Elemento Material Probatorio y Evidencia
+   * Física). REGLA INV-FPJ7-001/010/011: un único FPJ-7 por elemento
+   * incautado, independientemente del número de intervinientes.
+   */
+  async generarFpj7Rotulo(
+    procedimientoId: string,
+    elementoId: string,
+    usuarioId: string,
+    correoUsuario: string,
+  ) {
+    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+
+    const elemento = await this.prisma.elementoIncautado.findUnique({
+      where: { id: elementoId },
+      include: { capturado: true },
+    });
+    if (!elemento || elemento.procedimientoId !== procedimientoId) {
+      throw new NotFoundException('Elemento no encontrado en este procedimiento.');
+    }
+
+    const [funcionarioActuante, lugarProcedimiento, elementosDelProcedimiento] =
+      await Promise.all([
+        this.prisma.funcionarioActuante.findUnique({ where: { procedimientoId } }),
+        this.prisma.lugarProcedimiento.findUnique({ where: { procedimientoId } }),
+        this.prisma.elementoIncautado.findMany({
+          where: { procedimientoId },
+          orderBy: { createdAt: 'asc' },
+        }),
+      ]);
+    if (!funcionarioActuante) {
+      throw new BadRequestException('Debe registrar el funcionario actuante antes de generar el FPJ-7.');
+    }
+    if (!lugarProcedimiento) {
+      throw new BadRequestException('Debe registrar el lugar del procedimiento antes de generar el FPJ-7.');
+    }
+
+    // REGLA (Sección 2, Mapa Documental FPJ-7): numeración EMP-001, EMP-002...
+    // secuencial y consecutiva entre TODOS los elementos del procedimiento,
+    // en el orden en que fueron registrados (no solo los del mismo interviniente).
+    const indice = elementosDelProcedimiento.findIndex((e) => e.id === elementoId);
+    const numeroEmpEf = `EMP-${String(indice + 1).padStart(3, '0')}`;
+
+    const capturado = elemento.capturado;
+    const nombreCompleto = [
+      capturado.primerNombre,
+      capturado.segundoNombre,
+      capturado.primerApellido,
+      capturado.segundoApellido,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    // REGLA (Sección 1, Mapa Documental FPJ-7): fecha/hora = captura o
+    // aprehensión oficial. NUNCA derechos, comunicación ni disposición.
+    const digitosFechaRecoleccion = digitosFecha(procedimiento.fechaCaptura);
+    const digitosHoraRecoleccion = digitosHora(procedimiento.horaCaptura);
+
+    const datos: Record<string, string> = {
+      NUMERO_EMP_EF: numeroEmpEf,
+      CANTIDAD_ELEMENTO: String(
+        elemento.detalleSustancia
+          ? await this.contarEmpaques(elementoId)
+          : 1,
+      ),
+      DIRECCION_HALLAZGO: elemento.direccionIncautacion,
+      UBICACION_HALLAZGO: oNoAporta(elemento.ubicacionHallazgo),
+      NOMBRE_PERSONA_HALLAZGO: `${nombreCompleto} (${oNoAporta(capturado.numeroDocumento)})`,
+      DESCRIPCION_ELEMENTO: elemento.descripcionBase,
+      FUNCIONARIO_NOMBRE: funcionarioActuante.nombreCompleto,
+      FUNCIONARIO_DOCUMENTO: funcionarioActuante.documento,
+      FUNCIONARIO_ENTIDAD: funcionarioActuante.entidad,
+      FUNCIONARIO_CARGO: funcionarioActuante.cargo,
+      REC_A1: digitosFechaRecoleccion.A1,
+      REC_A2: digitosFechaRecoleccion.A2,
+      REC_A3: digitosFechaRecoleccion.A3,
+      REC_A4: digitosFechaRecoleccion.A4,
+      REC_M1: digitosFechaRecoleccion.M1,
+      REC_M2: digitosFechaRecoleccion.M2,
+      REC_D1: digitosFechaRecoleccion.D1,
+      REC_D2: digitosFechaRecoleccion.D2,
+      REC_H1: digitosHoraRecoleccion.H1,
+      REC_H2: digitosHoraRecoleccion.H2,
+      REC_H3: digitosHoraRecoleccion.H3,
+      REC_H4: digitosHoraRecoleccion.H4,
+    };
+
+    const buffer = rellenarPlantillaWord(PLANTILLA_FPJ7, datos);
+
+    const version =
+      (await this.prisma.documentoGenerado.count({
+        where: { elementoId, tipoDocumento: 'FPJ7' },
+      })) + 1;
+
+    const carpetaDestino = path.join(CARPETA_ALMACENAMIENTO, procedimientoId);
+    fs.mkdirSync(carpetaDestino, { recursive: true });
+    const nombreArchivo = `FPJ7-${elemento.id}-v${version}.docx`;
+    const rutaArchivo = path.join(carpetaDestino, nombreArchivo);
+    fs.writeFileSync(rutaArchivo, buffer);
+
+    const documentoGenerado = await this.prisma.documentoGenerado.create({
+      data: {
+        procedimientoId,
+        tipoDocumento: 'FPJ7',
+        elementoId,
+        fechaGeneracion: new Date(),
+        version,
+        procedimientoVersion: 1,
+        rutaArchivo,
+        estado: version > 1 ? 'Regenerado' : 'Generado',
+      },
+    });
+
+    await this.auditoria.registrar({
+      usuario: correoUsuario,
+      accion: version > 1 ? 'Regenerar' : 'Crear',
+      tablaAfectada: 'documentos_generados',
+      registroAfectado: documentoGenerado.id,
+      descripcionEvento: `FPJ-7 (${numeroEmpEf}) generado (v${version}) para el elemento ${elementoId}.`,
+    });
+
+    return documentoGenerado;
+  }
+
+  /** Suma la cantidad de empaques cuando el elemento es una sustancia. */
+  private async contarEmpaques(elementoId: string): Promise<number> {
+    const detalle = await this.prisma.detalleSustancia.findUnique({
+      where: { elementoId },
+    });
+    return detalle?.cantidadEmpaques ?? 1;
   }
 
   async obtenerArchivo(documentoId: string, usuarioId: string) {
