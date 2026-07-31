@@ -87,6 +87,7 @@ model FuncionarioActuante {
   zonaAtencion   String
   estacion       String
   servicio       String
+  cai            String? // Adenda 2026-07-25: requerido por los ejemplos de redacción aprobados ("CAI La Esperanza", "CAI Tintal"); PLANTILLA_INTELIGENTE.md lo lista como campo independiente de Estación y Zona de Atención.
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -106,6 +107,7 @@ model CompaneroPatrulla {
   nombreCompleto String
   documento      String
   placa          String
+  grado          String? // Adenda 2026-07-25: requerido para individualizar al compañero en la narración ("PT. Nombre Apellido, placa X"), tal como exigen los ejemplos de redacción aprobados.
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -169,6 +171,14 @@ model Capturado {
   telefonoPadres       String?
   escolaridad          String? // Adenda 2026-07-20: requerido por el FPJ-5 (sección 4, "Escolaridad").
   alias                String? // Adenda 2026-07-20: requerido por el FPJ-5 (sección 4, "Alias, seudónimo o apodo").
+
+  // Adenda 2026-07-22: datos individuales del Bloque 5/6 necesarios para
+  // la narrativa IA (uno por interviniente, a diferencia de los campos de
+  // ActuacionesProcedimiento que son generales del procedimiento).
+  participacionHechos  String? // qué hizo esta persona específicamente (portaba, consumía, comercializaba, ocultaba, etc.)
+  comportamientoAbordaje String? // colaboración, resistencia, intento de fuga, agresividad, etc.
+  identificacionPlena  Boolean @default(true)
+  formaIdentificacion  String? // si no se identificó plenamente, cómo se logró establecer la identidad
 
   // Exclusivo para APREHENDIDO (menor de edad) — Formulario Maestro V2
   nombreAcudiente    String?
@@ -306,6 +316,19 @@ model ActuacionesProcedimiento {
 
   demoraExistente       Boolean
   justificacionDemora   String?
+
+  // Adenda 2026-07-22: campos del Bloque 5/6 del Formulario Maestro
+  // ("Relato de los Hechos"), agregados por decisión del usuario para
+  // reducir la dependencia del ciclo de aclaraciones de la narrativa IA.
+  // No estaban en el Modelo de Datos V1 original.
+  observacionInicial     String? // qué observó el personal que motivó la intervención (patrullaje, información previa, actitud sospechosa, etc.)
+  desarrolloIntervencion String? // cómo se desarrolló el abordaje/registro personal
+
+  tieneCircunstanciaRelevante Boolean @default(false)
+  circunstanciaRelevante      String?
+
+  tieneObservacionAdicional Boolean @default(false)
+  observacionAdicional      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

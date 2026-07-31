@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsDateString,
   IsEmail,
   IsNotEmpty,
@@ -92,6 +93,23 @@ export class CrearCapturadoDto {
   @IsOptional()
   @IsString()
   alias?: string;
+
+  // ── Bloque 5/6: datos individuales para la narrativa IA (Adenda 2026-07-22) ──
+  @IsOptional()
+  @IsString()
+  participacionHechos?: string;
+
+  @IsOptional()
+  @IsString()
+  comportamientoAbordaje?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  identificacionPlena?: boolean;
+
+  @IsOptional()
+  @IsString()
+  formaIdentificacion?: string;
 
   // Solo aplican si, tras calcular la edad, la persona resulta menor de
   // edad (Aprehendido). Si se envían para un mayor de edad, el servicio

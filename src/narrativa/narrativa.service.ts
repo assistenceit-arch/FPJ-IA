@@ -41,17 +41,54 @@ export class NarrativaService {
   ): Promise<ResultadoNarracion> {
     const mensajeUsuario = this.construirMensajeUsuario(contexto, aclaraciones);
 
-    const respuesta = await this.cliente.messages.create({
-      model: this.modelo,
-      max_tokens: 8192,
-      system: this.systemPrompt,
-      messages: [{ role: 'user', content: mensajeUsuario }],
-    });
+    // Con max_tokens=24576 y un system prompt grande, el SDK exige
+    // streaming (rechaza .create() con AnthropicError: "Streaming is
+    // required for operations that may take longer than 10 minutes").
+    // .stream(...).finalMessage() espera a que termine y devuelve el
+    // mismo objeto Message que .create(), sin necesidad de procesar
+    // eventos manualmente. Ver bug reportado 2026-07-30.
+    const respuesta = await this.cliente.messages
+      .stream({
+        model: this.modelo,
+        // Claude Sonnet 5 tiene el pensamiento adaptativo activado por
+        // defecto, y max_tokens es un límite compartido entre ese
+        // pensamiento y el texto de la respuesta visible (a diferencia de
+        // versiones anteriores sin thinking). Con un system prompt grande
+        // (Prompt CORE + ejemplos ≈ 90KB), el modelo puede consumir buena
+        // parte del presupuesto pensando antes de escribir. Se deja
+        // bastante holgura para evitar que la narración quede cortada a
+        // la mitad (bug reportado 2026-07-30: la respuesta llegaba
+        // completa en apariencia pero truncada mid-oración, sin que
+        // stop_reason fuera detectado). Ver:
+        // https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-sonnet-5
+        max_tokens: 24576,
+        system: this.systemPrompt,
+        messages: [{ role: 'user', content: mensajeUsuario }],
+      })
+      .finalMessage();
 
     const texto = respuesta.content
       .map((bloque) => (bloque.type === 'text' ? bloque.text : ''))
       .join('\n')
       .trim();
+
+    // Validación PRIMERO por stop_reason, independientemente de si el
+    // texto quedó vacío o solo truncado a la mitad de una oración: un
+    // texto "casi completo" pero cortado es más peligroso que uno vacío,
+    // porque puede pasar desapercibido en una revisión rápida.
+    if (respuesta.stop_reason === 'max_tokens') {
+      const tiposDeBloque = respuesta.content.map((b) => b.type).join(', ');
+      this.logger.error(
+        `La respuesta de Anthropic se cortó por límite de tokens antes de ` +
+          `terminar. tokens_salida=${respuesta.usage?.output_tokens}, ` +
+          `tipos_de_bloque=[${tiposDeBloque}], longitud_texto=${texto.length}`,
+      );
+      throw new Error(
+        'La narración se cortó antes de terminar por un límite de tokens ' +
+          '(stop_reason: max_tokens). No se generó el documento para evitar ' +
+          'un FPJ-5 con la narración incompleta. Intente de nuevo.',
+      );
+    }
 
     if (texto.startsWith(MARCADOR_ACLARACION)) {
       const pregunta = texto.slice(MARCADOR_ACLARACION.length).trim();
@@ -61,10 +98,9 @@ export class NarrativaService {
 
     if (!texto) {
       // Nunca debe generarse un FPJ-5 con la sección 9 en blanco: si la
-      // respuesta del modelo llega vacía (por ejemplo, por corte de
-      // max_tokens u otra falla de la API), es preferible fallar aquí con
-      // un error explícito que silenciosamente producir un documento
-      // incompleto. Ver bug reportado 2026-07-21.
+      // respuesta del modelo llega vacía por cualquier otra razón, es
+      // preferible fallar aquí con un error explícito que silenciosamente
+      // producir un documento incompleto. Ver bug reportado 2026-07-21.
       const tiposDeBloque = respuesta.content.map((b) => b.type).join(', ');
       this.logger.error(
         `La API de Anthropic devolvió una respuesta vacía. ` +
@@ -85,9 +121,13 @@ export class NarrativaService {
   /**
    * Arma el system prompt uniendo el CORE TRANSVERSAL (reglas universales
    * a todos los delitos) con las reglas propias de Estupefacientes (prompt
-   * especializado, validaciones y flujo operativo), más una capa técnica
-   * que obliga al modelo a responder en uno de dos formatos exactos y
-   * parseables por código, sin depender de interpretación humana.
+   * especializado, validaciones, flujo operativo y plantilla inteligente
+   * con ejemplos de redacción por campo), las reglas complementarias
+   * diferenciadas mayor/menor de edad (terminología, esposas, acudientes,
+   * autoridad competente, procedimientos mixtos), las reglas de estilo
+   * obligatorio y 3 ejemplos de redacción ya aprobados por el usuario
+   * (few-shot, para anclar tono/orden/terminología con máxima fidelidad),
+   * más las capas propias de redacción y de formato técnico de respuesta.
    */
   private construirSystemPrompt(): string {
     const leer = (nombre: string) =>
@@ -97,6 +137,11 @@ export class NarrativaService {
     const especializado = leer('estupefacientes-prompt-especializado.md');
     const validaciones = leer('estupefacientes-validaciones.md');
     const flujo = leer('estupefacientes-flujo-operativo.md');
+    const plantillaInteligente = leer('estupefacientes-plantilla-inteligente.md');
+    const reglasAdultos = leer('reglas-adultos.md');
+    const reglasSrpa = leer('reglas-srpa.md');
+    const estiloObligatorio = leer('estilo-obligatorio.md');
+    const ejemplosAprobados = leer('ejemplos-redaccion-aprobados.md');
 
     const capaRedaccion = `
 INSTRUCCIONES ADICIONALES DE REDACCIÓN
@@ -118,6 +163,19 @@ resumir cuando hay más de un interviniente)
   se mencionan ÚNICAMENTE en el fragmento que describe quién realizó el
   procedimiento (el inicio de la narración). No los repitas ni los
   insertes sueltos en otras partes del relato.
+- Al narrar lo hallado a cada interviniente, menciona ÚNICAMENTE la
+  cantidad encontrada a esa persona, como un hallazgo independiente. NO
+  hagas referencia a un total agregado ni uses construcciones como "X de
+  los Y elementos" (por ejemplo: si a una persona se le hallaron 8
+  empaques, escribe "hallé 8 empaques...", nunca "hallé 8 de los 12
+  empaques..."). El hecho de que dos hallazgos individuales sumen un
+  total no es algo que deba narrarse ni calcularse en el relato.
+- Evita frases de justificación jurídica genéricas y vacías de contenido
+  como "amparado en los motivos fundados observados" o similares. Si hay
+  un motivo concreto que justificó el abordaje o el registro (actitud
+  evasiva, transacciones sospechosas, información previa, etc.), ya
+  quedó narrado como hecho concreto antes; no lo repitas envuelto en una
+  frase jurídica adicional.
 `.trim();
 
     const capaTecnica = `
@@ -143,11 +201,27 @@ adicional antes o después, sin markdown y sin explicar tu razonamiento:
 ${MARCADOR_ACLARACION} <aquí la pregunta o preguntas específicas y concretas dirigidas al funcionario>
 
 No mezcles ambos formatos en una misma respuesta.
+
+El razonamiento previo a tu respuesta debe ser proporcional a la
+complejidad real del caso: úsalo para verificar contradicciones,
+vacíos críticos y la correcta aplicación de las reglas de mayor/menor
+de edad, pero no te extiendas más de lo necesario. Prioriza dejar
+suficiente espacio para escribir la narración completa.
 `.trim();
 
-    return [core, especializado, validaciones, flujo, capaRedaccion, capaTecnica].join(
-      '\n\n---\n\n',
-    );
+    return [
+      core,
+      estiloObligatorio,
+      especializado,
+      validaciones,
+      flujo,
+      plantillaInteligente,
+      reglasAdultos,
+      reglasSrpa,
+      capaRedaccion,
+      ejemplosAprobados,
+      capaTecnica,
+    ].join('\n\n---\n\n');
   }
 
   private construirMensajeUsuario(

@@ -72,4 +72,33 @@ export class GuardarActuacionesDto {
   @IsOptional()
   @IsString()
   justificacionDemora?: string;
+
+  // ── Bloque 5/6: Relato de los hechos (Adenda 2026-07-22) ──
+  // Alimentan directamente el contexto de la narrativa IA, reduciendo la
+  // dependencia del ciclo de aclaraciones.
+  @IsOptional()
+  @IsString()
+  observacionInicial?: string;
+
+  @IsOptional()
+  @IsString()
+  desarrolloIntervencion?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  tieneCircunstanciaRelevante?: boolean;
+
+  @ValidateIf((o) => o.tieneCircunstanciaRelevante === true)
+  @IsNotEmpty()
+  @IsString()
+  circunstanciaRelevante?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  tieneObservacionAdicional?: boolean;
+
+  @ValidateIf((o) => o.tieneObservacionAdicional === true)
+  @IsNotEmpty()
+  @IsString()
+  observacionAdicional?: string;
 }
