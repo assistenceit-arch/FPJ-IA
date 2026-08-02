@@ -18,13 +18,15 @@ export class CreateProcedimientoDto {
   @IsString()
   horaCaptura!: string;
 
-  @IsNotEmpty()
+  // No se conocen al momento de crear el procedimiento (ver comentario en
+  // schema.prisma). Se completan después mediante actualización.
+  @IsOptional()
   @IsDateString()
-  fechaDisposicion!: Date;
+  fechaDisposicion?: Date;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  horaDisposicion!: string;
+  horaDisposicion?: string;
 
   @IsNotEmpty()
   @IsString()
@@ -34,9 +36,13 @@ export class CreateProcedimientoDto {
   @IsString()
   tipoProcedimiento!: string;
 
-  @IsNotEmpty()
+  // El estado inicial lo controla el sistema (Borrador), no el cliente —
+  // ver ProcedimientosService.create(). Solo se acepta aquí para permitir
+  // que UpdateProcedimientoDto (PartialType de este DTO) lo modifique más
+  // adelante en el ciclo de vida del procedimiento.
+  @IsOptional()
   @IsString()
-  estado!: string;
+  estado?: string;
 
   @IsOptional()
   @IsString()

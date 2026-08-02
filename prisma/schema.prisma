@@ -38,11 +38,16 @@ model Procedimiento {
   nunc                   String? // RN-008: editable después de generar documentos
   fechaCaptura           DateTime
   horaCaptura            String
-  fechaDisposicion       DateTime
-  horaDisposicion        String
+  // Adenda 2026-08-01: fechaDisposicion/horaDisposicion pasan a ser
+  // opcionales. No se conocen al momento de crear el procedimiento (el
+  // funcionario solo las sabe una vez el informe se entrega a la
+  // Fiscalía) — exigirlas en la creación no correspondía a la realidad
+  // operativa. Se completan después, vía actualización del procedimiento.
+  fechaDisposicion       DateTime?
+  horaDisposicion        String?
   delito                 String
   tipoProcedimiento      String // ESTÁNDAR | COMPLEJO (PC-001)
-  estado                 String // Borrador | Finalizado
+  estado                 String @default("Borrador") // Borrador | Finalizado
   observacionesGenerales String?
 
   // RT-006 / AT-005: no eliminación física. `activo=false` = eliminación

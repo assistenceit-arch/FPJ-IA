@@ -40,6 +40,7 @@ export class ProcedimientosService {
     const procedimiento = await this.prisma.procedimiento.create({
       data: {
         ...dto,
+        estado: 'Borrador', // VF-006: el estado inicial lo controla el sistema, no el cliente.
         numeroInterno,
         usuarioId,
       },
