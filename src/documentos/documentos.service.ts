@@ -331,6 +331,15 @@ export class DocumentosService {
     if (capturados.length === 0) {
       throw new BadRequestException('Debe registrar al menos un interviniente antes de generar el FPJ-5.');
     }
+    // fechaDisposicion/horaDisposicion son opcionales en el modelo (Adenda
+    // 2026-08-01: no se conocen al crear el procedimiento), pero el FPJ-5 sí
+    // las necesita para la sección 9. Si aún no se completaron, se pide
+    // explícitamente en vez de fallar con un error críptico más abajo.
+    if (!procedimiento.fechaDisposicion || !procedimiento.horaDisposicion) {
+      throw new BadRequestException(
+        'Debe registrar la fecha y hora de puesta a disposición del procedimiento antes de generar el FPJ-5.',
+      );
+    }
 
     const contexto: ContextoNarracionFpj5 = {
       procedimiento: {

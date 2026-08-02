@@ -97,16 +97,27 @@ export class ActuacionesProcedimientoService {
    * Calcula automáticamente si hubo demora en la puesta a disposición,
    * comparando la hora de captura (ya sincronizada con la de derechos) y
    * la hora de puesta a disposición del procedimiento. Umbral: 5 horas.
+   *
+   * fechaDisposicion/horaDisposicion son opcionales en el procedimiento
+   * (Adenda 2026-08-01: no se conocen en el momento en que normalmente se
+   * diligencian las actuaciones). Cuando aún no se han registrado, el
+   * cálculo de demora simplemente se omite — no bloquea el guardado de las
+   * actuaciones — y deberá volver a evaluarse más adelante, cuando el
+   * procedimiento se actualice con esa fecha/hora.
    */
   private calcularDemora(
     procedimiento: {
       fechaCaptura: Date;
       horaCaptura: string;
-      fechaDisposicion: Date;
-      horaDisposicion: string;
+      fechaDisposicion: Date | null;
+      horaDisposicion: string | null;
     },
     dto: GuardarActuacionesDto,
   ) {
+    if (!procedimiento.fechaDisposicion || !procedimiento.horaDisposicion) {
+      return { demoraExistente: false, justificacionDemora: null };
+    }
+
     const momentoCaptura = this.combinarFechaHora(
       procedimiento.fechaCaptura,
       procedimiento.horaCaptura,
