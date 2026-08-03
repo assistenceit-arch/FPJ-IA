@@ -59,10 +59,28 @@ export class FuncionarioActuanteService {
       where: { procedimientoId },
     });
 
+    // Adenda 2026-08-03: dto ya es todo opcional (borrador parcial). Las
+    // columnas de texto son NOT NULL en la base de datos (aceptan cadena
+    // vacía, pero no "undefined"), así que se rellenan con '' por si el
+    // llamador no las envía todas. correo/cai sí admiten null en la BD.
+    const datos = {
+      nombreCompleto: dto.nombreCompleto ?? '',
+      documento: dto.documento ?? '',
+      entidad: dto.entidad ?? '',
+      cargo: dto.cargo ?? '',
+      telefono: dto.telefono ?? '',
+      correo: dto.correo ?? '',
+      placa: dto.placa ?? '',
+      zonaAtencion: dto.zonaAtencion ?? '',
+      estacion: dto.estacion ?? '',
+      servicio: dto.servicio ?? '',
+      cai: dto.cai || null,
+    };
+
     const resultado = await this.prisma.funcionarioActuante.upsert({
       where: { procedimientoId },
-      create: { ...dto, procedimientoId },
-      update: { ...dto },
+      create: { ...datos, procedimientoId },
+      update: datos,
     });
 
     await this.auditoria.registrar({

@@ -176,6 +176,14 @@ export class DocumentosService {
         'Debe registrar las actuaciones procedimentales (lectura de derechos) antes de generar el FPJ-6.',
       );
     }
+    // Adenda 2026-08-03: fechaDerechos/horaDerechos ahora pueden faltar
+    // (el registro admite guardado parcial/borrador), así que la mera
+    // existencia de `actuaciones` ya no garantiza que estén diligenciadas.
+    if (!actuaciones.fechaDerechos || !actuaciones.horaDerechos) {
+      throw new BadRequestException(
+        'Debe completar la fecha y hora de lectura de derechos antes de generar el FPJ-6.',
+      );
+    }
 
     const esAprehendido = capturado.tipoInterviniente === 'APREHENDIDO';
     const nombreCompletoCapturado = [
@@ -330,6 +338,14 @@ export class DocumentosService {
     if (!actuaciones) {
       throw new BadRequestException(
         'Debe registrar las actuaciones procedimentales antes de generar el FPJ-5.',
+      );
+    }
+    // Adenda 2026-08-03: fechaDerechos/horaDerechos ahora pueden faltar
+    // (el registro admite guardado parcial/borrador), así que la mera
+    // existencia de `actuaciones` ya no garantiza que estén diligenciadas.
+    if (!actuaciones.fechaDerechos || !actuaciones.horaDerechos) {
+      throw new BadRequestException(
+        'Debe completar la fecha y hora de lectura de derechos (Bloque 5) antes de generar el FPJ-5.',
       );
     }
     if (capturados.length === 0) {

@@ -32,10 +32,20 @@ export class CompaneroPatrullaService {
       where: { procedimientoId },
     });
 
+    // Adenda 2026-08-03: dto ya es todo opcional (borrador parcial). Las
+    // columnas nombreCompleto/documento/placa son NOT NULL en la base de
+    // datos (aceptan cadena vacía, pero no "undefined").
+    const datos = {
+      nombreCompleto: dto.nombreCompleto ?? '',
+      documento: dto.documento ?? '',
+      placa: dto.placa ?? '',
+      grado: dto.grado,
+    };
+
     const resultado = await this.prisma.companeroPatrulla.upsert({
       where: { procedimientoId },
-      create: { ...dto, procedimientoId },
-      update: { ...dto },
+      create: { ...datos, procedimientoId },
+      update: datos,
     });
 
     await this.auditoria.registrar({

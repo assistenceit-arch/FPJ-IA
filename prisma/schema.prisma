@@ -304,7 +304,7 @@ model ActuacionesProcedimiento {
   procedimiento   Procedimiento @relation(fields: [procedimientoId], references: [id], onDelete: Cascade)
 
   derechosLeidos     Boolean
-  fechaDerechos      DateTime
+  fechaDerechos      DateTime? // Adenda 2026-08-03: nullable — permite guardado parcial (borrador) mientras el funcionario aún no ha diligenciado este campo.
   horaDerechos       String
   comprendeDerechos  Boolean
 

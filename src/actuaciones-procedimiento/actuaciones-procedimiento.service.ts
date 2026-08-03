@@ -41,32 +41,39 @@ export class ActuacionesProcedimientoService {
 
     // La captura/aprehensión se materializa en el momento en que se leen
     // los derechos: la hora de captura del procedimiento se sincroniza
-    // automáticamente con la hora de derechos registrada aquí.
-    const fechaDerechos = new Date(dto.fechaDerechos);
-    const procedimientoSincronizado = await this.prisma.procedimiento.update({
-      where: { id: procedimientoId },
-      data: {
-        fechaCaptura: fechaDerechos,
-        horaCaptura: dto.horaDerechos,
-      },
-    });
+    // automáticamente con la hora de derechos registrada aquí. Adenda
+    // 2026-08-03: si el usuario todavía no ha diligenciado fecha y hora
+    // de derechos (borrador), se omite la sincronización — no bloquea el
+    // guardado del resto del bloque.
+    const fechaDerechos = dto.fechaDerechos ? new Date(dto.fechaDerechos) : null;
+    let procedimientoVigente = procedimiento;
 
-    if (
-      procedimiento.fechaCaptura.getTime() !== fechaDerechos.getTime() ||
-      procedimiento.horaCaptura !== dto.horaDerechos
-    ) {
-      await this.auditoria.registrar({
-        usuario: correoUsuario,
-        accion: 'Modificar',
-        tablaAfectada: 'procedimientos',
-        registroAfectado: procedimientoId,
-        descripcionEvento:
-          'Hora de captura sincronizada automáticamente con la hora de lectura de derechos.',
+    if (fechaDerechos && dto.horaDerechos) {
+      procedimientoVigente = await this.prisma.procedimiento.update({
+        where: { id: procedimientoId },
+        data: {
+          fechaCaptura: fechaDerechos,
+          horaCaptura: dto.horaDerechos,
+        },
       });
+
+      if (
+        procedimiento.fechaCaptura.getTime() !== fechaDerechos.getTime() ||
+        procedimiento.horaCaptura !== dto.horaDerechos
+      ) {
+        await this.auditoria.registrar({
+          usuario: correoUsuario,
+          accion: 'Modificar',
+          tablaAfectada: 'procedimientos',
+          registroAfectado: procedimientoId,
+          descripcionEvento:
+            'Hora de captura sincronizada automáticamente con la hora de lectura de derechos.',
+        });
+      }
     }
 
     const { demoraExistente, justificacionDemora } = this.calcularDemora(
-      procedimientoSincronizado,
+      procedimientoVigente,
       dto,
     );
 
@@ -74,7 +81,17 @@ export class ActuacionesProcedimientoService {
       where: { procedimientoId },
     });
 
-    const datos = { ...dto, fechaDerechos, demoraExistente, justificacionDemora };
+    // horaDerechos y autoridadReceptora son String NOT NULL en la base de
+    // datos (aceptan cadena vacía, pero no "undefined"); se normalizan
+    // aquí porque el dto ya las admite opcionales (borrador parcial).
+    const datos = {
+      ...dto,
+      fechaDerechos,
+      horaDerechos: dto.horaDerechos ?? '',
+      autoridadReceptora: dto.autoridadReceptora ?? '',
+      demoraExistente,
+      justificacionDemora,
+    };
 
     const resultado = await this.prisma.actuacionesProcedimiento.upsert({
       where: { procedimientoId },
@@ -104,6 +121,14 @@ export class ActuacionesProcedimientoService {
    * cálculo de demora simplemente se omite — no bloquea el guardado de las
    * actuaciones — y deberá volver a evaluarse más adelante, cuando el
    * procedimiento se actualice con esa fecha/hora.
+   *
+   * Adenda 2026-08-03: cuando SÍ hay demora pero aún no se ha escrito la
+   * justificación, ya NO se rechaza el guardado — antes esto bloqueaba
+   * también el autoguardado de campos sin relación (p. ej. el relato del
+   * Bloque 6, que comparte este mismo registro). La falta de
+   * justificación ahora solo se refleja como "pendiente" en el punto de
+   * color del Bloque 5 (ver estadoActuaciones en el frontend), no como un
+   * error de guardado.
    */
   private calcularDemora(
     procedimiento: {
@@ -137,15 +162,9 @@ export class ActuacionesProcedimientoService {
       (momentoDisposicion.getTime() - momentoCaptura.getTime()) / (1000 * 60 * 60);
     const demoraExistente = horasTranscurridas >= UMBRAL_DEMORA_HORAS;
 
-    if (demoraExistente && !dto.justificacionDemora?.trim()) {
-      throw new BadRequestException(
-        `Han transcurrido ${horasTranscurridas.toFixed(1)} horas entre la captura y la puesta a disposición (umbral: ${UMBRAL_DEMORA_HORAS}h). Debe registrar la justificación de la demora.`,
-      );
-    }
-
     return {
       demoraExistente,
-      justificacionDemora: demoraExistente ? dto.justificacionDemora : null,
+      justificacionDemora: demoraExistente ? dto.justificacionDemora ?? null : null,
     };
   }
 

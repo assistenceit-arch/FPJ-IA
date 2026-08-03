@@ -1,25 +1,33 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
+// Adenda 2026-08-03: todos los campos pasan a opcionales para permitir
+// guardado parcial (borrador) mientras el funcionario aún no ha terminado
+// de diligenciar el bloque — antes, si faltaba uno solo, el frontend no
+// enviaba nada al backend y el trabajo escrito se perdía al salir o
+// recargar la página sin haber completado el último campo. La
+// obligatoriedad de estos campos para considerar el bloque "completo"
+// ahora se controla únicamente en el frontend (ver estadoLugar en
+// src/lib/estados.ts del frontend).
 export class GuardarLugarProcedimientoDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  departamento!: string;
+  departamento?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  municipio!: string;
+  municipio?: string;
 
   @IsOptional()
   @IsString()
   localidad?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  barrio!: string;
+  barrio?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  direccion!: string;
+  direccion?: string;
 
   @IsOptional()
   @IsString()
