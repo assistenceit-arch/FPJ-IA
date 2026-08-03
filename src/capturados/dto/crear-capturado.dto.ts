@@ -77,7 +77,14 @@ export class CrearCapturadoDto {
   @IsString()
   ocupacion?: string;
 
-  @IsOptional()
+  // Adenda 2026-08-03: @IsOptional() de class-validator solo omite la
+  // validación cuando el valor es null/undefined, NO cuando es cadena
+  // vacía. Como el frontend envía "" al dejar el campo en blanco (no
+  // null), @IsEmail() igual se ejecutaba y rechazaba la petición con
+  // "correo must be an email" — en la práctica volvía el campo
+  // obligatorio pese a estar marcado como opcional. @ValidateIf hace que
+  // la cadena vacía también se trate como "no aportado".
+  @ValidateIf((o) => o.correo !== undefined && o.correo !== null && o.correo !== '')
   @IsEmail()
   correo?: string;
 
