@@ -60,3 +60,7 @@ coverage
 
 /generated/prisma
 storage/
+
+# parches de Claude, nunca se versionan
+*.patch
+*.b64.txt
