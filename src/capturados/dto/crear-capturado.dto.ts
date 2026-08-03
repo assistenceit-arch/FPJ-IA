@@ -95,6 +95,10 @@ export class CrearCapturadoDto {
 
   @IsOptional()
   @IsString()
+  descripcionFisicaVestimenta?: string;
+
+  @IsOptional()
+  @IsString()
   senalesParticulares?: string;
 
   @IsOptional()

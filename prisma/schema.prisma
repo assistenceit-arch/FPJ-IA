@@ -171,6 +171,7 @@ model Capturado {
   redesSociales        String? // Adenda 2026-07-19: requerido por el FPJ-6 (Acta de Derechos)
   direccion            String?
   telefono             String?
+  descripcionFisicaVestimenta String? // Adenda 2026-08-03: descripción física y de vestimenta del interviniente, a solicitud del usuario.
   senalesParticulares  String?
   nombrePadres         String?
   telefonoPadres       String?
