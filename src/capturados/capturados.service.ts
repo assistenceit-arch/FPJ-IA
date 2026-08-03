@@ -25,7 +25,7 @@ export class CapturadosService {
    * Aprehendido) SIEMPRE se calculan aquí, nunca se reciben del cliente.
    * Menor de 18 años = Aprehendido. 18 años o más = Capturado.
    */
-  private calcularEdadYTipo(fechaNacimiento: string) {
+  private calcularEdadYTipoDesdeFecha(fechaNacimiento: string) {
     const nacimiento = new Date(fechaNacimiento);
     const hoy = new Date();
 
@@ -43,6 +43,42 @@ export class CapturadosService {
   }
 
   /**
+   * Adenda 2026-08-03: resuelve edad + tipoInterviniente + fechaNacimiento
+   * a partir de fechaNacimiento (caso normal) o edadManual (opción "No
+   * aporta"). El criterio jurídico es el mismo en ambos casos: edad < 18
+   * => Aprehendido (SRPA); confirmado por el usuario.
+   *
+   * Devuelve null cuando el DTO no trae ni fechaNacimiento ni edadManual
+   * (solo puede pasar en una actualización parcial que no toca estos
+   * campos: en ese caso el llamador debe conservar los valores existentes).
+   */
+  private resolverEdadYTipo(dto: {
+    fechaNacimiento?: string;
+    edadManual?: number;
+  }): { edad: number; tipoInterviniente: string; fechaNacimiento: Date | null } | null {
+    if (dto.fechaNacimiento !== undefined && dto.edadManual !== undefined) {
+      throw new BadRequestException(
+        'No se puede enviar fecha de nacimiento y edad manual al mismo tiempo; use una de las dos opciones.',
+      );
+    }
+
+    if (dto.edadManual !== undefined) {
+      return {
+        edad: dto.edadManual,
+        tipoInterviniente: dto.edadManual < 18 ? 'APREHENDIDO' : 'CAPTURADO',
+        fechaNacimiento: null,
+      };
+    }
+
+    if (dto.fechaNacimiento !== undefined) {
+      const { edad, tipoInterviniente } = this.calcularEdadYTipoDesdeFecha(dto.fechaNacimiento);
+      return { edad, tipoInterviniente, fechaNacimiento: new Date(dto.fechaNacimiento) };
+    }
+
+    return null;
+  }
+
+  /**
    * Prepara los datos a guardar aplicando las reglas de negocio:
    * - Limpia campos de acudiente si la persona es mayor de edad.
    * - Aplica "No aportó" a nombre/teléfono de padres si no se diligencian
@@ -52,12 +88,17 @@ export class CapturadosService {
     dto: T,
     tipoInterviniente: string,
     edad: number,
-    fechaNacimiento: Date,
+    fechaNacimiento: Date | null,
   ) {
     const esAprehendido = tipoInterviniente === 'APREHENDIDO';
+    // edadManual es un campo transitorio del DTO (opción "No aporta"): no
+    // corresponde a ninguna columna de Prisma, así que se excluye del
+    // objeto que se persiste (de lo contrario Prisma rechaza la petición
+    // por "Unknown argument").
+    const { edadManual: _edadManual, ...resto } = dto as T & { edadManual?: number };
 
     return {
-      ...dto,
+      ...resto,
       fechaNacimiento,
       edad,
       tipoInterviniente,
@@ -79,14 +120,20 @@ export class CapturadosService {
   ) {
     await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
 
-    const { edad, tipoInterviniente } = this.calcularEdadYTipo(
-      dto.fechaNacimiento,
-    );
+    // El DTO ya obliga (vía @ValidateIf) a que venga fechaNacimiento o
+    // edadManual, así que resolverEdadYTipo nunca debería devolver null
+    // aquí; el check queda como defensa adicional.
+    const resuelto = this.resolverEdadYTipo(dto);
+    if (!resuelto) {
+      throw new BadRequestException(
+        'Debe aportar la fecha de nacimiento o, si la persona no la aporta, la edad manual.',
+      );
+    }
     const datos = this.prepararDatos(
       dto,
-      tipoInterviniente,
-      edad,
-      new Date(dto.fechaNacimiento),
+      resuelto.tipoInterviniente,
+      resuelto.edad,
+      resuelto.fechaNacimiento,
     );
 
     try {
@@ -99,7 +146,7 @@ export class CapturadosService {
         accion: 'Crear',
         tablaAfectada: 'capturados',
         registroAfectado: capturado.id,
-        descripcionEvento: `Registro de interviniente (${tipoInterviniente}) en el procedimiento ${procedimientoId}`,
+        descripcionEvento: `Registro de interviniente (${resuelto.tipoInterviniente}) en el procedimiento ${procedimientoId}`,
       });
 
       return capturado;
@@ -134,13 +181,22 @@ export class CapturadosService {
     await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
     const existente = await this.obtenerCapturadoOFallar(procedimientoId, capturadoId);
 
-    const fechaNacimientoStr = dto.fechaNacimiento ?? existente.fechaNacimiento.toISOString();
-    const { edad, tipoInterviniente } = this.calcularEdadYTipo(fechaNacimientoStr);
+    // Si el DTO no trae fechaNacimiento ni edadManual, se conserva lo que
+    // ya había (una actualización parcial que no toca estos campos). Si
+    // trae alguno de los dos, se recalcula y eso puede incluso cambiar el
+    // tipoInterviniente (p. ej. si se corrige la fecha de nacimiento) o
+    // pasar de fecha a edad manual y viceversa.
+    const resuelto = this.resolverEdadYTipo(dto) ?? {
+      edad: existente.edad,
+      tipoInterviniente: existente.tipoInterviniente,
+      fechaNacimiento: existente.fechaNacimiento,
+    };
+
     const datos = this.prepararDatos(
       dto,
-      tipoInterviniente,
-      edad,
-      new Date(fechaNacimientoStr),
+      resuelto.tipoInterviniente,
+      resuelto.edad,
+      resuelto.fechaNacimiento,
     );
 
     try {

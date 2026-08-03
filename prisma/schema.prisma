@@ -161,7 +161,7 @@ model Capturado {
   tipoDocumento        String?
   numeroDocumento      String?
   expedicionDocumento  String?
-  fechaNacimiento      DateTime
+  fechaNacimiento      DateTime? // Adenda 2026-08-03: nullable — la persona puede no aportarla; en ese caso se usa edadManual (solo en el DTO, no se persiste) y edad se guarda con lo digitado por el funcionario.
   lugarNacimiento      String? // Adenda: campo opcional agregado a solicitud del usuario (2026-07-17). No siempre se aporta este dato en campo.
   edad                 Int // calculada, solo lectura
   genero               String
