@@ -183,6 +183,14 @@ model Capturado {
   // ActuacionesProcedimiento que son generales del procedimiento).
   participacionHechos  String? // qué hizo esta persona específicamente (portaba, consumía, comercializaba, ocultaba, etc.)
   comportamientoAbordaje String? // colaboración, resistencia, intento de fuga, agresividad, etc.
+
+  // Adenda 2026-08-03: uso de esposas pasa de una sola respuesta a nivel
+  // de procedimiento (ActuacionesProcedimiento) a una pregunta individual
+  // por interviniente. Solo aplica en la práctica a Aprehendidos (el
+  // frontend solo la muestra para ese tipo), pero se deja disponible en
+  // el modelo para cualquier interviniente por si cambia el criterio.
+  usoEsposas           Boolean?
+  justificacionEsposas String?
   identificacionPlena  Boolean @default(true)
   formaIdentificacion  String? // si no se identificó plenamente, cómo se logró establecer la identidad
 
@@ -308,8 +316,11 @@ model ActuacionesProcedimiento {
   horaDerechos       String
   comprendeDerechos  Boolean
 
-  usoEsposas          Boolean
-  justificacionEsposas String?
+  // Adenda 2026-08-03: usoEsposas/justificacionEsposas se quitan de aquí
+  // (eran una sola respuesta para todo el procedimiento) y pasan a
+  // Capturado, como pregunta individual por interviniente Aprehendido
+  // (menor de edad) — a solicitud del usuario, para procedimientos
+  // mixtos donde solo a algunos intervinientes se les colocan esposas.
 
   presentaLesiones     Boolean
   descripcionLesiones  String?

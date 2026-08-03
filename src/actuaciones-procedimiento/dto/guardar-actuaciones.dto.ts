@@ -9,14 +9,18 @@ import {
 
 // Adenda 2026-08-03: fechaDerechos, horaDerechos y autoridadReceptora
 // pasan de obligatorios a opcionales, igual que los campos condicionales
-// (justificacionEsposas, descripcionLesiones, centroAsistencial,
-// motivoTraslado, circunstanciaRelevante, observacionAdicional), para
-// permitir guardado parcial (borrador). Antes, mientras faltara CUALQUIERA
-// de estos, el backend rechazaba TODO el objeto — incluyendo campos sin
-// relación como el relato del Bloque 6, que comparte este mismo registro.
-// La obligatoriedad para considerar el bloque "completo" ahora se
-// controla únicamente en el frontend (ver estadoActuaciones/estadoRelato
-// en src/lib/estados.ts del frontend).
+// (descripcionLesiones, centroAsistencial, motivoTraslado,
+// circunstanciaRelevante, observacionAdicional), para permitir guardado
+// parcial (borrador). Antes, mientras faltara CUALQUIERA de estos, el
+// backend rechazaba TODO el objeto — incluyendo campos sin relación como
+// el relato del Bloque 6, que comparte este mismo registro. La
+// obligatoriedad para considerar el bloque "completo" ahora se controla
+// únicamente en el frontend (ver estadoActuaciones/estadoRelato en
+// src/lib/estados.ts del frontend).
+//
+// usoEsposas/justificacionEsposas se removieron de este DTO por completo
+// el mismo día: pasaron a ser una pregunta individual por interviniente
+// (ver CrearCapturadoDto), no una respuesta general del procedimiento.
 export class GuardarActuacionesDto {
   // ── Lectura de derechos ──
   @IsNotEmpty()
@@ -35,14 +39,9 @@ export class GuardarActuacionesDto {
   @IsBoolean()
   comprendeDerechos!: boolean;
 
-  // ── Uso de esposas ──
-  @IsNotEmpty()
-  @IsBoolean()
-  usoEsposas!: boolean;
-
-  @ValidateIf((o) => o.usoEsposas === true)
-  @IsString()
-  justificacionEsposas?: string;
+  // Adenda 2026-08-03: usoEsposas/justificacionEsposas se quitan de aquí
+  // — pasan a ser una pregunta individual por interviniente en
+  // CrearCapturadoDto/ActualizarCapturadoDto (ver ese archivo).
 
   // ── Estado físico ──
   @IsNotEmpty()

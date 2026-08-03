@@ -133,6 +133,17 @@ export class CrearCapturadoDto {
   @IsString()
   comportamientoAbordaje?: string;
 
+  // Adenda 2026-08-03: uso de esposas pasa a ser individual por
+  // interviniente (antes era una sola respuesta en Actuaciones para todo
+  // el procedimiento). El frontend solo la muestra para Aprehendidos.
+  @IsOptional()
+  @IsBoolean()
+  usoEsposas?: boolean;
+
+  @ValidateIf((o) => o.usoEsposas === true)
+  @IsString()
+  justificacionEsposas?: string;
+
   @IsOptional()
   @IsBoolean()
   identificacionPlena?: boolean;

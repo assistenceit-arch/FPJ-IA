@@ -25,6 +25,11 @@ export interface IntervinienteNarracion {
   comportamientoAbordaje?: string | null;
   identificacionPlena: boolean;
   formaIdentificacion?: string | null;
+  // Adenda 2026-08-03: uso de esposas pasa a ser individual por
+  // interviniente (antes vivía en `actuaciones`, general para todo el
+  // procedimiento).
+  usoEsposas?: boolean | null;
+  justificacionEsposas?: string | null;
 }
 
 export interface ContextoNarracionFpj5 {
@@ -62,8 +67,6 @@ export interface ContextoNarracionFpj5 {
     fechaDerechos: string;
     horaDerechos: string;
     comprendeDerechos: boolean;
-    usoEsposas: boolean;
-    justificacionEsposas?: string | null;
     presentaLesiones: boolean;
     descripcionLesiones?: string | null;
     trasladoCentroAsistencial: boolean;
