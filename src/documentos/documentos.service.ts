@@ -213,7 +213,9 @@ export class DocumentosService {
       IDENTIFICACION: capturado.numeroDocumento
         ? `${capturado.tipoDocumento ?? ''} ${capturado.numeroDocumento}`.trim()
         : 'No aporta',
-      FECHA_NAC: capturado.fechaNacimiento.toLocaleDateString('es-CO'),
+      FECHA_NAC: capturado.fechaNacimiento
+        ? capturado.fechaNacimiento.toLocaleDateString('es-CO')
+        : 'No aporta',
       LUGAR_NAC: oNoAporta(capturado.lugarNacimiento),
       PADRES: oNoAporta(capturado.nombrePadres),
       ESTADO_CIVIL: oNoAporta(capturado.estadoCivil),
@@ -237,7 +239,9 @@ export class DocumentosService {
       BT_HORA: actuaciones.horaDerechos,
       BT_NOMBRE: nombreCompletoCapturado,
       BT_CEDULA: oNoAporta(capturado.numeroDocumento),
-      BT_FECHA_NAC: capturado.fechaNacimiento.toLocaleDateString('es-CO'),
+      BT_FECHA_NAC: capturado.fechaNacimiento
+        ? capturado.fechaNacimiento.toLocaleDateString('es-CO')
+        : 'No aporta',
       BT_EDAD: String(capturado.edad),
       BT_ESTADO_CIVIL: oNoAporta(capturado.estadoCivil),
       BT_INDICIADO: '',
@@ -504,7 +508,12 @@ export class DocumentosService {
         ...digitosPrefijados({ D1: String(c.edad).padStart(2, '0')[0], D2: String(c.edad).padStart(2, '0')[1] }, 'EDAD'),
         GENERO_CHECK_M: generoM ? 'X' : '',
         GENERO_CHECK_F: generoM ? '' : 'X',
-        ...digitosPrefijados(digitosFecha(c.fechaNacimiento), 'FN'),
+        ...digitosPrefijados(
+          c.fechaNacimiento
+            ? digitosFecha(c.fechaNacimiento)
+            : { D1: '', D2: '', M1: '', M2: '', A1: '', A2: '', A3: '', A4: '' },
+          'FN',
+        ),
         LUGAR_NACIMIENTO: oNoAporta(c.lugarNacimiento),
         ESTADO_CIVIL: oNoAporta(c.estadoCivil),
         ESCOLARIDAD: oNoAporta(c.escolaridad),

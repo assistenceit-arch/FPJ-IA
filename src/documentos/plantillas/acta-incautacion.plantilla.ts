@@ -35,7 +35,7 @@ export interface DatosActaIncautacion {
     numeroDocumento?: string | null;
     expedicionDocumento?: string | null;
     edad: number;
-    fechaNacimiento: Date;
+    fechaNacimiento: Date | null;
     lugarNacimiento?: string | null;
     direccion?: string | null;
   };
