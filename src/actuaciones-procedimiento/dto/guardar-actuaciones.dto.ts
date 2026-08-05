@@ -70,10 +70,12 @@ export class GuardarActuacionesDto {
   @IsString()
   autoridadReceptora?: string;
 
-  // demoraExistente YA NO se recibe del cliente: el sistema lo calcula
-  // automáticamente comparando la hora de captura (sincronizada con la
-  // hora de derechos) y la hora de puesta a disposición del procedimiento,
-  // usando el umbral de 5 horas definido por el CORE_TRANSVERSAL.
+  // demoraExistente ya no se recibe del cliente NI se persiste (Adenda
+  // 2026-08-04): se calcula al vuelo cada vez que se consulta (ver
+  // demora.util.ts), comparando la hora de captura (sincronizada con la
+  // de derechos) y la de puesta a disposición del procedimiento, con el
+  // umbral de 5 horas del CORE_TRANSVERSAL. justificacionDemora sí se
+  // guarda tal cual la escriba el usuario.
   @IsOptional()
   @IsString()
   justificacionDemora?: string;

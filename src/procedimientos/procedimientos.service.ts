@@ -9,6 +9,7 @@ import { AuditoriaService } from '../auditoria/auditoria.service';
 
 import { CreateProcedimientoDto } from './dto/create-procedimiento.dto';
 import { UpdateProcedimientoDto } from './dto/update-procedimiento.dto';
+import { validarOrdenFechas } from '../actuaciones-procedimiento/demora.util';
 
 @Injectable()
 export class ProcedimientosService {
@@ -85,6 +86,29 @@ export class ProcedimientosService {
     correoUsuario: string,
   ) {
     const existente = await this.findOne(id, usuarioId);
+
+    // Adenda 2026-08-04: la puesta a disposición también puede llegar
+    // por aquí (PATCH /procedimientos/:id, desde el formulario de
+    // disposición del Bloque 5), así que la validación de orden de
+    // fechas se repite aquí — antes solo se comprobaba al guardar
+    // Actuaciones, y se podía guardar una disposición anterior a la
+    // captura sin que nada lo detectara si nunca se volvía a tocar el
+    // Bloque 5. Ver demora.util.ts.
+    const fechaDisposicionNueva =
+      dto.fechaDisposicion !== undefined
+        ? dto.fechaDisposicion
+          ? new Date(dto.fechaDisposicion)
+          : null
+        : existente.fechaDisposicion;
+    const horaDisposicionNueva =
+      dto.horaDisposicion !== undefined ? dto.horaDisposicion : existente.horaDisposicion;
+
+    validarOrdenFechas({
+      fechaCaptura: existente.fechaCaptura,
+      horaCaptura: existente.horaCaptura,
+      fechaDisposicion: fechaDisposicionNueva,
+      horaDisposicion: horaDisposicionNueva,
+    });
 
     const actualizado = await this.prisma.procedimiento.update({
       where: { id: existente.id },

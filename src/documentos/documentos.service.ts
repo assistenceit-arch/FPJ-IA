@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { ProcedimientoAccesoService } from '../procedimientos/procedimiento-acceso.service';
 import { NarrativaService } from '../narrativa/narrativa.service';
+import { calcularDemoraExistente } from '../actuaciones-procedimiento/demora.util';
 import { construirActaIncautacion } from './plantillas/acta-incautacion.plantilla';
 import {
   rellenarPlantillaWord,
@@ -425,7 +426,7 @@ export class DocumentosService {
         centroAsistencial: actuaciones.centroAsistencial,
         motivoTraslado: actuaciones.motivoTraslado,
         autoridadReceptora: actuaciones.autoridadReceptora,
-        demoraExistente: actuaciones.demoraExistente,
+        demoraExistente: calcularDemoraExistente(procedimiento),
         justificacionDemora: actuaciones.justificacionDemora,
         observacionInicial: actuaciones.observacionInicial,
         desarrolloIntervencion: actuaciones.desarrolloIntervencion,

@@ -331,7 +331,11 @@ model ActuacionesProcedimiento {
 
   autoridadReceptora String
 
-  demoraExistente       Boolean
+  // Adenda 2026-08-04: demoraExistente se quita de aquí — se calcula
+  // siempre al vuelo (nunca como snapshot) en demora.util.ts, para que
+  // nunca quede desactualizado sin importar si se edita primero la
+  // lectura de derechos o la puesta a disposición. justificacionDemora sí
+  // sigue siendo contenido real escrito por el usuario, se conserva.
   justificacionDemora   String?
 
   // Adenda 2026-07-22: campos del Bloque 5/6 del Formulario Maestro
