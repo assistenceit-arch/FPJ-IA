@@ -36,7 +36,11 @@ export class PagosService {
     const existente = await this.prisma.pago.findUnique({
       where: { procedimientoId },
     });
-    if (existente) {
+    // Adenda 2026-08-05: antes, un pago Rechazado dejaba el procedimiento
+    // bloqueado para siempre (no había forma de volver a registrar uno
+    // nuevo). Ahora se permite reintentar cuando el anterior fue
+    // rechazado; solo se bloquea si ya hay uno Pendiente o Verificado.
+    if (existente && existente.estadoPago !== 'Rechazado') {
       throw new ConflictException(
         'Este procedimiento ya tiene un pago registrado. Consulte su estado en vez de crear uno nuevo.',
       );
@@ -48,24 +52,36 @@ export class PagosService {
         ? configuracion.valorComplejo
         : configuracion.valorEstandar;
 
-    const pago = await this.prisma.pago.create({
-      data: {
-        procedimientoId,
-        fechaPago: new Date(dto.fechaPago),
-        valor,
-        medioPago: dto.medioPago,
-        referenciaPago: dto.referenciaPago,
-        comprobantePago: dto.comprobantePago,
-        estadoPago: ESTADO_INICIAL,
-      },
-    });
+    const pago = existente
+      ? await this.prisma.pago.update({
+          where: { procedimientoId },
+          data: {
+            fechaPago: new Date(dto.fechaPago),
+            valor,
+            medioPago: dto.medioPago,
+            referenciaPago: dto.referenciaPago,
+            comprobantePago: dto.comprobantePago,
+            estadoPago: ESTADO_INICIAL,
+          },
+        })
+      : await this.prisma.pago.create({
+          data: {
+            procedimientoId,
+            fechaPago: new Date(dto.fechaPago),
+            valor,
+            medioPago: dto.medioPago,
+            referenciaPago: dto.referenciaPago,
+            comprobantePago: dto.comprobantePago,
+            estadoPago: ESTADO_INICIAL,
+          },
+        });
 
     await this.auditoria.registrar({
       usuario: correoUsuario,
-      accion: 'Crear',
+      accion: existente ? 'Modificar' : 'Crear',
       tablaAfectada: 'pagos',
       registroAfectado: pago.id,
-      descripcionEvento: `Pago registrado por $${valor} para el procedimiento ${procedimientoId} (${procedimiento.tipoProcedimiento})`,
+      descripcionEvento: `${existente ? 'Nuevo pago registrado (reintento tras rechazo anterior)' : 'Pago registrado'} por $${valor} para el procedimiento ${procedimientoId} (${procedimiento.tipoProcedimiento})`,
     });
 
     return pago;

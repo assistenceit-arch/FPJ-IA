@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -42,6 +43,28 @@ export class DocumentosService {
     private readonly narrativa: NarrativaService,
   ) {}
 
+  /**
+   * Adenda 2026-08-05: ningún documento se genera sin un pago verificado
+   * para el procedimiento. Se llama al inicio de los 5 métodos de
+   * generación (nunca en la descarga de un documento ya generado ni en
+   * el listado — eso sigue disponible siempre).
+   */
+  private async verificarPagoAprobado(procedimientoId: string): Promise<void> {
+    const pago = await this.prisma.pago.findUnique({ where: { procedimientoId } });
+
+    if (!pago) {
+      throw new ForbiddenException(
+        'Este procedimiento no tiene un pago registrado. Debe registrarse y ser verificado por un administrador antes de generar documentos.',
+      );
+    }
+
+    if (pago.estadoPago !== 'Verificado') {
+      throw new ForbiddenException(
+        `El pago de este procedimiento está en estado "${pago.estadoPago}". Debe estar "Verificado" por un administrador antes de generar documentos.`,
+      );
+    }
+  }
+
   async generarActaIncautacion(
     procedimientoId: string,
     capturadoId: string,
@@ -49,6 +72,7 @@ export class DocumentosService {
     correoUsuario: string,
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.verificarPagoAprobado(procedimientoId);
 
     const capturado = await this.prisma.capturado.findUnique({
       where: { id: capturadoId },
@@ -152,6 +176,7 @@ export class DocumentosService {
     correoUsuario: string,
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.verificarPagoAprobado(procedimientoId);
 
     const capturado = await this.prisma.capturado.findUnique({
       where: { id: capturadoId },
@@ -316,6 +341,7 @@ export class DocumentosService {
     aclaraciones: string[] = [],
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.verificarPagoAprobado(procedimientoId);
 
     const [funcionarioActuante, companeroPatrulla, lugarProcedimiento, actuaciones, capturados] =
       await Promise.all([
@@ -596,6 +622,7 @@ export class DocumentosService {
     correoUsuario: string,
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.verificarPagoAprobado(procedimientoId);
 
     const elemento = await this.prisma.elementoIncautado.findUnique({
       where: { id: elementoId },
@@ -732,6 +759,7 @@ export class DocumentosService {
     correoUsuario: string,
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.verificarPagoAprobado(procedimientoId);
 
     const elemento = await this.prisma.elementoIncautado.findUnique({
       where: { id: elementoId },
