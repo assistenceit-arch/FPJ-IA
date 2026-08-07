@@ -25,6 +25,10 @@ export interface IntervinienteNarracion {
   comportamientoAbordaje?: string | null;
   identificacionPlena: boolean;
   formaIdentificacion?: string | null;
+  // Adenda 2026-08-06: faltaba por completo -- el dato se capturaba en
+  // el Bloque 2 pero nunca llegaba al contexto que se le manda a la IA,
+  // así que el FPJ-5 nunca lo mencionaba.
+  escolaridad?: string | null;
   // Adenda 2026-08-03: uso de esposas pasa a ser individual por
   // interviniente (antes vivía en `actuaciones`, general para todo el
   // procedimiento).

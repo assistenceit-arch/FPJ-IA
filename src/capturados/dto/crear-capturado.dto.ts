@@ -84,7 +84,18 @@ export class CrearCapturadoDto {
   // "correo must be an email" — en la práctica volvía el campo
   // obligatorio pese a estar marcado como opcional. @ValidateIf hace que
   // la cadena vacía también se trate como "no aportado".
-  @ValidateIf((o) => o.correo !== undefined && o.correo !== null && o.correo !== '')
+  //
+  // Adenda 2026-08-06: además de vacío, se permite explícitamente la
+  // leyenda "No aporta" (sin distinguir mayúsculas) sin que @IsEmail()
+  // la rechace por no tener formato de correo -- el funcionario la
+  // escribe cuando el interviniente no tiene o no quiere dar un correo.
+  @ValidateIf(
+    (o) =>
+      o.correo !== undefined &&
+      o.correo !== null &&
+      o.correo !== '' &&
+      o.correo.trim().toLowerCase() !== 'no aporta',
+  )
   @IsEmail()
   correo?: string;
 

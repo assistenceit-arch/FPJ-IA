@@ -448,6 +448,7 @@ export class DocumentosService {
         comportamientoAbordaje: c.comportamientoAbordaje,
         identificacionPlena: c.identificacionPlena,
         formaIdentificacion: c.formaIdentificacion,
+        escolaridad: c.escolaridad,
         usoEsposas: c.usoEsposas,
         justificacionEsposas: c.justificacionEsposas,
       })),
