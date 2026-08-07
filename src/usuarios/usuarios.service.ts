@@ -106,12 +106,19 @@ export class UsuariosService {
       );
     }
 
+    // Adenda 2026-08-06: ya no se limpia tokenVerificacion aquí. Antes,
+    // una segunda visita al mismo enlace (React Strict Mode en
+    // desarrollo lo dispara dos veces; en producción algunos clientes de
+    // correo "previsualizan" los enlaces automáticamente y los consumen
+    // antes de que la persona haga clic de verdad) encontraba el token
+    // ya nulo y caía en "enlace no válido" en vez de en la respuesta
+    // amigable de arriba ("ya estaba verificado"). El campo
+    // correoVerificado es suficiente por sí solo para no volver a
+    // verificar dos veces.
     await this.prisma.usuario.update({
       where: { id: usuario.id },
       data: {
         correoVerificado: true,
-        tokenVerificacion: null,
-        tokenVerificacionExpira: null,
       },
     });
 
