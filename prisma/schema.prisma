@@ -13,12 +13,26 @@ datasource db {
 model Usuario {
   id             String  @id @default(uuid()) // RT-001: UUID como PK
   nombres        String
-  apellidos      String
-  identificacion String  @unique
+  // Adenda 2026-08-06: apellidos/identificacion pasan a opcionales -- el
+  // registro autónomo (WF-AUT nuevo) solo pide nombre completo, correo y
+  // teléfono. La creación por un administrador (CreateUsuarioDto) sigue
+  // exigiendo estos dos campos a nivel de validación.
+  apellidos      String?
+  identificacion String? @unique
   correo         String  @unique // WF-AUT-001: correo único
+  telefono       String? // Adenda 2026-08-06: requerido en el registro autónomo
   password       String
   rol            String
+  // activo ahora también sirve para que un administrador bloquee el
+  // acceso por uso irregular de la aplicación (Adenda 2026-08-06).
   activo         Boolean @default(true)
+
+  // Adenda 2026-08-06: verificación de correo para el registro autónomo.
+  // Los usuarios creados por un administrador (UsuariosService.crear)
+  // quedan verificados de una vez -- ya hay un humano vouching por ellos.
+  correoVerificado        Boolean   @default(false)
+  tokenVerificacion       String?   @unique
+  tokenVerificacionExpira DateTime?
 
   procedimientos Procedimiento[]
 

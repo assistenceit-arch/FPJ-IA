@@ -14,4 +14,15 @@ export const environmentValidationSchema = Joi.object({
   // Requerida por el módulo de narrativa (generación IA de la narración de
   // los hechos del FPJ-5). Se crea en console.anthropic.com.
   ANTHROPIC_API_KEY: Joi.string().required(),
+
+  // Adenda 2026-08-06: envío de correo de verificación para el registro
+  // autónomo (src/correo). Opcionales -- si no están configuradas, el
+  // enlace de verificación queda en el log del servidor en vez de
+  // enviarse por correo real (útil en desarrollo).
+  SMTP_HOST: Joi.string().optional(),
+  SMTP_PORT: Joi.number().optional(),
+  SMTP_USER: Joi.string().optional(),
+  SMTP_PASS: Joi.string().optional(),
+  SMTP_FROM: Joi.string().optional(),
+  FRONTEND_URL: Joi.string().optional(),
 });

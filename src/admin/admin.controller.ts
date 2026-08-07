@@ -4,6 +4,7 @@ import { PagosService } from '../pagos/pagos.service';
 import { UsuariosService } from '../usuarios/usuarios.service';
 import { ExonerarPagoDto } from './dto/exonerar-pago.dto';
 import { CambiarRolDto } from './dto/cambiar-rol.dto';
+import { CambiarEstadoDto } from './dto/cambiar-estado.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -26,8 +27,11 @@ export class AdminController {
   // ── Procedimientos / exoneración de pago ──
 
   @Get('procedimientos')
-  listarProcedimientos(@Query('busqueda') busqueda?: string) {
-    return this.procedimientosService.listarTodosAdmin(busqueda);
+  listarProcedimientos(
+    @Query('busqueda') busqueda?: string,
+    @Query('pagina') pagina?: string,
+  ) {
+    return this.procedimientosService.listarTodosAdmin(busqueda, Number(pagina) || 1, 10);
   }
 
   @Patch('procedimientos/:id/exoneracion')
@@ -46,15 +50,20 @@ export class AdminController {
     return this.pagosService.listarPendientesAdmin();
   }
 
-  // ── Usuarios / roles ──
+  // ── Usuarios / roles / bloqueo ──
 
   @Get('usuarios')
-  listarUsuarios() {
-    return this.usuariosService.listarTodos();
+  listarUsuarios(@Query('pagina') pagina?: string) {
+    return this.usuariosService.listarTodos(Number(pagina) || 1, 10);
   }
 
   @Patch('usuarios/:id/rol')
   cambiarRol(@Param('id') id: string, @Body() dto: CambiarRolDto) {
     return this.usuariosService.cambiarRol(id, dto.rol);
+  }
+
+  @Patch('usuarios/:id/estado')
+  cambiarEstado(@Param('id') id: string, @Body() dto: CambiarEstadoDto) {
+    return this.usuariosService.cambiarEstado(id, dto.activo);
   }
 }

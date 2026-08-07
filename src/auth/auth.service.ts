@@ -33,6 +33,21 @@ export class AuthService {
       );
     }
 
+    // Adenda 2026-08-06: bloqueo de acceso por uso irregular (panel de
+    // administración) y verificación de correo del registro autónomo.
+    // Se comprueban DESPUÉS de validar la contraseña para no revelar si
+    // una cuenta existe/está bloqueada a alguien que no la conoce.
+    if (!usuario.activo) {
+      throw new UnauthorizedException(
+        'Tu cuenta ha sido bloqueada. Contacta a un administrador.',
+      );
+    }
+    if (!usuario.correoVerificado) {
+      throw new UnauthorizedException(
+        'Debes verificar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada.',
+      );
+    }
+
     return usuario;
   }
 

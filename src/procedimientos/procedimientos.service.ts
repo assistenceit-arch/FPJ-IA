@@ -171,29 +171,37 @@ export class ProcedimientosService {
   }
 
   /**
-   * Panel de administración: lista TODOS los procedimientos (de
-   * cualquier funcionario), con búsqueda opcional por número interno,
-   * para poder ubicar uno puntual y exonerarlo del pago.
+   * Panel de administración: lista PAGINADA de todos los procedimientos
+   * (de cualquier funcionario), con búsqueda opcional por número
+   * interno, para poder ubicar uno puntual y exonerarlo del pago.
    */
-  async listarTodosAdmin(busqueda?: string) {
-    return this.prisma.procedimiento.findMany({
-      where: {
-        activo: true,
-        ...(busqueda ? { numeroInterno: { contains: busqueda, mode: 'insensitive' } } : {}),
-      },
-      select: {
-        id: true,
-        numeroInterno: true,
-        tipoProcedimiento: true,
-        estado: true,
-        exoneradoPago: true,
-        fechaCreacion: true,
-        usuario: { select: { nombres: true, apellidos: true, correo: true } },
-        pago: { select: { estadoPago: true } },
-      },
-      orderBy: { fechaCreacion: 'desc' },
-      take: 100,
-    });
+  async listarTodosAdmin(busqueda?: string, pagina = 1, porPagina = 10) {
+    const where = {
+      activo: true,
+      ...(busqueda ? { numeroInterno: { contains: busqueda, mode: 'insensitive' as const } } : {}),
+    };
+
+    const [datos, total] = await Promise.all([
+      this.prisma.procedimiento.findMany({
+        where,
+        select: {
+          id: true,
+          numeroInterno: true,
+          tipoProcedimiento: true,
+          estado: true,
+          exoneradoPago: true,
+          fechaCreacion: true,
+          usuario: { select: { nombres: true, apellidos: true, correo: true } },
+          pago: { select: { estadoPago: true } },
+        },
+        orderBy: { fechaCreacion: 'desc' },
+        skip: (pagina - 1) * porPagina,
+        take: porPagina,
+      }),
+      this.prisma.procedimiento.count({ where }),
+    ]);
+
+    return { datos, total, pagina, totalPaginas: Math.max(1, Math.ceil(total / porPagina)) };
   }
 
   /**
