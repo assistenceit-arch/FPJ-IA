@@ -9,7 +9,7 @@ import { AuditoriaService } from '../auditoria/auditoria.service';
 
 import { CreateProcedimientoDto } from './dto/create-procedimiento.dto';
 import { UpdateProcedimientoDto } from './dto/update-procedimiento.dto';
-import { validarOrdenFechas } from '../actuaciones-procedimiento/demora.util';
+import { calcularDemoraExistente, validarOrdenFechas } from '../actuaciones-procedimiento/demora.util';
 
 @Injectable()
 export class ProcedimientosService {
@@ -76,7 +76,152 @@ export class ProcedimientosService {
     }
     this.verificarPropiedad(procedimiento, usuarioId);
 
+    // Adenda 2026-08-06: "Borrador"/"Finalizado" se recalcula cada vez
+    // que se consulta el procedimiento (patrón "recompute-on-read"),
+    // en vez de intentar sincronizarlo en cada uno de los muchos
+    // endpoints que podrían afectar alguno de los 8 bloques. Como el
+    // frontend consulta este endpoint en cada navegación entre bloques,
+    // en la práctica queda al día. Decisión del usuario: Finalizado
+    // cuando los 8 bloques del formulario único están en verde.
+    const completo = await this.todosLosBloquesCompletos(procedimiento);
+    const estadoCorrecto = completo ? 'Finalizado' : 'Borrador';
+    if (procedimiento.estado !== estadoCorrecto) {
+      return this.prisma.procedimiento.update({
+        where: { id },
+        data: { estado: estadoCorrecto },
+      });
+    }
+
     return procedimiento;
+  }
+
+  private textoCompleto(v: string | null | undefined): boolean {
+    return Boolean(v && v.trim());
+  }
+
+  /**
+   * Replica en el backend el mismo criterio de "completo" que ya usa el
+   * frontend (src/lib/estados.ts) para pintar los 8 puntos de color del
+   * menú lateral, para no depender de que el cliente reporte
+   * honestamente si terminó o no.
+   */
+  private async todosLosBloquesCompletos(procedimiento: {
+    id: string;
+    fechaCaptura: Date;
+    horaCaptura: string;
+    fechaDisposicion: Date | null;
+    horaDisposicion: string | null;
+    exoneradoPago: boolean;
+  }): Promise<boolean> {
+    const [funcionario, lugar, capturados, actuaciones, documentosCount, pago] = await Promise.all([
+      this.prisma.funcionarioActuante.findUnique({ where: { procedimientoId: procedimiento.id } }),
+      this.prisma.lugarProcedimiento.findUnique({ where: { procedimientoId: procedimiento.id } }),
+      this.prisma.capturado.findMany({
+        where: { procedimientoId: procedimiento.id },
+        include: { elementosIncautados: true },
+      }),
+      this.prisma.actuacionesProcedimiento.findUnique({ where: { procedimientoId: procedimiento.id } }),
+      this.prisma.documentoGenerado.count({ where: { procedimientoId: procedimiento.id } }),
+      this.prisma.pago.findUnique({ where: { procedimientoId: procedimiento.id } }),
+    ]);
+
+    // 1. Funcionario
+    const funcionarioOk =
+      !!funcionario &&
+      [
+        funcionario.nombreCompleto,
+        funcionario.documento,
+        funcionario.entidad,
+        funcionario.cargo,
+        funcionario.telefono,
+        funcionario.correo,
+        funcionario.placa,
+        funcionario.zonaAtencion,
+        funcionario.estacion,
+        funcionario.servicio,
+        funcionario.cai,
+      ].every((v) => this.textoCompleto(v));
+
+    // 2. Intervinientes (binario, igual que Elementos)
+    const intervinientesOk = capturados.length > 0;
+
+    // 3. Lugar
+    const lugarOk =
+      !!lugar &&
+      [lugar.departamento, lugar.municipio, lugar.barrio, lugar.direccion].every((v) =>
+        this.textoCompleto(v),
+      );
+
+    // 4. Elementos incautados (binario, suma de todos los intervinientes)
+    const totalElementos = capturados.reduce((total, c) => total + c.elementosIncautados.length, 0);
+    const elementosOk = totalElementos > 0;
+
+    // 5. Actuaciones procedimentales
+    let actuacionesOk = false;
+    if (actuaciones) {
+      const requeridos = [
+        this.textoCompleto(actuaciones.autoridadReceptora),
+        procedimiento.fechaDisposicion != null,
+        this.textoCompleto(procedimiento.horaDisposicion),
+      ];
+      if (actuaciones.derechosLeidos) {
+        requeridos.push(actuaciones.fechaDerechos != null, this.textoCompleto(actuaciones.horaDerechos));
+      }
+      if (actuaciones.presentaLesiones) {
+        requeridos.push(this.textoCompleto(actuaciones.descripcionLesiones));
+      }
+      if (actuaciones.trasladoCentroAsistencial) {
+        requeridos.push(
+          this.textoCompleto(actuaciones.centroAsistencial),
+          this.textoCompleto(actuaciones.motivoTraslado),
+        );
+      }
+      if (calcularDemoraExistente(procedimiento)) {
+        requeridos.push(this.textoCompleto(actuaciones.justificacionDemora));
+      }
+
+      const aprehendidos = capturados.filter((c) => c.tipoInterviniente === 'APREHENDIDO');
+      const esposasOk = aprehendidos.every((a) => {
+        if (a.usoEsposas === null || a.usoEsposas === undefined) return false;
+        if (a.usoEsposas === true) return this.textoCompleto(a.justificacionEsposas);
+        return true;
+      });
+
+      actuacionesOk = requeridos.every(Boolean) && esposasOk;
+    }
+
+    // 6. Relato de los hechos (comparte registro con Actuaciones)
+    let relatoOk = false;
+    if (actuaciones) {
+      const requeridos = [
+        this.textoCompleto(actuaciones.observacionInicial),
+        this.textoCompleto(actuaciones.desarrolloIntervencion),
+      ];
+      if (actuaciones.tieneCircunstanciaRelevante) {
+        requeridos.push(this.textoCompleto(actuaciones.circunstanciaRelevante));
+      }
+      if (actuaciones.tieneObservacionAdicional) {
+        requeridos.push(this.textoCompleto(actuaciones.observacionAdicional));
+      }
+      relatoOk = requeridos.every(Boolean);
+    }
+
+    // 7. Documentos (al menos uno generado)
+    const documentosOk = documentosCount > 0;
+
+    // 8. Pago (verificado, o el procedimiento fue exonerado por un administrador)
+    const pagoOk = procedimiento.exoneradoPago || pago?.estadoPago === 'Verificado';
+
+    return (
+      funcionarioOk &&
+      intervinientesOk &&
+      lugarOk &&
+      elementosOk &&
+      actuacionesOk &&
+      relatoOk &&
+      documentosOk &&
+      pagoOk
+    );
   }
 
   async update(
