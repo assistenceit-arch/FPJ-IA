@@ -19,6 +19,7 @@ import { AsesoriaComplejaModule } from './asesoria-compleja/asesoria-compleja.mo
 import { ConfiguracionPagosModule } from './configuracion-pagos/configuracion-pagos.module';
 import { PagosModule } from './pagos/pagos.module';
 import { DocumentosModule } from './documentos/documentos.module';
+import { AdminModule } from './admin/admin.module';
 // Fases 0-3 completas. Fase 4 en curso: motor de generación de documentos
 // Word. Primer documento: Acta de Incautación de Elementos (por
 // interviniente). Pendientes: FPJ-5, FPJ-6, FPJ-7, FPJ-8.
@@ -45,6 +46,7 @@ import { DocumentosModule } from './documentos/documentos.module';
     ConfiguracionPagosModule,
     PagosModule,
     DocumentosModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [],

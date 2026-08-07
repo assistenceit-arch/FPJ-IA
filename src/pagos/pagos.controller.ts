@@ -14,7 +14,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import type { Response } from 'express';
 import { PagosService } from './pagos.service';
-import { RegistrarPagoDto } from './dto/registrar-pago.dto';
 import { VerificarPagoDto } from './dto/verificar-pago.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles/roles.guard';
@@ -36,11 +35,10 @@ export class PagosController {
   )
   registrar(
     @Param('procedimientoId') procedimientoId: string,
-    @Body() dto: RegistrarPagoDto,
     @UploadedFile() comprobante: Express.Multer.File,
     @CurrentUser() usuario: JwtPayload,
   ) {
-    return this.service.registrar(procedimientoId, dto, comprobante, usuario.sub, usuario.correo);
+    return this.service.registrar(procedimientoId, comprobante, usuario.sub, usuario.correo);
   }
 
   @Get()

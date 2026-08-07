@@ -10,5 +10,6 @@ import { ConfiguracionPagosModule } from '../configuracion-pagos/configuracion-p
   imports: [PrismaModule, AuditoriaModule, ProcedimientosModule, ConfiguracionPagosModule],
   controllers: [PagosController],
   providers: [PagosService],
+  exports: [PagosService],
 })
 export class PagosModule {}

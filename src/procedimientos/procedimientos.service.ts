@@ -169,4 +169,58 @@ export class ProcedimientosService {
       );
     }
   }
+
+  /**
+   * Panel de administración: lista TODOS los procedimientos (de
+   * cualquier funcionario), con búsqueda opcional por número interno,
+   * para poder ubicar uno puntual y exonerarlo del pago.
+   */
+  async listarTodosAdmin(busqueda?: string) {
+    return this.prisma.procedimiento.findMany({
+      where: {
+        activo: true,
+        ...(busqueda ? { numeroInterno: { contains: busqueda, mode: 'insensitive' } } : {}),
+      },
+      select: {
+        id: true,
+        numeroInterno: true,
+        tipoProcedimiento: true,
+        estado: true,
+        exoneradoPago: true,
+        fechaCreacion: true,
+        usuario: { select: { nombres: true, apellidos: true, correo: true } },
+        pago: { select: { estadoPago: true } },
+      },
+      orderBy: { fechaCreacion: 'desc' },
+      take: 100,
+    });
+  }
+
+  /**
+   * Adenda 2026-08-06: permite a un administrador exonerar (o revertir
+   * la exoneración de) un procedimiento puntual del requisito de pago
+   * para generar documentos. Decisión del usuario: sin motivo
+   * obligatorio, queda igual registrado en auditoría.
+   */
+  async exonerarPago(id: string, exonerado: boolean, correoAdministrador: string) {
+    const procedimiento = await this.prisma.procedimiento.findUnique({ where: { id } });
+    if (!procedimiento || !procedimiento.activo) {
+      throw new NotFoundException('Procedimiento no encontrado');
+    }
+
+    const actualizado = await this.prisma.procedimiento.update({
+      where: { id },
+      data: { exoneradoPago: exonerado },
+    });
+
+    await this.auditoria.registrar({
+      usuario: correoAdministrador,
+      accion: 'Modificar',
+      tablaAfectada: 'procedimientos',
+      registroAfectado: id,
+      descripcionEvento: `${exonerado ? 'Exoneración' : 'Reversión de exoneración'} de pago para el procedimiento ${procedimiento.numeroInterno ?? id}`,
+    });
+
+    return actualizado;
+  }
 }

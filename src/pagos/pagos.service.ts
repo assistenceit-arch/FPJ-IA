@@ -10,14 +10,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { ProcedimientoAccesoService } from '../procedimientos/procedimiento-acceso.service';
 import { ConfiguracionPagosService } from '../configuracion-pagos/configuracion-pagos.service';
-import { RegistrarPagoDto } from './dto/registrar-pago.dto';
 import { VerificarPagoDto } from './dto/verificar-pago.dto';
 
 const ESTADO_INICIAL = 'Pendiente';
 
-// Adenda 2026-08-05: el comprobante de la transferencia (adjunto
-// obligatorio) se guarda en disco con el mismo patrón que los documentos
-// generados (src/documentos/documentos.service.ts, CARPETA_ALMACENAMIENTO).
+// El comprobante de la transferencia (adjunto obligatorio, Adenda
+// 2026-08-05/06) se guarda en disco con el mismo patrón que los
+// documentos generados (src/documentos/documentos.service.ts).
 const CARPETA_COMPROBANTES = path.join(process.cwd(), 'storage', 'comprobantes-pago');
 const TIPOS_PERMITIDOS: Record<string, string> = {
   'image/jpeg': '.jpg',
@@ -36,9 +35,15 @@ export class PagosService {
     private readonly configuracionPagos: ConfiguracionPagosService,
   ) {}
 
+  /**
+   * Adenda 2026-08-06: el registro ya NO recibe ningún dato de texto del
+   * funcionario (fecha/medio/referencia) -- a solicitud del usuario, el
+   * único insumo es el comprobante adjunto; el administrador lee esos
+   * datos directamente del archivo al revisar (ver
+   * PagosController.verificar).
+   */
   async registrar(
     procedimientoId: string,
-    dto: RegistrarPagoDto,
     comprobante: Express.Multer.File | undefined,
     usuarioId: string,
     correoUsuario: string,
@@ -48,12 +53,6 @@ export class PagosService {
       usuarioId,
     );
 
-    // Adenda 2026-08-05: el comprobante ahora es un archivo obligatorio
-    // (imagen o PDF), no texto libre -- debe evidenciar como mínimo la
-    // fecha, el número de referencia y el valor del movimiento, a
-    // solicitud del usuario. El backend no puede verificar el CONTENIDO
-    // del archivo (eso lo revisa el administrador al aprobar/rechazar),
-    // solo que efectivamente se haya adjuntado uno válido.
     if (!comprobante) {
       throw new BadRequestException(
         'Debe adjuntar el comprobante de la transferencia (imagen o PDF) donde se vea la fecha, el número de referencia y el valor del movimiento.',
@@ -71,8 +70,8 @@ export class PagosService {
     const existente = await this.prisma.pago.findUnique({
       where: { procedimientoId },
     });
-    // Un pago Rechazado permite volver a registrar uno nuevo (Adenda
-    // 2026-08-05); solo se bloquea si ya hay uno Pendiente o Verificado.
+    // Un pago Rechazado permite volver a registrar uno nuevo; solo se
+    // bloquea si ya hay uno Pendiente o Verificado.
     if (existente && existente.estadoPago !== 'Rechazado') {
       throw new ConflictException(
         'Este procedimiento ya tiene un pago registrado. Consulte su estado en vez de crear uno nuevo.',
@@ -88,10 +87,7 @@ export class PagosService {
     const rutaComprobante = this.guardarComprobante(procedimientoId, comprobante);
 
     const datos = {
-      fechaPago: new Date(dto.fechaPago),
       valor,
-      medioPago: dto.medioPago,
-      referenciaPago: dto.referenciaPago,
       comprobantePago: rutaComprobante,
       estadoPago: ESTADO_INICIAL,
     };
@@ -123,12 +119,9 @@ export class PagosService {
   }
 
   /**
-   * Adenda 2026-08-05: los administradores necesitan poder CONSULTAR el
-   * pago (y su comprobante) de procedimientos que no son suyos para
-   * poder revisarlos antes de aprobar/rechazar -- antes solo la acción
-   * de verificar estaba abierta a cualquier procedimiento, pero no la
-   * consulta, así que en la práctica un administrador no podía ver qué
-   * estaba aprobando salvo que fuera dueño del procedimiento.
+   * Los administradores necesitan poder CONSULTAR el pago (y su
+   * comprobante) de procedimientos que no son suyos para poder
+   * revisarlos antes de aprobar/rechazar.
    */
   async obtener(procedimientoId: string, usuarioId: string, rol: string) {
     if (rol === 'ADMINISTRADOR') {
@@ -188,5 +181,27 @@ export class PagosService {
     });
 
     return actualizado;
+  }
+
+  /**
+   * Panel de administración: vista centralizada de todos los pagos
+   * Pendientes de cualquier funcionario, para no tener que entrar
+   * procedimiento por procedimiento a buscarlos.
+   */
+  async listarPendientesAdmin() {
+    return this.prisma.pago.findMany({
+      where: { estadoPago: 'Pendiente' },
+      orderBy: { createdAt: 'asc' },
+      include: {
+        procedimiento: {
+          select: {
+            id: true,
+            numeroInterno: true,
+            tipoProcedimiento: true,
+            usuario: { select: { nombres: true, apellidos: true, correo: true } },
+          },
+        },
+      },
+    });
   }
 }

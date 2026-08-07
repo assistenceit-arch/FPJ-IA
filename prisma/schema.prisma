@@ -55,6 +55,11 @@ model Procedimiento {
   activo        Boolean   @default(true)
   eliminadoEn   DateTime?
 
+  // Adenda 2026-08-06: un administrador puede exonerar un procedimiento
+  // puntual del requisito de pago (ver DocumentosService.verificarPagoAprobado),
+  // para poder generar documentos aunque no haya un pago Verificado.
+  exoneradoPago Boolean @default(false)
+
   usuarioId String // WF-AUT-005: cada usuario ve solo sus procedimientos
   usuario   Usuario @relation(fields: [usuarioId], references: [id])
 
@@ -390,11 +395,12 @@ model Pago {
   procedimientoId String        @unique
   procedimiento   Procedimiento @relation(fields: [procedimientoId], references: [id])
 
-  fechaPago        DateTime
+  // Adenda 2026-08-06: fechaPago/medioPago/referenciaPago se quitan --
+  // a solicitud del usuario, el funcionario ya no diligencia un
+  // formulario de texto, solo adjunta el comprobante y el administrador
+  // lee esos datos directamente del archivo al revisar.
   valor            Decimal
-  medioPago        String
-  referenciaPago   String
-  comprobantePago  String?
+  comprobantePago  String // ahora siempre presente: ruta del archivo adjunto (obligatorio)
   estadoPago       String // Pendiente | Verificado | Rechazado
 
   createdAt DateTime @default(now())

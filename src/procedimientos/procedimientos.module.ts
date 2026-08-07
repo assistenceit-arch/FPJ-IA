@@ -9,6 +9,6 @@ import { AuditoriaModule } from '../auditoria/auditoria.module';
   imports: [PrismaModule, AuditoriaModule],
   controllers: [ProcedimientosController],
   providers: [ProcedimientosService, ProcedimientoAccesoService],
-  exports: [ProcedimientoAccesoService],
+  exports: [ProcedimientosService, ProcedimientoAccesoService],
 })
 export class ProcedimientosModule {}

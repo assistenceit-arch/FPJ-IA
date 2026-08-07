@@ -49,8 +49,18 @@ export class DocumentosService {
    * generación (nunca en la descarga de un documento ya generado ni en
    * el listado — eso sigue disponible siempre).
    */
-  private async verificarPagoAprobado(procedimientoId: string): Promise<void> {
-    const pago = await this.prisma.pago.findUnique({ where: { procedimientoId } });
+  private async verificarPagoAprobado(procedimiento: {
+    id: string;
+    exoneradoPago: boolean;
+  }): Promise<void> {
+    // Adenda 2026-08-06: un administrador puede exonerar puntualmente un
+    // procedimiento del requisito de pago desde el panel de
+    // administración (AdminController.exonerarPago).
+    if (procedimiento.exoneradoPago) return;
+
+    const pago = await this.prisma.pago.findUnique({
+      where: { procedimientoId: procedimiento.id },
+    });
 
     if (!pago) {
       throw new ForbiddenException(
@@ -72,7 +82,7 @@ export class DocumentosService {
     correoUsuario: string,
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
-    await this.verificarPagoAprobado(procedimientoId);
+    await this.verificarPagoAprobado(procedimiento);
 
     const capturado = await this.prisma.capturado.findUnique({
       where: { id: capturadoId },
@@ -176,7 +186,7 @@ export class DocumentosService {
     correoUsuario: string,
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
-    await this.verificarPagoAprobado(procedimientoId);
+    await this.verificarPagoAprobado(procedimiento);
 
     const capturado = await this.prisma.capturado.findUnique({
       where: { id: capturadoId },
@@ -341,7 +351,7 @@ export class DocumentosService {
     aclaraciones: string[] = [],
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
-    await this.verificarPagoAprobado(procedimientoId);
+    await this.verificarPagoAprobado(procedimiento);
 
     const [funcionarioActuante, companeroPatrulla, lugarProcedimiento, actuaciones, capturados] =
       await Promise.all([
@@ -622,7 +632,7 @@ export class DocumentosService {
     correoUsuario: string,
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
-    await this.verificarPagoAprobado(procedimientoId);
+    await this.verificarPagoAprobado(procedimiento);
 
     const elemento = await this.prisma.elementoIncautado.findUnique({
       where: { id: elementoId },
@@ -759,7 +769,7 @@ export class DocumentosService {
     correoUsuario: string,
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
-    await this.verificarPagoAprobado(procedimientoId);
+    await this.verificarPagoAprobado(procedimiento);
 
     const elemento = await this.prisma.elementoIncautado.findUnique({
       where: { id: elementoId },
