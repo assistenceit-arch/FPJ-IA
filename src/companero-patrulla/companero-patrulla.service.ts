@@ -27,6 +27,7 @@ export class CompaneroPatrullaService {
     correoUsuario: string,
   ) {
     await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.acceso.verificarNoBloqueado(procedimientoId);
 
     const existente = await this.prisma.companeroPatrulla.findUnique({
       where: { procedimientoId },

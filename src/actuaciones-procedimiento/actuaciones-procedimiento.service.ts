@@ -44,6 +44,7 @@ export class ActuacionesProcedimientoService {
       procedimientoId,
       usuarioId,
     );
+    await this.acceso.verificarNoBloqueado(procedimientoId);
 
     // La captura/aprehensión se materializa en el momento en que se leen
     // los derechos: la hora de captura del procedimiento se sincroniza

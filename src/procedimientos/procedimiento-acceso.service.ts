@@ -48,4 +48,27 @@ export class ProcedimientoAccesoService {
     }
     return procedimiento;
   }
+
+  /**
+   * Adenda 2026-08-06: en cuanto un procedimiento generó al menos UN
+   * documento oficial, se congela toda la información base (funcionario,
+   * compañero, lugar, intervinientes, elementos, actuaciones, puesta a
+   * disposición) -- de lo contrario un funcionario podía editar los
+   * datos y volver a generar documentos con contenido distinto al que
+   * ya se usó oficialmente. Solo queda disponible descargar lo ya
+   * generado y generar documentos que NUNCA se hayan generado antes
+   * (ej. el FPJ-6 de un segundo interviniente), ya que la información
+   * de la que dependen quedó congelada y por lo tanto sigue siendo
+   * consistente -- ver DocumentosService para esa segunda regla.
+   */
+  async verificarNoBloqueado(procedimientoId: string) {
+    const cantidadGenerados = await this.prisma.documentoGenerado.count({
+      where: { procedimientoId },
+    });
+    if (cantidadGenerados > 0) {
+      throw new ForbiddenException(
+        'Este procedimiento ya generó documentos oficiales y quedó bloqueado para edición. Solo se pueden descargar los documentos existentes.',
+      );
+    }
+  }
 }

@@ -35,6 +35,23 @@ export class FuncionarioActuanteService {
     return procedimiento;
   }
 
+  /**
+   * Adenda 2026-08-06: en cuanto el procedimiento generó al menos un
+   * documento oficial, se congela esta información -- de lo contrario
+   * se podía editar y volver a generar documentos con contenido
+   * distinto al ya usado oficialmente.
+   */
+  private async verificarNoBloqueado(procedimientoId: string) {
+    const cantidadGenerados = await this.prisma.documentoGenerado.count({
+      where: { procedimientoId },
+    });
+    if (cantidadGenerados > 0) {
+      throw new ForbiddenException(
+        'Este procedimiento ya generó documentos oficiales y quedó bloqueado para edición. Solo se pueden descargar los documentos existentes.',
+      );
+    }
+  }
+
   async obtener(procedimientoId: string, usuarioId: string) {
     await this.verificarProcedimiento(procedimientoId, usuarioId);
 
@@ -54,6 +71,7 @@ export class FuncionarioActuanteService {
     correoUsuario: string,
   ) {
     await this.verificarProcedimiento(procedimientoId, usuarioId);
+    await this.verificarNoBloqueado(procedimientoId);
 
     const existente = await this.prisma.funcionarioActuante.findUnique({
       where: { procedimientoId },

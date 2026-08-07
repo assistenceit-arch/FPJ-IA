@@ -100,6 +100,24 @@ export class ProcedimientosService {
   }
 
   /**
+   * Adenda 2026-08-06: en cuanto el procedimiento generó al menos un
+   * documento oficial, se congela también la edición de sus propios
+   * campos (ej. puesta a disposición) -- ver el mismo criterio en
+   * ProcedimientoAccesoService.verificarNoBloqueado, usado por el resto
+   * de submódulos.
+   */
+  private async verificarNoBloqueado(procedimientoId: string) {
+    const cantidadGenerados = await this.prisma.documentoGenerado.count({
+      where: { procedimientoId },
+    });
+    if (cantidadGenerados > 0) {
+      throw new ForbiddenException(
+        'Este procedimiento ya generó documentos oficiales y quedó bloqueado para edición. Solo se pueden descargar los documentos existentes.',
+      );
+    }
+  }
+
+  /**
    * Replica en el backend el mismo criterio de "completo" que ya usa el
    * frontend (src/lib/estados.ts) para pintar los 8 puntos de color del
    * menú lateral, para no depender de que el cliente reporte
@@ -231,6 +249,7 @@ export class ProcedimientosService {
     correoUsuario: string,
   ) {
     const existente = await this.findOne(id, usuarioId);
+    await this.verificarNoBloqueado(id);
 
     // Adenda 2026-08-04: la puesta a disposición también puede llegar
     // por aquí (PATCH /procedimientos/:id, desde el formulario de

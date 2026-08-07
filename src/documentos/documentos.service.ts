@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -44,6 +45,31 @@ export class DocumentosService {
   ) {}
 
   /**
+   * Adenda 2026-08-06: antes existía soporte deliberado de "regenerar
+   * con versión" (v1, v2, v3... con estado 'Regenerado'), que permitía
+   * editar los datos base y volver a generar un documento distinto al
+   * ya usado oficialmente. El usuario detectó esto como un problema de
+   * integridad real: una vez generado un documento, ya no se puede
+   * regenerar -- solo descargar el existente. Se identifica cada
+   * documento por su tipo + a quién pertenece (capturado, elemento, o
+   * el procedimiento completo en el caso del FPJ-5).
+   */
+  private async verificarDocumentoNoGeneradoAntes(
+    procedimientoId: string,
+    tipoDocumento: string,
+    referencia: { capturadoId?: string; elementoId?: string },
+  ) {
+    const yaGenerado = await this.prisma.documentoGenerado.findFirst({
+      where: { procedimientoId, tipoDocumento, ...referencia },
+    });
+    if (yaGenerado) {
+      throw new ConflictException(
+        `El ${tipoDocumento} ya fue generado para este procedimiento y no se puede regenerar. Descárguelo desde el listado de documentos generados.`,
+      );
+    }
+  }
+
+  /**
    * Adenda 2026-08-05: ningún documento se genera sin un pago verificado
    * para el procedimiento. Se llama al inicio de los 5 métodos de
    * generación (nunca en la descarga de un documento ya generado ni en
@@ -83,6 +109,7 @@ export class DocumentosService {
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
     await this.verificarPagoAprobado(procedimiento);
+    await this.verificarDocumentoNoGeneradoAntes(procedimientoId, 'ACTA', { capturadoId });
 
     const capturado = await this.prisma.capturado.findUnique({
       where: { id: capturadoId },
@@ -187,6 +214,7 @@ export class DocumentosService {
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
     await this.verificarPagoAprobado(procedimiento);
+    await this.verificarDocumentoNoGeneradoAntes(procedimientoId, 'FPJ6', { capturadoId });
 
     const capturado = await this.prisma.capturado.findUnique({
       where: { id: capturadoId },
@@ -352,6 +380,7 @@ export class DocumentosService {
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
     await this.verificarPagoAprobado(procedimiento);
+    await this.verificarDocumentoNoGeneradoAntes(procedimientoId, 'FPJ5', {});
 
     const [funcionarioActuante, companeroPatrulla, lugarProcedimiento, actuaciones, capturados] =
       await Promise.all([
@@ -634,6 +663,7 @@ export class DocumentosService {
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
     await this.verificarPagoAprobado(procedimiento);
+    await this.verificarDocumentoNoGeneradoAntes(procedimientoId, 'FPJ7', { elementoId });
 
     const elemento = await this.prisma.elementoIncautado.findUnique({
       where: { id: elementoId },
@@ -771,6 +801,7 @@ export class DocumentosService {
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
     await this.verificarPagoAprobado(procedimiento);
+    await this.verificarDocumentoNoGeneradoAntes(procedimientoId, 'FPJ8', { elementoId });
 
     const elemento = await this.prisma.elementoIncautado.findUnique({
       where: { id: elementoId },
