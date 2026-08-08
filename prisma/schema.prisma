@@ -452,6 +452,21 @@ model ConfiguracionPagos {
   id             String   @id @default(uuid())
   valorEstandar  Decimal
   valorComplejo  Decimal
+
+  // Adenda 2026-08-07: métodos de pago que se muestran al funcionario en
+  // el Bloque 8, cada uno con su propio interruptor de habilitado/
+  // deshabilitado y sus datos editables desde el panel de administración.
+  nequiHabilitado Boolean @default(false)
+  nequiNumero     String?
+
+  cuentaHabilitada Boolean @default(false)
+  cuentaBanco      String?
+  cuentaTipo       String? // Ahorros | Corriente
+  cuentaNumero     String?
+
+  tarjetaHabilitada    Boolean @default(false)
+  tarjetaInstrucciones String?
+
   actualizadoPor String
   updatedAt      DateTime @updatedAt
 

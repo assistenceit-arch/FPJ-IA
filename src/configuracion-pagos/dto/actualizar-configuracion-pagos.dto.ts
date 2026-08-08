@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, Min } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class ActualizarConfiguracionPagosDto {
   @IsNotEmpty()
@@ -10,4 +10,42 @@ export class ActualizarConfiguracionPagosDto {
   @IsNumber()
   @Min(0)
   valorComplejo!: number;
+
+  // Adenda 2026-08-07: métodos de pago mostrados al funcionario en el
+  // Bloque 8, cada uno con su propio interruptor de habilitado/
+  // deshabilitado. Los datos (número, banco, etc.) son opcionales incluso
+  // si el método está habilitado -- el backend no obliga a llenarlos,
+  // pero un método habilitado sin datos no tendría sentido mostrarlo, así
+  // que esa validación queda del lado del frontend.
+  @IsOptional()
+  @IsBoolean()
+  nequiHabilitado?: boolean;
+
+  @IsOptional()
+  @IsString()
+  nequiNumero?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  cuentaHabilitada?: boolean;
+
+  @IsOptional()
+  @IsString()
+  cuentaBanco?: string;
+
+  @IsOptional()
+  @IsString()
+  cuentaTipo?: string;
+
+  @IsOptional()
+  @IsString()
+  cuentaNumero?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  tarjetaHabilitada?: boolean;
+
+  @IsOptional()
+  @IsString()
+  tarjetaInstrucciones?: string;
 }
