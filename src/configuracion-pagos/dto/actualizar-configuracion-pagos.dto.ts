@@ -48,4 +48,14 @@ export class ActualizarConfiguracionPagosDto {
   @IsOptional()
   @IsString()
   tarjetaInstrucciones?: string;
+
+  // Adenda 2026-08-08: contacto de asesoría para procedimientos
+  // complejos, mostrado en el Bloque 8 tras adjuntar el comprobante.
+  @IsOptional()
+  @IsString()
+  contactoTelefono?: string;
+
+  @IsOptional()
+  @IsString()
+  contactoCorreo?: string;
 }

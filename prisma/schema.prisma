@@ -467,6 +467,12 @@ model ConfiguracionPagos {
   tarjetaHabilitada    Boolean @default(false)
   tarjetaInstrucciones String?
 
+  // Adenda 2026-08-08: datos de contacto que se muestran al funcionario
+  // en el Bloque 8 tras adjuntar el comprobante en un procedimiento
+  // COMPLEJO ("si un asesor no te ha contactado en 15 minutos...").
+  contactoTelefono String?
+  contactoCorreo   String?
+
   actualizadoPor String
   updatedAt      DateTime @updatedAt
 

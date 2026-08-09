@@ -188,6 +188,13 @@ export class PagosService {
    * Pendientes de cualquier funcionario, para no tener que entrar
    * procedimiento por procedimiento a buscarlos.
    */
+  /**
+   * Panel de administración: vista centralizada de todos los pagos
+   * Pendientes de cualquier funcionario, para no tener que entrar
+   * procedimiento por procedimiento a buscarlos. Incluye los datos de
+   * contacto del funcionario (Adenda 2026-08-08: necesarios para que un
+   * asesor pueda comunicarse tras aprobar un procedimiento COMPLEJO).
+   */
   async listarPendientesAdmin() {
     return this.prisma.pago.findMany({
       where: { estadoPago: 'Pendiente' },
@@ -198,7 +205,7 @@ export class PagosService {
             id: true,
             numeroInterno: true,
             tipoProcedimiento: true,
-            usuario: { select: { nombres: true, apellidos: true, correo: true } },
+            usuario: { select: { nombres: true, apellidos: true, correo: true, telefono: true } },
           },
         },
       },
