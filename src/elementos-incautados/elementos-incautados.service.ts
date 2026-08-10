@@ -103,6 +103,7 @@ export class ElementosIncautadosService {
   ) {
     await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
     await this.acceso.verificarNoBloqueado(procedimientoId);
+    await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
     await this.verificarCapturado(procedimientoId, capturadoId);
 
     const descripcionBase = this.construirDescripcionBase(dto);
@@ -180,6 +181,7 @@ export class ElementosIncautadosService {
   ) {
     await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
     await this.acceso.verificarNoBloqueado(procedimientoId);
+    await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
     await this.verificarCapturado(procedimientoId, capturadoId);
     await this.obtenerElementoOFallar(capturadoId, elementoId);
 

@@ -120,6 +120,7 @@ export class CapturadosService {
   ) {
     await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
     await this.acceso.verificarNoBloqueado(procedimientoId);
+    await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
 
     // El DTO ya obliga (vía @ValidateIf) a que venga fechaNacimiento o
     // edadManual, así que resolverEdadYTipo nunca debería devolver null
@@ -181,6 +182,7 @@ export class CapturadosService {
   ) {
     await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
     await this.acceso.verificarNoBloqueado(procedimientoId);
+    await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
     const existente = await this.obtenerCapturadoOFallar(procedimientoId, capturadoId);
 
     // Si el DTO no trae fechaNacimiento ni edadManual, se conserva lo que
@@ -235,6 +237,7 @@ export class CapturadosService {
   ) {
     await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
     await this.acceso.verificarNoBloqueado(procedimientoId);
+    await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
     await this.obtenerCapturadoOFallar(procedimientoId, capturadoId);
 
     const [elementos, documentos] = await Promise.all([
@@ -285,6 +288,7 @@ export class CapturadosService {
   ) {
     await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
     await this.acceso.verificarNoBloqueado(procedimientoId);
+    await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
     await this.obtenerCapturadoOFallar(procedimientoId, capturadoId);
 
     const existente = await this.prisma.contactoNotificacion.findUnique({

@@ -118,6 +118,27 @@ export class ProcedimientosService {
   }
 
   /**
+   * Adenda 2026-08-08: en un procedimiento COMPLEJO, los Bloques 1 a 7
+   * quedan deshabilitados hasta que un administrador verifique el pago.
+   * Aquí cubre la puesta a disposición (parte del Bloque 5), que se
+   * guarda a través de este mismo endpoint.
+   */
+  private async verificarPagoComplejoAprobado(procedimientoId: string) {
+    const procedimiento = await this.prisma.procedimiento.findUnique({
+      where: { id: procedimientoId },
+    });
+    if (!procedimiento) return;
+    if (procedimiento.tipoProcedimiento !== 'COMPLEJO' || procedimiento.exoneradoPago) return;
+
+    const pago = await this.prisma.pago.findUnique({ where: { procedimientoId } });
+    if (!pago || pago.estadoPago !== 'Verificado') {
+      throw new ForbiddenException(
+        'Este es un procedimiento complejo: debe quedar el pago Verificado por un administrador antes de poder diligenciar el resto de la información. Adjunte el comprobante en el Bloque 8.',
+      );
+    }
+  }
+
+  /**
    * Replica en el backend el mismo criterio de "completo" que ya usa el
    * frontend (src/lib/estados.ts) para pintar los 8 puntos de color del
    * menú lateral, para no depender de que el cliente reporte
@@ -250,6 +271,7 @@ export class ProcedimientosService {
   ) {
     const existente = await this.findOne(id, usuarioId);
     await this.verificarNoBloqueado(id);
+    await this.verificarPagoComplejoAprobado(id);
 
     // Adenda 2026-08-04: la puesta a disposición también puede llegar
     // por aquí (PATCH /procedimientos/:id, desde el formulario de

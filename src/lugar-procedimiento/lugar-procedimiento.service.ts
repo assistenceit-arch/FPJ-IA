@@ -28,6 +28,7 @@ export class LugarProcedimientoService {
   ) {
     await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
     await this.acceso.verificarNoBloqueado(procedimientoId);
+    await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
 
     const existente = await this.prisma.lugarProcedimiento.findUnique({
       where: { procedimientoId },

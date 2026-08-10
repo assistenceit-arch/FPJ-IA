@@ -71,4 +71,32 @@ export class ProcedimientoAccesoService {
       );
     }
   }
+
+  /**
+   * Adenda 2026-08-08: en un procedimiento COMPLEJO, los Bloques 1 a 7
+   * (todo salvo el propio Bloque 8 de Pago) quedan deshabilitados hasta
+   * que un administrador verifique el pago -- el procedimiento requiere
+   * asesoría especializada antes de continuar. No aplica a procedimientos
+   * ESTANDAR (se pueden diligenciar libremente antes de pagar; solo la
+   * generación de documentos exige pago Verificado, ver
+   * DocumentosService.verificarPagoAprobado) ni a procedimientos
+   * exonerados por un administrador.
+   */
+  async verificarPagoComplejoAprobado(procedimientoId: string) {
+    const procedimiento = await this.prisma.procedimiento.findUnique({
+      where: { id: procedimientoId },
+    });
+    if (!procedimiento) return; // verificarPropiedad/verificarExiste ya lo habría atrapado antes
+
+    if (procedimiento.tipoProcedimiento !== 'COMPLEJO' || procedimiento.exoneradoPago) {
+      return;
+    }
+
+    const pago = await this.prisma.pago.findUnique({ where: { procedimientoId } });
+    if (!pago || pago.estadoPago !== 'Verificado') {
+      throw new ForbiddenException(
+        'Este es un procedimiento complejo: debe quedar el pago Verificado por un administrador antes de poder diligenciar el resto de la información. Adjunte el comprobante en el Bloque 8.',
+      );
+    }
+  }
 }
