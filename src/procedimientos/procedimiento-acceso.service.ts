@@ -14,8 +14,13 @@ export class ProcedimientoAccesoService {
    * pertenece al usuario autenticado (WF-AUT-005). Usado por todos los
    * submódulos que cuelgan de un procedimiento (funcionario, compañero,
    * lugar, capturados, elementos, actuaciones).
+   *
+   * Adenda 2026-08-08: si el usuario autenticado es ADMINISTRADOR, se
+   * omite la verificación de propiedad -- un administrador puede entrar
+   * a cualquier procedimiento de cualquier funcionario para revisarlo o
+   * resolver un inconveniente directamente, no solo a los suyos.
    */
-  async verificarPropiedad(procedimientoId: string, usuarioId: string) {
+  async verificarPropiedad(procedimientoId: string, usuarioId: string, rol?: string) {
     const procedimiento = await this.prisma.procedimiento.findUnique({
       where: { id: procedimientoId },
     });
@@ -23,7 +28,7 @@ export class ProcedimientoAccesoService {
     if (!procedimiento || !procedimiento.activo) {
       throw new NotFoundException('Procedimiento no encontrado');
     }
-    if (procedimiento.usuarioId !== usuarioId) {
+    if (rol !== 'ADMINISTRADOR' && procedimiento.usuarioId !== usuarioId) {
       throw new ForbiddenException(
         'No tiene autorización para modificar este procedimiento.',
       );

@@ -28,7 +28,7 @@ export class CapturadosController {
     @Body() dto: CrearCapturadoDto,
     @CurrentUser() usuario: JwtPayload,
   ) {
-    return this.service.crear(procedimientoId, dto, usuario.sub, usuario.correo);
+    return this.service.crear(procedimientoId, dto, usuario.sub, usuario.correo, usuario.rol);
   }
 
   @Get()
@@ -36,7 +36,7 @@ export class CapturadosController {
     @Param('procedimientoId') procedimientoId: string,
     @CurrentUser() usuario: JwtPayload,
   ) {
-    return this.service.listar(procedimientoId, usuario.sub);
+    return this.service.listar(procedimientoId, usuario.sub, usuario.rol);
   }
 
   @Get(':capturadoId')
@@ -45,7 +45,7 @@ export class CapturadosController {
     @Param('capturadoId') capturadoId: string,
     @CurrentUser() usuario: JwtPayload,
   ) {
-    return this.service.obtener(procedimientoId, capturadoId, usuario.sub);
+    return this.service.obtener(procedimientoId, capturadoId, usuario.sub, usuario.rol);
   }
 
   @Patch(':capturadoId')
@@ -61,6 +61,7 @@ export class CapturadosController {
       dto,
       usuario.sub,
       usuario.correo,
+      usuario.rol,
     );
   }
 
@@ -70,7 +71,7 @@ export class CapturadosController {
     @Param('capturadoId') capturadoId: string,
     @CurrentUser() usuario: JwtPayload,
   ) {
-    return this.service.eliminar(procedimientoId, capturadoId, usuario.sub, usuario.correo);
+    return this.service.eliminar(procedimientoId, capturadoId, usuario.sub, usuario.correo, usuario.rol);
   }
 
   @Get(':capturadoId/contacto-notificacion')
@@ -79,7 +80,7 @@ export class CapturadosController {
     @Param('capturadoId') capturadoId: string,
     @CurrentUser() usuario: JwtPayload,
   ) {
-    return this.service.obtenerContacto(procedimientoId, capturadoId, usuario.sub);
+    return this.service.obtenerContacto(procedimientoId, capturadoId, usuario.sub, usuario.rol);
   }
 
   @Put(':capturadoId/contacto-notificacion')
@@ -95,6 +96,7 @@ export class CapturadosController {
       dto,
       usuario.sub,
       usuario.correo,
+      usuario.rol,
     );
   }
 }

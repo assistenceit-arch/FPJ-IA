@@ -106,8 +106,9 @@ export class DocumentosService {
     capturadoId: string,
     usuarioId: string,
     correoUsuario: string,
+    rol?: string,
   ) {
-    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.verificarPagoAprobado(procedimiento);
     await this.verificarDocumentoNoGeneradoAntes(procedimientoId, 'ACTA', { capturadoId });
 
@@ -211,8 +212,9 @@ export class DocumentosService {
     capturadoId: string,
     usuarioId: string,
     correoUsuario: string,
+    rol?: string,
   ) {
-    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.verificarPagoAprobado(procedimiento);
     await this.verificarDocumentoNoGeneradoAntes(procedimientoId, 'FPJ6', { capturadoId });
 
@@ -377,8 +379,9 @@ export class DocumentosService {
     usuarioId: string,
     correoUsuario: string,
     aclaraciones: string[] = [],
+    rol?: string,
   ) {
-    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.verificarPagoAprobado(procedimiento);
     await this.verificarDocumentoNoGeneradoAntes(procedimientoId, 'FPJ5', {});
 
@@ -660,8 +663,9 @@ export class DocumentosService {
     elementoId: string,
     usuarioId: string,
     correoUsuario: string,
+    rol?: string,
   ) {
-    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.verificarPagoAprobado(procedimiento);
     await this.verificarDocumentoNoGeneradoAntes(procedimientoId, 'FPJ7', { elementoId });
 
@@ -798,8 +802,9 @@ export class DocumentosService {
     elementoId: string,
     usuarioId: string,
     correoUsuario: string,
+    rol?: string,
   ) {
-    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.verificarPagoAprobado(procedimiento);
     await this.verificarDocumentoNoGeneradoAntes(procedimientoId, 'FPJ8', { elementoId });
 
@@ -872,14 +877,14 @@ export class DocumentosService {
     return documentoGenerado;
   }
 
-  async obtenerArchivo(documentoId: string, usuarioId: string) {
+  async obtenerArchivo(documentoId: string, usuarioId: string, rol?: string) {
     const documento = await this.prisma.documentoGenerado.findUnique({
       where: { id: documentoId },
     });
     if (!documento) {
       throw new NotFoundException('Documento no encontrado.');
     }
-    await this.acceso.verificarPropiedad(documento.procedimientoId, usuarioId);
+    await this.acceso.verificarPropiedad(documento.procedimientoId, usuarioId, rol);
 
     if (!fs.existsSync(documento.rutaArchivo)) {
       throw new NotFoundException('El archivo físico del documento no existe en el servidor.');
@@ -888,8 +893,8 @@ export class DocumentosService {
     return documento;
   }
 
-  async listar(procedimientoId: string, usuarioId: string) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+  async listar(procedimientoId: string, usuarioId: string, rol?: string) {
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     return this.prisma.documentoGenerado.findMany({
       where: { procedimientoId },
       orderBy: { fechaGeneracion: 'desc' },

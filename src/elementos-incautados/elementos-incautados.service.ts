@@ -100,8 +100,9 @@ export class ElementosIncautadosService {
     dto: CrearElementoDto,
     usuarioId: string,
     correoUsuario: string,
+    rol?: string,
   ) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
     await this.verificarCapturado(procedimientoId, capturadoId);
@@ -139,8 +140,8 @@ export class ElementosIncautadosService {
     return elemento;
   }
 
-  async listar(procedimientoId: string, capturadoId: string, usuarioId: string) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+  async listar(procedimientoId: string, capturadoId: string, usuarioId: string, rol?: string) {
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.verificarCapturado(procedimientoId, capturadoId);
 
     return this.prisma.elementoIncautado.findMany({
@@ -160,8 +161,9 @@ export class ElementosIncautadosService {
     capturadoId: string,
     elementoId: string,
     usuarioId: string,
+    rol?: string,
   ) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.verificarCapturado(procedimientoId, capturadoId);
     return this.obtenerElementoOFallar(capturadoId, elementoId);
   }
@@ -178,8 +180,9 @@ export class ElementosIncautadosService {
     elementoId: string,
     usuarioId: string,
     correoUsuario: string,
+    rol?: string,
   ) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
     await this.verificarCapturado(procedimientoId, capturadoId);

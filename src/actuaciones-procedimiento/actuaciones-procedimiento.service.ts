@@ -13,10 +13,11 @@ export class ActuacionesProcedimientoService {
     private readonly acceso: ProcedimientoAccesoService,
   ) {}
 
-  async obtener(procedimientoId: string, usuarioId: string) {
+  async obtener(procedimientoId: string, usuarioId: string, rol?: string) {
     const procedimiento = await this.acceso.verificarPropiedad(
       procedimientoId,
       usuarioId,
+      rol,
     );
 
     const actuaciones = await this.prisma.actuacionesProcedimiento.findUnique({
@@ -39,10 +40,12 @@ export class ActuacionesProcedimientoService {
     dto: GuardarActuacionesDto,
     usuarioId: string,
     correoUsuario: string,
+    rol?: string,
   ) {
     const procedimiento = await this.acceso.verificarPropiedad(
       procedimientoId,
       usuarioId,
+      rol,
     );
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);

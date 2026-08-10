@@ -23,7 +23,7 @@ export class CompaneroPatrullaController {
     @Param('procedimientoId') procedimientoId: string,
     @CurrentUser() usuario: JwtPayload,
   ) {
-    return this.service.obtener(procedimientoId, usuario.sub);
+    return this.service.obtener(procedimientoId, usuario.sub, usuario.rol);
   }
 
   @Put()
@@ -32,7 +32,7 @@ export class CompaneroPatrullaController {
     @Body() dto: GuardarCompaneroPatrullaDto,
     @CurrentUser() usuario: JwtPayload,
   ) {
-    return this.service.guardar(procedimientoId, dto, usuario.sub, usuario.correo);
+    return this.service.guardar(procedimientoId, dto, usuario.sub, usuario.correo, usuario.rol);
   }
 
   // UI-015: el compañero de patrulla es opcional; permite retirarlo si se
@@ -42,6 +42,6 @@ export class CompaneroPatrullaController {
     @Param('procedimientoId') procedimientoId: string,
     @CurrentUser() usuario: JwtPayload,
   ) {
-    return this.service.eliminar(procedimientoId, usuario.sub, usuario.correo);
+    return this.service.eliminar(procedimientoId, usuario.sub, usuario.correo, usuario.rol);
   }
 }

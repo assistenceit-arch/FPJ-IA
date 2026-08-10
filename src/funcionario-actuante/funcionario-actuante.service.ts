@@ -18,8 +18,11 @@ export class FuncionarioActuanteService {
    * Confirma que el procedimiento existe, está activo y pertenece al
    * usuario autenticado. Reutilizado por todos los submódulos del
    * procedimiento (funcionario, compañero, lugar, capturados, etc.).
+   *
+   * Adenda 2026-08-08: un ADMINISTRADOR puede entrar a cualquier
+   * procedimiento, no solo a los propios.
    */
-  private async verificarProcedimiento(procedimientoId: string, usuarioId: string) {
+  private async verificarProcedimiento(procedimientoId: string, usuarioId: string, rol?: string) {
     const procedimiento = await this.prisma.procedimiento.findUnique({
       where: { id: procedimientoId },
     });
@@ -27,7 +30,7 @@ export class FuncionarioActuanteService {
     if (!procedimiento || !procedimiento.activo) {
       throw new NotFoundException('Procedimiento no encontrado');
     }
-    if (procedimiento.usuarioId !== usuarioId) {
+    if (rol !== 'ADMINISTRADOR' && procedimiento.usuarioId !== usuarioId) {
       throw new ForbiddenException(
         'No tiene autorización para modificar este procedimiento.',
       );
@@ -71,8 +74,8 @@ export class FuncionarioActuanteService {
     }
   }
 
-  async obtener(procedimientoId: string, usuarioId: string) {
-    await this.verificarProcedimiento(procedimientoId, usuarioId);
+  async obtener(procedimientoId: string, usuarioId: string, rol?: string) {
+    await this.verificarProcedimiento(procedimientoId, usuarioId, rol);
 
     return this.prisma.funcionarioActuante.findUnique({
       where: { procedimientoId },
@@ -88,8 +91,9 @@ export class FuncionarioActuanteService {
     dto: GuardarFuncionarioActuanteDto,
     usuarioId: string,
     correoUsuario: string,
+    rol?: string,
   ) {
-    await this.verificarProcedimiento(procedimientoId, usuarioId);
+    await this.verificarProcedimiento(procedimientoId, usuarioId, rol);
     await this.verificarNoBloqueado(procedimientoId);
     await this.verificarPagoComplejoAprobado(procedimientoId);
 

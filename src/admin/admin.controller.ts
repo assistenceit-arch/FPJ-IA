@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { ProcedimientosService } from '../procedimientos/procedimientos.service';
 import { PagosService } from '../pagos/pagos.service';
 import { UsuariosService } from '../usuarios/usuarios.service';
@@ -43,6 +43,13 @@ export class AdminController {
     return this.procedimientosService.exonerarPago(id, dto.exonerado, usuario.correo);
   }
 
+  // RT-006/RI-005: eliminación lógica; el servicio ya rechaza si el
+  // procedimiento tiene documentos generados.
+  @Delete('procedimientos/:id')
+  eliminarProcedimiento(@Param('id') id: string, @CurrentUser() usuario: JwtPayload) {
+    return this.procedimientosService.remove(id, usuario.sub, usuario.correo, usuario.rol);
+  }
+
   // ── Pagos ──
 
   @Get('pagos/pendientes')
@@ -65,5 +72,12 @@ export class AdminController {
   @Patch('usuarios/:id/estado')
   cambiarEstado(@Param('id') id: string, @Body() dto: CambiarEstadoDto) {
     return this.usuariosService.cambiarEstado(id, dto.activo);
+  }
+
+  // RT-006/AT-005: eliminación lógica; el servicio ya protege que no
+  // quede el sistema sin ningún administrador activo.
+  @Delete('usuarios/:id')
+  eliminarUsuario(@Param('id') id: string) {
+    return this.usuariosService.eliminar(id);
   }
 }

@@ -66,7 +66,7 @@ export class ProcedimientosService {
     });
   }
 
-  async findOne(id: string, usuarioId: string) {
+  async findOne(id: string, usuarioId: string, rol?: string) {
     const procedimiento = await this.prisma.procedimiento.findUnique({
       where: { id },
     });
@@ -74,7 +74,7 @@ export class ProcedimientosService {
     if (!procedimiento || !procedimiento.activo) {
       throw new NotFoundException('Procedimiento no encontrado');
     }
-    this.verificarPropiedad(procedimiento, usuarioId);
+    this.verificarPropiedad(procedimiento, usuarioId, rol);
 
     // Adenda 2026-08-06: "Borrador"/"Finalizado" se recalcula cada vez
     // que se consulta el procedimiento (patrón "recompute-on-read"),
@@ -268,8 +268,9 @@ export class ProcedimientosService {
     dto: UpdateProcedimientoDto,
     usuarioId: string,
     correoUsuario: string,
+    rol?: string,
   ) {
-    const existente = await this.findOne(id, usuarioId);
+    const existente = await this.findOne(id, usuarioId, rol);
     await this.verificarNoBloqueado(id);
     await this.verificarPagoComplejoAprobado(id);
 
@@ -315,9 +316,14 @@ export class ProcedimientosService {
   /**
    * RT-006 / AT-005: eliminación lógica, nunca física.
    * RI-005: no puede eliminarse un procedimiento con documentos generados.
+   * Adenda 2026-08-08: un ADMINISTRADOR puede eliminar el procedimiento
+   * de cualquier funcionario (mismo bypass de propiedad), pero la
+   * restricción de RI-005 (no eliminar si ya generó documentos) aplica
+   * igual, incluso para administradores -- se preserva el registro
+   * oficial ya emitido.
    */
-  async remove(id: string, usuarioId: string, correoUsuario: string) {
-    const existente = await this.findOne(id, usuarioId);
+  async remove(id: string, usuarioId: string, correoUsuario: string, rol?: string) {
+    const existente = await this.findOne(id, usuarioId, rol);
 
     const documentosGenerados = await this.prisma.documentoGenerado.count({
       where: { procedimientoId: existente.id },
@@ -348,8 +354,9 @@ export class ProcedimientosService {
   private verificarPropiedad(
     procedimiento: { usuarioId: string },
     usuarioId: string,
+    rol?: string,
   ) {
-    if (procedimiento.usuarioId !== usuarioId) {
+    if (rol !== 'ADMINISTRADOR' && procedimiento.usuarioId !== usuarioId) {
       throw new ForbiddenException(
         'No tiene autorización para acceder a este procedimiento.',
       );

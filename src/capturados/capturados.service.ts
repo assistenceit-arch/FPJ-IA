@@ -117,8 +117,9 @@ export class CapturadosService {
     dto: CrearCapturadoDto,
     usuarioId: string,
     correoUsuario: string,
+    rol?: string,
   ) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
 
@@ -158,8 +159,8 @@ export class CapturadosService {
     }
   }
 
-  async listar(procedimientoId: string, usuarioId: string) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+  async listar(procedimientoId: string, usuarioId: string, rol?: string) {
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
 
     return this.prisma.capturado.findMany({
       where: { procedimientoId },
@@ -168,8 +169,8 @@ export class CapturadosService {
     });
   }
 
-  async obtener(procedimientoId: string, capturadoId: string, usuarioId: string) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+  async obtener(procedimientoId: string, capturadoId: string, usuarioId: string, rol?: string) {
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     return this.obtenerCapturadoOFallar(procedimientoId, capturadoId);
   }
 
@@ -179,8 +180,9 @@ export class CapturadosService {
     dto: ActualizarCapturadoDto,
     usuarioId: string,
     correoUsuario: string,
+    rol?: string,
   ) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
     const existente = await this.obtenerCapturadoOFallar(procedimientoId, capturadoId);
@@ -234,8 +236,9 @@ export class CapturadosService {
     capturadoId: string,
     usuarioId: string,
     correoUsuario: string,
+    rol?: string,
   ) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
     await this.obtenerCapturadoOFallar(procedimientoId, capturadoId);
@@ -270,8 +273,9 @@ export class CapturadosService {
     procedimientoId: string,
     capturadoId: string,
     usuarioId: string,
+    rol?: string,
   ) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.obtenerCapturadoOFallar(procedimientoId, capturadoId);
 
     return this.prisma.contactoNotificacion.findUnique({
@@ -285,8 +289,9 @@ export class CapturadosService {
     dto: GuardarContactoNotificacionDto,
     usuarioId: string,
     correoUsuario: string,
+    rol?: string,
   ) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
     await this.obtenerCapturadoOFallar(procedimientoId, capturadoId);

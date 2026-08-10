@@ -31,6 +31,7 @@ export class ElementosIncautadosController {
       dto,
       usuario.sub,
       usuario.correo,
+      usuario.rol,
     );
   }
 
@@ -40,7 +41,7 @@ export class ElementosIncautadosController {
     @Param('capturadoId') capturadoId: string,
     @CurrentUser() usuario: JwtPayload,
   ) {
-    return this.service.listar(procedimientoId, capturadoId, usuario.sub);
+    return this.service.listar(procedimientoId, capturadoId, usuario.sub, usuario.rol);
   }
 
   @Get(':elementoId')
@@ -50,7 +51,7 @@ export class ElementosIncautadosController {
     @Param('elementoId') elementoId: string,
     @CurrentUser() usuario: JwtPayload,
   ) {
-    return this.service.obtener(procedimientoId, capturadoId, elementoId, usuario.sub);
+    return this.service.obtener(procedimientoId, capturadoId, elementoId, usuario.sub, usuario.rol);
   }
 
   @Delete(':elementoId')
@@ -66,6 +67,7 @@ export class ElementosIncautadosController {
       elementoId,
       usuario.sub,
       usuario.correo,
+      usuario.rol,
     );
   }
 }

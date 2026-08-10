@@ -37,6 +37,9 @@ export class AuthService {
     // administración) y verificación de correo del registro autónomo.
     // Se comprueban DESPUÉS de validar la contraseña para no revelar si
     // una cuenta existe/está bloqueada a alguien que no la conoce.
+    if (usuario.eliminado) {
+      throw new UnauthorizedException('Correo o contraseña incorrectos');
+    }
     if (!usuario.activo) {
       throw new UnauthorizedException(
         'Tu cuenta ha sido bloqueada. Contacta a un administrador.',

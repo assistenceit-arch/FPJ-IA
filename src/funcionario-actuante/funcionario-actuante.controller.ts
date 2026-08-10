@@ -15,7 +15,7 @@ export class FuncionarioActuanteController {
     @Param('procedimientoId') procedimientoId: string,
     @CurrentUser() usuario: JwtPayload,
   ) {
-    return this.service.obtener(procedimientoId, usuario.sub);
+    return this.service.obtener(procedimientoId, usuario.sub, usuario.rol);
   }
 
   @Put()
@@ -24,6 +24,6 @@ export class FuncionarioActuanteController {
     @Body() dto: GuardarFuncionarioActuanteDto,
     @CurrentUser() usuario: JwtPayload,
   ) {
-    return this.service.guardar(procedimientoId, dto, usuario.sub, usuario.correo);
+    return this.service.guardar(procedimientoId, dto, usuario.sub, usuario.correo, usuario.rol);
   }
 }

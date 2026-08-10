@@ -34,6 +34,13 @@ model Usuario {
   tokenVerificacion       String?   @unique
   tokenVerificacionExpira DateTime?
 
+  // Adenda 2026-08-08: eliminación lógica (RT-006/AT-005, mismo criterio
+  // que Procedimiento) -- deliberadamente separado de `activo`, que ya
+  // se usa para bloqueo/desbloqueo temporal. Un usuario bloqueado sigue
+  // existiendo en el listado; uno eliminado, no.
+  eliminado   Boolean   @default(false)
+  eliminadoEn DateTime?
+
   procedimientos Procedimiento[]
 
   createdAt DateTime @default(now())

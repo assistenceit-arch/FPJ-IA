@@ -147,8 +147,10 @@ export class UsuariosService {
    * sistema, para gestionar roles y bloqueo/desbloqueo de acceso.
    */
   async listarTodos(pagina = 1, porPagina = 10) {
+    const where = { eliminado: false };
     const [datos, total] = await Promise.all([
       this.prisma.usuario.findMany({
+        where,
         select: {
           id: true,
           nombres: true,
@@ -165,7 +167,7 @@ export class UsuariosService {
         skip: (pagina - 1) * porPagina,
         take: porPagina,
       }),
-      this.prisma.usuario.count(),
+      this.prisma.usuario.count({ where }),
     ]);
 
     return { datos, total, pagina, totalPaginas: Math.max(1, Math.ceil(total / porPagina)) };
@@ -225,6 +227,41 @@ export class UsuariosService {
         correo: true,
         rol: true,
         activo: true,
+      },
+    });
+  }
+
+  /**
+   * RT-006/AT-005: eliminación lógica, nunca física -- igual que
+   * Procedimiento. No se toca `activo` (bloqueo), son conceptos
+   * separados; un usuario eliminado simplemente deja de aparecer en el
+   * listado y no puede iniciar sesión (ver AuthService.validarUsuario).
+   * Misma protección que cambiarRol/cambiarEstado: no se puede dejar el
+   * sistema sin ningún administrador activo.
+   */
+  async eliminar(id: string) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { id } });
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado.');
+    }
+    if (usuario.eliminado) {
+      return usuario;
+    }
+
+    if (usuario.rol === 'ADMINISTRADOR' && usuario.activo) {
+      await this.exigirNoEsUltimoAdministrador(id);
+    }
+
+    return this.prisma.usuario.update({
+      where: { id },
+      data: { eliminado: true, eliminadoEn: new Date() },
+      select: {
+        id: true,
+        nombres: true,
+        apellidos: true,
+        correo: true,
+        rol: true,
+        eliminado: true,
       },
     });
   }

@@ -12,8 +12,8 @@ export class LugarProcedimientoService {
     private readonly acceso: ProcedimientoAccesoService,
   ) {}
 
-  async obtener(procedimientoId: string, usuarioId: string) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+  async obtener(procedimientoId: string, usuarioId: string, rol?: string) {
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
 
     return this.prisma.lugarProcedimiento.findUnique({
       where: { procedimientoId },
@@ -25,8 +25,9 @@ export class LugarProcedimientoService {
     dto: GuardarLugarProcedimientoDto,
     usuarioId: string,
     correoUsuario: string,
+    rol?: string,
   ) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
 

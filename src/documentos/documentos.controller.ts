@@ -30,6 +30,7 @@ export class DocumentosController {
       capturadoId,
       usuario.sub,
       usuario.correo,
+      usuario.rol,
     );
   }
 
@@ -44,6 +45,7 @@ export class DocumentosController {
       capturadoId,
       usuario.sub,
       usuario.correo,
+      usuario.rol,
     );
   }
 
@@ -63,6 +65,7 @@ export class DocumentosController {
       usuario.sub,
       usuario.correo,
       dto.aclaraciones ?? [],
+      usuario.rol,
     );
   }
 
@@ -77,6 +80,7 @@ export class DocumentosController {
       elementoId,
       usuario.sub,
       usuario.correo,
+      usuario.rol,
     );
   }
 
@@ -91,6 +95,7 @@ export class DocumentosController {
       elementoId,
       usuario.sub,
       usuario.correo,
+      usuario.rol,
     );
   }
 
@@ -99,7 +104,7 @@ export class DocumentosController {
     @Param('procedimientoId') procedimientoId: string,
     @CurrentUser() usuario: JwtPayload,
   ) {
-    return this.service.listar(procedimientoId, usuario.sub);
+    return this.service.listar(procedimientoId, usuario.sub, usuario.rol);
   }
 
   @Get('documentos/:documentoId/descargar')
@@ -108,7 +113,7 @@ export class DocumentosController {
     @CurrentUser() usuario: JwtPayload,
     @Res() res: Response,
   ) {
-    const documento = await this.service.obtenerArchivo(documentoId, usuario.sub);
+    const documento = await this.service.obtenerArchivo(documentoId, usuario.sub, usuario.rol);
     return res.download(documento.rutaArchivo);
   }
 }

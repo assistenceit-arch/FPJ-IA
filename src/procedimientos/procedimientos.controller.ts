@@ -39,7 +39,7 @@ export class ProcedimientosController {
 
   @Get(':id')
   findOne(@Param('id') id: string, @CurrentUser() usuario: JwtPayload) {
-    return this.procedimientosService.findOne(id, usuario.sub);
+    return this.procedimientosService.findOne(id, usuario.sub, usuario.rol);
   }
 
   @Patch(':id')
@@ -53,11 +53,12 @@ export class ProcedimientosController {
       updateProcedimientoDto,
       usuario.sub,
       usuario.correo,
+      usuario.rol,
     );
   }
 
   @Delete(':id')
   remove(@Param('id') id: string, @CurrentUser() usuario: JwtPayload) {
-    return this.procedimientosService.remove(id, usuario.sub, usuario.correo);
+    return this.procedimientosService.remove(id, usuario.sub, usuario.correo, usuario.rol);
   }
 }

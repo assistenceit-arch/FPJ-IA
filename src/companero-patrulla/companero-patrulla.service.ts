@@ -12,8 +12,8 @@ export class CompaneroPatrullaService {
     private readonly acceso: ProcedimientoAccesoService,
   ) {}
 
-  async obtener(procedimientoId: string, usuarioId: string) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+  async obtener(procedimientoId: string, usuarioId: string, rol?: string) {
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
 
     return this.prisma.companeroPatrulla.findUnique({
       where: { procedimientoId },
@@ -25,8 +25,9 @@ export class CompaneroPatrullaService {
     dto: GuardarCompaneroPatrullaDto,
     usuarioId: string,
     correoUsuario: string,
+    rol?: string,
   ) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
 
@@ -61,8 +62,8 @@ export class CompaneroPatrullaService {
     return resultado;
   }
 
-  async eliminar(procedimientoId: string, usuarioId: string, correoUsuario: string) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
+  async eliminar(procedimientoId: string, usuarioId: string, correoUsuario: string, rol?: string) {
+    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
 
     const existente = await this.prisma.companeroPatrulla.findUnique({
       where: { procedimientoId },
