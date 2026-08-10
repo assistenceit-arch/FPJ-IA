@@ -42,6 +42,7 @@ export class UsuariosService {
         apellidos: createUsuarioDto.apellidos,
         identificacion: createUsuarioDto.identificacion,
         correo: createUsuarioDto.correo,
+        telefono: createUsuarioDto.telefono,
         password: passwordHash,
         rol: createUsuarioDto.rol,
         correoVerificado: true,

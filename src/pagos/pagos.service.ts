@@ -123,13 +123,30 @@ export class PagosService {
    * comprobante) de procedimientos que no son suyos para poder
    * revisarlos antes de aprobar/rechazar.
    */
+  /**
+   * Adenda 2026-08-08: se incluyen los datos del funcionario dueño del
+   * procedimiento (nombres/apellidos/correo/telefono) para que un
+   * administrador los vea también DENTRO del propio Bloque 8 del
+   * procedimiento (antes solo estaban disponibles en el panel
+   * centralizado /admin) -- necesarios para poder contactarlo antes de
+   * aprobar/rechazar, especialmente en procedimientos complejos.
+   */
   async obtener(procedimientoId: string, usuarioId: string, rol: string) {
     if (rol === 'ADMINISTRADOR') {
       await this.acceso.verificarExiste(procedimientoId);
     } else {
       await this.acceso.verificarPropiedad(procedimientoId, usuarioId);
     }
-    return this.prisma.pago.findUnique({ where: { procedimientoId } });
+    return this.prisma.pago.findUnique({
+      where: { procedimientoId },
+      include: {
+        procedimiento: {
+          select: {
+            usuario: { select: { nombres: true, apellidos: true, correo: true, telefono: true } },
+          },
+        },
+      },
+    });
   }
 
   async obtenerRutaComprobante(procedimientoId: string, usuarioId: string, rol: string) {
