@@ -91,7 +91,6 @@ model Procedimiento {
   capturados           Capturado[]
   documentosGenerados  DocumentoGenerado[]
   pago                 Pago?
-  asesoriaCompleja     AsesoriaCompleja?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -433,24 +432,6 @@ model Pago {
 // ════════════════════════════════════════
 // ASESORÍA COMPLEJA (1:1 con Procedimiento COMPLEJO) — Adenda V1.1
 // ════════════════════════════════════════
-model AsesoriaCompleja {
-  id String @id @default(uuid())
-
-  procedimientoId String        @unique
-  procedimiento   Procedimiento @relation(fields: [procedimientoId], references: [id])
-
-  numeroTicket        String  @unique // TK-AAAA-CONSECUTIVO (PC-005)
-  motivoConsulta      String // obligatorio (PC-003)
-  observacionesCaso   String?
-  fechaSolicitud      DateTime @default(now())
-  estadoAsesoria      String // Pendiente | En Proceso | Finalizada
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("asesoria_compleja")
-}
-
 // ════════════════════════════════════════
 // CONFIGURACIÓN DE PAGOS (singleton, editable solo por ADMINISTRADOR)
 // PC-004: el valor de la asesoría (y del procedimiento) es configurable.

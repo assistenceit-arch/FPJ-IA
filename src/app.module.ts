@@ -15,7 +15,6 @@ import { LugarProcedimientoModule } from './lugar-procedimiento/lugar-procedimie
 import { CapturadosModule } from './capturados/capturados.module';
 import { ElementosIncautadosModule } from './elementos-incautados/elementos-incautados.module';
 import { ActuacionesProcedimientoModule } from './actuaciones-procedimiento/actuaciones-procedimiento.module';
-import { AsesoriaComplejaModule } from './asesoria-compleja/asesoria-compleja.module';
 import { ConfiguracionPagosModule } from './configuracion-pagos/configuracion-pagos.module';
 import { PagosModule } from './pagos/pagos.module';
 import { DocumentosModule } from './documentos/documentos.module';
@@ -42,7 +41,6 @@ import { AdminModule } from './admin/admin.module';
     CapturadosModule,
     ElementosIncautadosModule,
     ActuacionesProcedimientoModule,
-    AsesoriaComplejaModule,
     ConfiguracionPagosModule,
     PagosModule,
     DocumentosModule,
