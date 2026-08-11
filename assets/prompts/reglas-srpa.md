@@ -76,7 +76,7 @@ Ejemplos válidos:
 
 **6. CONTROL TEMPORAL DE COMUNICACIÓN**
 
-Verificar que la comunicación al acudiente se haya realizado dentro de un tiempo razonable posterior a la aprehensión.
+Verificar que la comunicación al acudiente se haya realizado dentro de un tiempo razonable posterior a la aprehensión, y siempre antes de la hora de puesta a disposición (ver CORE TRANSVERSAL #17.8) — incluida cuando esa hora de comunicación llegue como respuesta a una aclaración solicitada al usuario, verificándola en ese caso contra la hora de puesta a disposición ya conocida, no solo contra la hora de aprehensión.
 
 Si existe una diferencia temporal significativa:
 

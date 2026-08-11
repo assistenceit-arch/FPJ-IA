@@ -210,8 +210,11 @@ Reglas:
 5. Toda inconsistencia temporal que haga imposible o incoherente el procedimiento debe resolverse mediante aclaración antes de generar el informe.
 6. La contención física ante un intento de fuga no equivale a la captura o aprehensión formal.
 7. Debe existir hora de puesta a disposición; demoras superiores a 5 horas requieren justificación.
+8. La hora de comunicación al acudiente o persona informada debe ser anterior a la hora de puesta a disposición. Si resulta posterior, existe una inconsistencia temporal que debe resolverse mediante aclaración antes de generar el informe.
 
-Ejemplos de inconsistencias bloqueantes: captura anterior al inicio del procedimiento; aprehensión anterior a la observación inicial o denuncia; comunicación al acudiente anterior a la aprehensión; hora de captura distinta a la hora de lectura de derechos; hallazgo narrado después de la captura o aprehensión; demora superior a 5 horas sin justificación.
+**Verificación de horas suministradas mediante aclaración.** Cuando una hora llegue como respuesta a una pregunta de aclaración (por ejemplo, la hora de comunicación a un acudiente), no basta con verificar que sea coherente con las demás horas mencionadas dentro de esa misma respuesta o del párrafo donde se inserta: debe verificarse contra **todas** las horas críticas ya conocidas del procedimiento, incluidas las que provienen de datos estructurados suministrados desde el inicio (por ejemplo, la hora de puesta a disposición, que normalmente ya se conoce antes de generar el informe). Antes de incorporar la aclaración y generar el informe, repetir la verificación completa de secuencia cronológica del numeral 4 con el dato nuevo ya incorporado. Si el dato aportado en la aclaración genera una inconsistencia con una hora ya conocida, no incorporarlo sin más: señalar la inconsistencia y solicitar que se resuelva antes de generar el informe.
+
+Ejemplos de inconsistencias bloqueantes: captura anterior al inicio del procedimiento; aprehensión anterior a la observación inicial o denuncia; comunicación al acudiente anterior a la aprehensión; comunicación al acudiente posterior a la puesta a disposición; hora de captura distinta a la hora de lectura de derechos; hallazgo narrado después de la captura o aprehensión; demora superior a 5 horas sin justificación.
 
 # 18. PROCEDIMIENTOS CON MÚLTIPLES INTERVINIENTES Y PROCEDIMIENTOS MIXTOS
 
