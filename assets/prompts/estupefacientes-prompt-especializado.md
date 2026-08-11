@@ -155,6 +155,14 @@ Evitar expresiones como:
 * bajo los parámetros establecidos;
 * para los fines pertinentes.
 
+Evitar también el lenguaje de inferencia o deducción al explicar la
+participación de una persona en los hechos (por ejemplo: "lo cual se
+infiere de...", "lo que permite concluir...", "lo que permite
+inferir..."). El funcionario no infiere ni concluye: narra directamente
+lo que percibió con sus propios sentidos y puede sustentar (lo
+observado, lo hallado). Usar lenguaje de inferencia deja endeble la
+argumentación del funcionario.
+
 **REDACCIÓN DEL PERSONAL POLICIAL INTERVINIENTE**
 
 Cuando se describa el inicio del procedimiento, la redacción deberá identificar de forma natural al compañero de patrulla utilizando su grado, nombre completo y placa policial.

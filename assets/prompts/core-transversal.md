@@ -267,4 +267,14 @@ Todos los módulos de delito deben generar informes:
 
 # NOTA DE IMPLEMENTACIÓN
 
-Los documentos de HURTO (Prompt Especializado, Validaciones, Flujo Operativo, Plantilla y Reglas Complementarias) ya incorporan todos estos criterios. Los documentos de ESTUPEFACIENTES (Prompt Especializado, Validaciones, Flujo Operativo, Plantilla, Reglas-Adultos y Reglas-SRPA) fueron construidos antes de que varias de estas reglas se refinaran durante las pruebas de hurto (numerales 4, 7 —parte de adultos—, 8, 9 —coherencia física y estándar de descripción—, 10, 13 —URI—, 14, 15 y 17 —control de horas críticas ampliado—). Se recomienda actualizar los documentos de ESTUPEFACIENTES para incorporar estos mismos criterios y mantener consistencia entre ambos módulos.
+Los documentos de HURTO y de ESTUPEFACIENTES ya incorporan todos estos
+criterios transversales (verificado el 2026-08-11: coherencia física,
+estándar de descripción de elementos, permiso de porte de armas,
+autoridad competente/URI, hora de puesta a disposición con control de
+demora de 5 horas, y cadena de custodia están presentes en
+estupefacientes-prompt-especializado.md, estupefacientes-validaciones.md
+y estupefacientes-flujo-operativo.md). Los criterios adicionales
+específicos para adolescentes (reincidencia, pertenencia a
+organización delincuencial, distancia de persecución, lesiones con
+traslado médico) viven en reglas-srpa.md, no aquí, por ser exclusivos
+de esa condición jurídica.

@@ -13,13 +13,40 @@ reutilizar). Presta especial atención a:
   interviniente antes del hallazgo.
 - Cómo se narra el registro personal con lateralidad exacta del
   hallazgo.
-- Cómo se conecta el hallazgo con la identificación de la persona y la
-  frase "condición que lo ubica como [adulto capturado / adolescente
-  aprehendido]".
-- Cómo se explica la participación de cada persona con razonamiento
-  ("lo cual se infiere de...") en vez de afirmarla sin sustento.
+- Cómo se conecta el hallazgo con la identificación de la persona y su
+  condición jurídica (ver más abajo "VARIANTES PARA LA CONDICIÓN
+  JURÍDICA" — no repetir siempre la misma fórmula).
+- Cómo se explica la participación de cada persona describiendo
+  directamente lo observado y lo hallado (nunca con lenguaje de
+  inferencia o deducción como "lo cual se infiere de..." o "lo que
+  permite concluir..." — el funcionario narra lo que percibió con sus
+  propios sentidos y puede sustentar, no conclusiones o deducciones,
+  que debilitan la fuerza de su relato).
 - Cómo se individualizan, en el párrafo final, los elementos que quedan
   a disposición de cada autoridad competente, persona por persona.
+
+---
+
+## VARIANTES PARA LA CONDICIÓN JURÍDICA
+
+La frase "condición que lo ubica como adulto capturado / adolescente
+aprehendido" es válida y puede seguir usándose, pero **no debe
+repetirse siempre igual** dentro del mismo informe ni de un informe a
+otro — usada de forma mecánica suena repetitiva. Alternar con
+variantes equivalentes en significado, por ejemplo:
+
+* "condición que lo ubica como adulto capturado" / "...como
+  adolescente aprehendido"
+* "la persona intervenida, por su mayoría de edad, es capturada" /
+  "...por su condición de menor de edad, es aprehendida"
+* "hecho que determina su captura" / "...su aprehensión"
+* "situación jurídica que corresponde a la de adulto capturado" /
+  "...adolescente aprehendido"
+
+Elegir la variante según fluya mejor en el párrafo — no es necesario
+usar siempre la misma en todo el documento. Lo que nunca debe variar
+es la terminología de fondo (capturado/captura para adultos,
+aprehendido/aprehensión para adolescentes — ver CORE TRANSVERSAL #3).
 
 ---
 
@@ -56,12 +83,11 @@ como adolescente aprehendido, siendo las 18:35 horas. Le informé sus
 derechos como adolescente aprehendido, manifestando comprender los
 mismos. Seguidamente me comuniqué con la señora Martha Pérez Gómez,
 madre del adolescente, al número telefónico 3114569874, siendo las
-19:00 horas, quien quedó informada del procedimiento. La participación
-de Kevin Andrés Rojas Pérez se encontraba orientada a la
+19:00 horas, quien quedó informada del procedimiento. La participación de Kevin Andrés Rojas Pérez consistió en la
 comercialización de sustancia estupefaciente mediante entrega directa
-de dosis a consumidores, lo cual se infiere de la observación previa de
-intercambios de paquetes por dinero y del hallazgo de la sustancia
-distribuida en múltiples unidades listas para su entrega. No presentó
+de dosis a consumidores, observada previamente por mí en los
+intercambios de paquetes por dinero y confirmada con el hallazgo de la
+sustancia distribuida en múltiples unidades listas para su entrega. No presentó
 lesiones visibles.
 
 Acto seguido procedí a registrar personalmente a la segunda persona
@@ -81,9 +107,9 @@ mismos. Se intentó establecer comunicación con su acudiente; sin
 embargo, el adolescente manifestó no conocer números telefónicos de sus
 familiares, razón por la cual no fue posible informar a persona alguna.
 La participación de Juan David Ramírez Torres consistió en portar
-sustancia al parecer estupefaciente destinada a comercialización, lo
-cual se infiere de la observación previa del grupo realizando
-transacciones sospechosas y de la cantidad y forma de empaque de la
+sustancia al parecer estupefaciente destinada a comercialización,
+observada previamente por mí en el grupo realizando transacciones
+sospechosas, y confirmada con la cantidad y forma de empaque de la
 sustancia hallada. No presentó novedades físicas.
 
 Procedí igualmente a registrar a la tercera persona intervenida, quien
@@ -105,10 +131,10 @@ derechos, siendo las 18:37 horas. Me comuniqué con la señora Sandra
 León al número telefónico 3209874561, siendo las 19:10 horas, quien
 quedó informada de la situación. La participación de Jhon Fredy Castro
 León consistió en realizar intercambios directos de sustancia
-estupefaciente por dinero con diferentes personas, lo cual se infiere
-de la observación previa de las transacciones y del hallazgo de la
-sustancia en múltiples unidades, el dinero en efectivo y el teléfono
-celular. No presentó lesiones visibles.
+estupefaciente por dinero con diferentes personas, observados
+previamente por mí, y confirmados con el hallazgo de la sustancia en
+múltiples unidades, el dinero en efectivo y el teléfono celular. No
+presentó lesiones visibles.
 
 Finalmente procedí a registrar a la cuarta persona intervenida, quien
 inicialmente intentó ocultar elementos y luego mantuvo comportamiento
@@ -124,8 +150,8 @@ que lo ubica como adulto capturado. Le informé sus derechos, siendo las
 18:38 horas. El señor Vargas Méndez no suministró persona a informar.
 La participación de Carlos Alberto Vargas Méndez consistió en ocultar
 y portar sustancia al parecer estupefaciente destinada a distribución,
-lo cual se infiere de la actitud inicial de ocultamiento observada al
-momento del abordaje y del hallazgo en zona de difícil visualización.
+evidenciada en la actitud inicial de ocultamiento que observé al
+momento del abordaje y en el hallazgo en zona de difícil visualización.
 No presentó lesiones visibles.
 
 Procedí a trasladar en camioneta institucional a los adolescentes
@@ -182,12 +208,12 @@ llamarse RAFAEL ORLANDO GUARNIZO, con cédula de ciudadanía número
 informarle los derechos que le asisten como persona capturada,
 manifestando comprenderlos. Se comunicó telefónicamente a LUISA
 MAHECHA USUGA al número 3202145636, a las 15:40 horas, informándole
-sobre la situación del ciudadano. El ciudadano GUARNIZO realizaba
+sobre la situación del ciudadano. Observé al ciudadano GUARNIZO realizando
 transacciones sospechosas con los transeúntes del sector, y al
 practicársele el registro personal se le halló la sustancia descrita,
-lo que permite concluir su participación en los hechos. No presenta
-lesiones visibles. Refiere dolor en la mano derecha por una caída
-ocurrida el día anterior al procedimiento.
+confirmando su participación en los hechos. No presenta lesiones
+visibles. Refiere dolor en la mano derecha por una caída ocurrida el
+día anterior al procedimiento.
 
 La segunda persona correspondía a un adolescente de contextura
 atlética, tez blanca, estatura aproximada de 1.68 metros, cabello corto
@@ -208,12 +234,11 @@ edad. Siendo las 18:40 horas procedí a informarle los derechos que le
 asisten como adolescente aprehendido, manifestando comprenderlos. Se
 comunicó telefónicamente al señor CARLOS EDUARDO MENDEZ, tío del
 adolescente, al número 3003214521, a las 18:25 horas, informándole
-sobre la situación del adolescente. El adolescente ORTIZ CASABLANCA fue
-observado realizando transacciones sospechosas con los transeúntes del
-sector, y al practicársele el registro personal se le halló la
-sustancia y el teléfono celular descritos, lo que permite concluir su
-participación en los hechos. No presenta lesiones visibles ni
-manifiesta afectación física.
+sobre la situación del adolescente. Observé al adolescente ORTIZ CASABLANCA
+realizando transacciones sospechosas con los transeúntes del sector, y
+al practicársele el registro personal se le halló la sustancia y el
+teléfono celular descritos, confirmando su participación en los
+hechos. No presenta lesiones visibles ni manifiesta afectación física.
 
 Ambas personas fueron trasladadas en vehículo institucional al CAI
 Tintal para el diligenciamiento de la documentación correspondiente.

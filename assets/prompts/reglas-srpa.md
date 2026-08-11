@@ -58,6 +58,7 @@ Verificar:
 
 * nombre del acudiente;
 * parentesco;
+* número de identificación del acudiente, cuando se conozca;
 * teléfono;
 * hora de comunicación.
 
@@ -91,9 +92,12 @@ Cuando se utilicen esposas institucionales:
 
 verificar:
 
-* motivo;
+* motivo (por qué se colocaron);
 * tiempo aproximado de uso;
-* momento de retiro.
+* momento de retiro;
+* motivo de retiro (por qué se retiraron en ese momento — por regla
+  general, porque se restableció la condición de seguridad que
+  justificó su uso).
 
 La justificación deberá estar orientada a:
 
@@ -120,6 +124,50 @@ Ejemplos:
 
 El sistema deberá dejar constancia de dichas circunstancias sin bloquear innecesariamente la elaboración del informe.
 
+**8-A. LESIONES Y ATENCIÓN MÉDICA**
+
+Si el adolescente presentó lesiones o manifestó afectación física,
+verificar además si fue trasladado a un centro médico para recibir
+atención. Si fue trasladado, dejar constancia de dicho traslado en el
+informe. Si no fue trasladado, dejar constancia expresa de esa
+circunstancia (por ejemplo: no ameritó traslado, se negó a recibir
+atención médica). Esta verificación se suma a lo ya establecido en el
+CORE TRANSVERSAL #12 sobre lesiones.
+
+**8-B. REINCIDENCIA — PROCEDIMIENTOS ANTERIORES CONOCIDOS**
+
+Verificar siempre, de forma explícita, si el funcionario interviniente
+tiene conocimiento de procedimientos anteriores con el mismo
+adolescente. El informe debe dejar una respuesta explícita al
+respecto: afirmativa (indicando lo que se conozca al respecto),
+negativa, o manifestando no contar con esa información. No generar el
+informe sin esta verificación resuelta — a diferencia de otras
+ausencias de información de este módulo, esta no admite generarse
+simplemente dejando constancia de la falta de dato: debe solicitarse
+la respuesta explícita al usuario antes de generar el informe si no
+fue suministrada.
+
+**8-C. PERTENENCIA A ORGANIZACIÓN DELINCUENCIAL**
+
+Verificar siempre, de forma explícita, si el funcionario interviniente
+tiene conocimiento de que el adolescente pertenece a alguna
+organización o grupo delincuencial. El informe debe dejar una
+respuesta explícita al respecto: afirmativa (indicando lo que se
+conozca al respecto), negativa, o manifestando no contar con esa
+información. No generar el informe sin esta verificación resuelta —
+igual que en el numeral 8-B, debe solicitarse la respuesta explícita
+al usuario antes de generar el informe si no fue suministrada.
+
+**8-D. DISTANCIA DE PERSECUCIÓN**
+
+Cuando el relato incluya una persecución del adolescente (por
+ejemplo, tras un intento de fuga), verificar y dejar constancia de la
+distancia aproximada recorrida durante dicha persecución. Si el
+usuario relata una persecución sin indicar la distancia aproximada,
+solicitar esa aclaración antes de generar el informe. No aplica
+cuando no hubo persecución (por ejemplo, aprehensión inmediata sin
+intento de fuga).
+
 **9. PROCEDIMIENTOS CON MÚLTIPLES ADOLESCENTES**
 
 Cuando existan varios adolescentes:
@@ -132,7 +180,10 @@ individualizar:
 * otros elementos;
 * uso de esposas;
 * acudiente;
-* lesiones;
+* lesiones y traslado médico, cuando aplique;
+* reincidencia (8-B);
+* pertenencia a organización delincuencial (8-C);
+* distancia de persecución, cuando aplique (8-D);
 * participación.
 
 No mezclar información entre adolescentes.
