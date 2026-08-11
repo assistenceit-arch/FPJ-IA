@@ -216,13 +216,26 @@ model Capturado {
   // el modelo para cualquier interviniente por si cambia el criterio.
   usoEsposas           Boolean?
   justificacionEsposas String?
+  // Adenda 2026-08-11: tiempo y motivo de retiro, antes solo se pedía el
+  // momento -- a solicitud del usuario.
+  tiempoEsposado       String?
+  motivoRetiroEsposas  String?
+
   identificacionPlena  Boolean @default(true)
   formaIdentificacion  String? // si no se identificó plenamente, cómo se logró establecer la identidad
 
-  // Exclusivo para APREHENDIDO (menor de edad) — Formulario Maestro V2
-  nombreAcudiente    String?
-  parentescoAcudiente String?
-  telefonoAcudiente  String?
+  // Adenda 2026-08-11: lesiones pasa de ser una sola respuesta a nivel de
+  // procedimiento (antes en ActuacionesProcedimiento) a individual por
+  // interviniente, igual que ya pasó con esposas -- cada persona puede
+  // tener lesiones distintas (o ninguna). Se agregan parteCuerpoLesion y
+  // motivoLesion, que antes no existían.
+  presentaLesiones          Boolean?
+  descripcionLesiones       String?
+  parteCuerpoLesion         String?
+  motivoLesion              String?
+  trasladoCentroAsistencial Boolean?
+  centroAsistencial         String?
+  motivoTraslado            String?
 
   contactoNotificacion ContactoNotificacion?
   elementosIncautados  ElementoIncautado[]
@@ -246,6 +259,9 @@ model ContactoNotificacion {
   capturado   Capturado @relation(fields: [capturadoId], references: [id], onDelete: Cascade)
 
   nombre                        String?
+  // Adenda 2026-08-11: faltaba -- a solicitud del usuario, junto con
+  // nombre/teléfono.
+  parentesco                    String?
   identificacion                String? // Adenda 2026-07-19: requerido por el FPJ-6 (Acta de Derechos)
   telefono                      String?
   comunicacionExitosa           Boolean
@@ -290,6 +306,10 @@ model DetalleSustancia {
   elementoId        String            @unique
   elemento          ElementoIncautado @relation(fields: [elementoId], references: [id], onDelete: Cascade)
   cantidadEmpaques  Int
+  // Adenda 2026-08-11: cómo viene empacada la sustancia (bolsas,
+  // papeletas, frascos, cajas, pastillas...), a solicitud del usuario --
+  // antes la descripción siempre decía "empaques" de forma genérica.
+  tipoEmpaque       String?
   tipoSustancia     String
   color             String
   caracteristicas   String
@@ -347,12 +367,11 @@ model ActuacionesProcedimiento {
   // (menor de edad) — a solicitud del usuario, para procedimientos
   // mixtos donde solo a algunos intervinientes se les colocan esposas.
 
-  presentaLesiones     Boolean
-  descripcionLesiones  String?
-
-  trasladoCentroAsistencial Boolean
-  centroAsistencial         String?
-  motivoTraslado            String?
+  // Adenda 2026-08-11: presentaLesiones/descripcionLesiones/
+  // trasladoCentroAsistencial/centroAsistencial/motivoTraslado se
+  // quitan de aquí (eran una sola respuesta para todo el procedimiento)
+  // y pasan a Capturado, como pregunta individual por interviniente,
+  // mismo criterio ya aplicado a usoEsposas.
 
   autoridadReceptora String
 

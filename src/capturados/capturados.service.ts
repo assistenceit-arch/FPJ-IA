@@ -90,7 +90,6 @@ export class CapturadosService {
     edad: number,
     fechaNacimiento: Date | null,
   ) {
-    const esAprehendido = tipoInterviniente === 'APREHENDIDO';
     // edadManual es un campo transitorio del DTO (opción "No aporta"): no
     // corresponde a ninguna columna de Prisma, así que se excluye del
     // objeto que se persiste (de lo contrario Prisma rechaza la petición
@@ -104,11 +103,6 @@ export class CapturadosService {
       tipoInterviniente,
       nombrePadres: dto.nombrePadres?.trim() || NO_APORTO,
       telefonoPadres: dto.telefonoPadres?.trim() || NO_APORTO,
-      nombreAcudiente: esAprehendido ? dto.nombreAcudiente ?? null : null,
-      parentescoAcudiente: esAprehendido
-        ? dto.parentescoAcudiente ?? null
-        : null,
-      telefonoAcudiente: esAprehendido ? dto.telefonoAcudiente ?? null : null,
     };
   }
 
@@ -302,6 +296,7 @@ export class CapturadosService {
 
     const datos = {
       nombre: dto.nombre?.trim() || NO_APORTO,
+      parentesco: dto.parentesco?.trim() || NO_APORTO,
       identificacion: dto.identificacion?.trim() || NO_APORTO,
       telefono: dto.telefono?.trim() || NO_APORTO,
       comunicacionExitosa: dto.comunicacionExitosa,

@@ -42,28 +42,11 @@ export class GuardarActuacionesDto {
   // Adenda 2026-08-03: usoEsposas/justificacionEsposas se quitan de aquí
   // — pasan a ser una pregunta individual por interviniente en
   // CrearCapturadoDto/ActualizarCapturadoDto (ver ese archivo).
-
-  // ── Estado físico ──
-  @IsNotEmpty()
-  @IsBoolean()
-  presentaLesiones!: boolean;
-
-  @ValidateIf((o) => o.presentaLesiones === true)
-  @IsString()
-  descripcionLesiones?: string;
-
-  // ── Atención médica ──
-  @IsNotEmpty()
-  @IsBoolean()
-  trasladoCentroAsistencial!: boolean;
-
-  @ValidateIf((o) => o.trasladoCentroAsistencial === true)
-  @IsString()
-  centroAsistencial?: string;
-
-  @ValidateIf((o) => o.trasladoCentroAsistencial === true)
-  @IsString()
-  motivoTraslado?: string;
+  //
+  // Adenda 2026-08-11: presentaLesiones/descripcionLesiones/
+  // trasladoCentroAsistencial/centroAsistencial/motivoTraslado se
+  // quitan de aquí por el mismo motivo -- pasan a ser individuales por
+  // interviniente (mismo criterio que esposas).
 
   // ── Puesta a disposición ──
   @IsOptional()

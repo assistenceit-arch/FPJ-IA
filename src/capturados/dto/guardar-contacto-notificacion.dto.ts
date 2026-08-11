@@ -11,6 +11,12 @@ export class GuardarContactoNotificacionDto {
   @IsString()
   nombre?: string;
 
+  // Adenda 2026-08-11: faltaba -- a solicitud del usuario, junto con
+  // nombre/teléfono. identificacion se conserva (la usa el FPJ-6).
+  @IsOptional()
+  @IsString()
+  parentesco?: string;
+
   @IsOptional()
   @IsString()
   identificacion?: string;

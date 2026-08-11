@@ -206,15 +206,6 @@ export class ProcedimientosService {
       if (actuaciones.derechosLeidos) {
         requeridos.push(actuaciones.fechaDerechos != null, this.textoCompleto(actuaciones.horaDerechos));
       }
-      if (actuaciones.presentaLesiones) {
-        requeridos.push(this.textoCompleto(actuaciones.descripcionLesiones));
-      }
-      if (actuaciones.trasladoCentroAsistencial) {
-        requeridos.push(
-          this.textoCompleto(actuaciones.centroAsistencial),
-          this.textoCompleto(actuaciones.motivoTraslado),
-        );
-      }
       if (calcularDemoraExistente(procedimiento)) {
         requeridos.push(this.textoCompleto(actuaciones.justificacionDemora));
       }
@@ -226,7 +217,22 @@ export class ProcedimientosService {
         return true;
       });
 
-      actuacionesOk = requeridos.every(Boolean) && esposasOk;
+      // Adenda 2026-08-11: lesiones pasa a ser individual por
+      // interviniente (antes vivía en actuaciones, general para todo el
+      // procedimiento), mismo criterio ya aplicado a esposas.
+      const lesionesOk = capturados.every((c) => {
+        if (c.presentaLesiones === null || c.presentaLesiones === undefined) return false;
+        if (c.presentaLesiones === true) {
+          if (!this.textoCompleto(c.descripcionLesiones)) return false;
+          if (c.trasladoCentroAsistencial === null || c.trasladoCentroAsistencial === undefined) return false;
+          if (c.trasladoCentroAsistencial === true) {
+            return this.textoCompleto(c.centroAsistencial) && this.textoCompleto(c.motivoTraslado);
+          }
+        }
+        return true;
+      });
+
+      actuacionesOk = requeridos.every(Boolean) && esposasOk && lesionesOk;
     }
 
     // 6. Relato de los hechos (comparte registro con Actuaciones)

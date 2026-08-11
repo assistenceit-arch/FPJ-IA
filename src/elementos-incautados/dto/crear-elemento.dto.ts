@@ -37,6 +37,13 @@ export class CrearElementoDto {
   @Min(1)
   cantidadEmpaques?: number;
 
+  // Adenda 2026-08-11: cómo viene empacada la sustancia (bolsas,
+  // papeletas, frascos, cajas, pastillas...), a solicitud del usuario.
+  @ValidateIf((o) => o.tipoElemento === 'SUSTANCIA')
+  @IsNotEmpty()
+  @IsString()
+  tipoEmpaque?: string;
+
   @ValidateIf((o) => o.tipoElemento === 'SUSTANCIA')
   @IsNotEmpty()
   @IsString()

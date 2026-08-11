@@ -34,6 +34,35 @@ export interface IntervinienteNarracion {
   // procedimiento).
   usoEsposas?: boolean | null;
   justificacionEsposas?: string | null;
+  // Adenda 2026-08-11: tiempo y motivo de retiro, junto con la
+  // justificación de por qué se colocaron.
+  tiempoEsposado?: string | null;
+  motivoRetiroEsposas?: string | null;
+
+  // Adenda 2026-08-11: lesiones pasan a ser individuales por
+  // interviniente (antes vivían en `actuaciones`, general para todo el
+  // procedimiento) -- mismo criterio ya aplicado a esposas.
+  presentaLesiones?: boolean | null;
+  descripcionLesiones?: string | null;
+  parteCuerpoLesion?: string | null;
+  motivoLesion?: string | null;
+  trasladoCentroAsistencial?: boolean | null;
+  centroAsistencial?: string | null;
+  motivoTraslado?: string | null;
+
+  // Adenda 2026-08-11: corrige un bug real -- este dato se diligenciaba
+  // en el Bloque 2 (Contacto de notificación) pero nunca llegaba al
+  // contexto de la narrativa IA, así que el sistema preguntaba por él
+  // en cada generación sin importar que ya estuviera guardado. `null`
+  // cuando el interviniente no tiene un registro de contacto todavía.
+  contacto?: {
+    nombre?: string | null;
+    parentesco?: string | null;
+    telefono?: string | null;
+    comunicacionExitosa: boolean;
+    horaComunicacion?: string | null;
+    justificacionNoComunicacion?: string | null;
+  } | null;
 }
 
 export interface ContextoNarracionFpj5 {
@@ -71,11 +100,6 @@ export interface ContextoNarracionFpj5 {
     fechaDerechos: string;
     horaDerechos: string;
     comprendeDerechos: boolean;
-    presentaLesiones: boolean;
-    descripcionLesiones?: string | null;
-    trasladoCentroAsistencial: boolean;
-    centroAsistencial?: string | null;
-    motivoTraslado?: string | null;
     autoridadReceptora: string;
     demoraExistente: boolean;
     justificacionDemora?: string | null;

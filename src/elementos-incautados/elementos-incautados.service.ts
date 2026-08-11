@@ -26,8 +26,19 @@ export class ElementosIncautadosService {
    */
   private construirDescripcionBase(dto: CrearElementoDto | ActualizarElementoDto): string {
     switch (dto.tipoElemento) {
-      case 'SUSTANCIA':
-        return `${dto.cantidadEmpaques} empaques que en su interior contienen una sustancia vegetal de color ${dto.color} con características similares a ${dto.caracteristicas}.`;
+      case 'SUSTANCIA': {
+        // Adenda 2026-08-11: dos correcciones a solicitud del usuario:
+        // 1) tipoEmpaque (bolsas, papeletas, frascos, cajas, pastillas...)
+        //    en vez de la palabra fija "empaques", que no reflejaba cómo
+        //    venía realmente empacada la sustancia.
+        // 2) tipoSustancia (vegetal, pulverulenta, etc.) en vez del
+        //    valor fijo "vegetal" -- el campo ya se capturaba en el
+        //    formulario ("Tipo de sustancia") pero nunca se usaba aquí,
+        //    así que la descripción decía "vegetal" sin importar lo que
+        //    el funcionario hubiera escrito.
+        const empaque = dto.tipoEmpaque?.trim() || 'empaques';
+        return `${dto.cantidadEmpaques} ${empaque} que en su interior contienen una sustancia ${dto.tipoSustancia} de color ${dto.color} con características similares a ${dto.caracteristicas}.`;
+      }
 
       case 'DINERO':
         return `Dinero en efectivo por valor de $${this.formatearValor(dto.valorTotal)} representado en: ${dto.denominaciones}.`;
@@ -58,6 +69,7 @@ export class ElementosIncautadosService {
           detalleSustancia: {
             create: {
               cantidadEmpaques: dto.cantidadEmpaques!,
+              tipoEmpaque: dto.tipoEmpaque,
               tipoSustancia: dto.tipoSustancia!,
               color: dto.color!,
               caracteristicas: dto.caracteristicas!,

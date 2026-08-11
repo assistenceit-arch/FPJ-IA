@@ -155,6 +155,16 @@ export class CrearCapturadoDto {
   @IsString()
   justificacionEsposas?: string;
 
+  // Adenda 2026-08-11: tiempo y motivo de retiro, junto a la
+  // justificación de por qué se colocaron.
+  @ValidateIf((o) => o.usoEsposas === true)
+  @IsString()
+  tiempoEsposado?: string;
+
+  @ValidateIf((o) => o.usoEsposas === true)
+  @IsString()
+  motivoRetiroEsposas?: string;
+
   @IsOptional()
   @IsBoolean()
   identificacionPlena?: boolean;
@@ -163,18 +173,34 @@ export class CrearCapturadoDto {
   @IsString()
   formaIdentificacion?: string;
 
-  // Solo aplican si, tras calcular la edad, la persona resulta menor de
-  // edad (Aprehendido). Si se envían para un mayor de edad, el servicio
-  // los ignora.
+  // Adenda 2026-08-11: lesiones pasa a ser individual por interviniente
+  // (antes era una sola respuesta en Actuaciones para todo el
+  // procedimiento), mismo criterio ya aplicado a esposas.
   @IsOptional()
+  @IsBoolean()
+  presentaLesiones?: boolean;
+
+  @ValidateIf((o) => o.presentaLesiones === true)
   @IsString()
-  nombreAcudiente?: string;
+  descripcionLesiones?: string;
+
+  @ValidateIf((o) => o.presentaLesiones === true)
+  @IsString()
+  parteCuerpoLesion?: string;
+
+  @ValidateIf((o) => o.presentaLesiones === true)
+  @IsString()
+  motivoLesion?: string;
 
   @IsOptional()
-  @IsString()
-  parentescoAcudiente?: string;
+  @IsBoolean()
+  trasladoCentroAsistencial?: boolean;
 
-  @IsOptional()
+  @ValidateIf((o) => o.trasladoCentroAsistencial === true)
   @IsString()
-  telefonoAcudiente?: string;
+  centroAsistencial?: string;
+
+  @ValidateIf((o) => o.trasladoCentroAsistencial === true)
+  @IsString()
+  motivoTraslado?: string;
 }
