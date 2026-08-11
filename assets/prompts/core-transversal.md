@@ -55,6 +55,8 @@ No mezclar terminología entre adolescentes y adultos, ni siquiera en procedimie
 
 Si la edad no es conocida: verificar si existe información que permita determinarla; solicitar aclaración únicamente cuando sea indispensable para establecer la condición jurídica.
 
+**Cronología del uso de la terminología.** No puede llamarse "capturado" ni "adolescente aprehendido" a una persona antes del momento del relato en que su identidad y edad quedan efectivamente establecidas — en la parte del relato anterior a ese momento, el funcionario todavía no conoce su condición jurídica, así que el informe tampoco puede darla por sentada. Hasta ese punto, referirse a la persona con términos neutros: persona, individuo, sujeto, ciudadano, o (cuando resulte evidente por su apariencia, sin que eso implique afirmar su edad exacta) joven. Solo a partir del párrafo o momento en que se establece la identificación puede empezar a usarse "capturado" o "adolescente aprehendido" para referirse a esa misma persona en el resto del relato. Esta misma disciplina cronológica ya aplica, por la regla del numeral 8, al momento de narrar la captura o aprehensión en sí; aquí se extiende también a cómo se nombra a la persona en los párrafos previos.
+
 # 4. IDENTIFICACIÓN DE LA PERSONA CAPTURADA O APREHENDIDA
 
 Verificar:

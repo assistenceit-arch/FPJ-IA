@@ -10,7 +10,12 @@ reutilizar). Presta especial atención a:
   intervinientes con nombre completo + grado + placa, adscripción,
   CAI, zona de atención, y motivo que originó la intervención).
 - Cómo se describe físicamente y por comportamiento a cada
-  interviniente antes del hallazgo.
+  interviniente antes del hallazgo, refiriéndose a esa persona con
+  términos neutros (persona, individuo, sujeto, ciudadano, joven) —
+  todavía no se conoce su condición jurídica en ese punto del relato,
+  así que no puede llamársele "capturado" ni "adolescente aprehendido"
+  hasta después de identificarla (ver CORE TRANSVERSAL #3,
+  "Cronología del uso de la terminología").
 - Cómo se narra el registro personal con lateralidad exacta del
   hallazgo.
 - Cómo se conecta el hallazgo con la identificación de la persona y su
@@ -215,14 +220,14 @@ confirmando su participación en los hechos. No presenta lesiones
 visibles. Refiere dolor en la mano derecha por una caída ocurrida el
 día anterior al procedimiento.
 
-La segunda persona correspondía a un adolescente de contextura
+La segunda persona correspondía a un joven de contextura
 atlética, tez blanca, estatura aproximada de 1.68 metros, cabello corto
 color negro, sin señales particulares visibles, quien vestía jean
 beige, camisa negra y zapatos negros, y quien durante el procedimiento
 adoptó una actitud agresiva. Ante dicha conducta procedí a colocarle
 esposas institucionales por un tiempo aproximado de quince (15)
 minutos, siendo retiradas una vez se restablecieron las condiciones de
-seguridad para el adolescente y para el personal policial. Procedí a
+seguridad para el joven y para el personal policial. Procedí a
 realizarle registro personal mediante requisa, hallando en la pretina
 derecha del jean ocho (8) papeletas de papel contentivas de sustancia
 de tipo pulverulenta, color beige, con características similares al
@@ -276,7 +281,7 @@ lo logró dado que se intervino con prontitud. Ante el riesgo que su
 intento de evasión representaba para su propia integridad y la de las
 personas que se encontraban en el sector, procedí a colocarle esposas
 institucionales, las cuales permanecieron puestas durante
-aproximadamente 10 minutos y fueron retiradas una vez el adolescente se
+aproximadamente 10 minutos y fueron retiradas una vez el joven se
 tranquilizó y se restablecieron las condiciones de seguridad. Acto
 seguido, procedí a realizar registro personal mediante requisa,
 hallando en el bolsillo derecho de su sudadera 18 bolsas plásticas
