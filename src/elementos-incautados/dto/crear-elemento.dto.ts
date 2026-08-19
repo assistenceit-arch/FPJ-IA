@@ -13,7 +13,14 @@ export const TIPOS_ELEMENTO = ['SUSTANCIA', 'DINERO', 'CELULAR', 'ARMA', 'OTRO']
 export type TipoElemento = (typeof TIPOS_ELEMENTO)[number];
 
 export const TIPOS_ARMA = ['PISTOLA', 'REVOLVER', 'ESCOPETA', 'FUSIL', 'HECHIZA'] as const;
-export const ESTADOS_ARMA = ['BUEN_ESTADO', 'MAL_ESTADO'] as const;
+export const ESTADOS_ARMA = ['BUEN_ESTADO', 'REGULAR_ESTADO', 'MAL_ESTADO'] as const;
+export const ESTADOS_SERIAL_ARMA = [
+  'LEGIBLE',
+  'NO_PRESENTA',
+  'BORRADO',
+  'ALTERADO',
+  'NO_LEGIBLE',
+] as const;
 
 export class CrearElementoDto {
   @IsIn(TIPOS_ELEMENTO)
@@ -85,7 +92,7 @@ export class CrearElementoDto {
   @IsString()
   imei?: string;
 
-  // ── Exclusivos de ARMA (Adenda 2026-08-12) ──
+  // ── Exclusivos de ARMA (Adenda 2026-08-12, ajustada 2026-08-13) ──
   // Alcance confirmado: solo armas de fuego (pistola, revólver,
   // escopeta, fusil) y hechizas/artesanales, con su munición.
   @ValidateIf((o) => o.tipoElemento === 'ARMA')
@@ -102,17 +109,27 @@ export class CrearElementoDto {
   @IsString()
   calibre?: string;
 
+  // Cacha/empuñadura: material (madera, plástica, etc.) y color.
+  @IsOptional()
+  @IsString()
+  cachaMaterial?: string;
+
+  @IsOptional()
+  @IsString()
+  cachaColor?: string;
+
   // El serial borrado/alterado es legalmente relevante -- se deja como
-  // verificación siempre explícita (booleano obligatorio), no opcional.
+  // verificación siempre explícita, no opcional. `serial` solo aplica
+  // (y solo tiene sentido) cuando estadoSerial === 'LEGIBLE'.
   @IsOptional()
   @IsString()
   serial?: string;
 
   @ValidateIf((o) => o.tipoElemento === 'ARMA')
-  @IsNotEmpty()
-  serialLegible?: boolean;
+  @IsIn(ESTADOS_SERIAL_ARMA)
+  estadoSerial?: string;
 
-  // Solo estas 2 opciones (a solicitud del usuario, no es texto libre).
+  // 3 opciones (a solicitud del usuario, no es texto libre).
   @ValidateIf((o) => o.tipoElemento === 'ARMA')
   @IsIn(ESTADOS_ARMA)
   estadoArma?: string;
@@ -122,8 +139,11 @@ export class CrearElementoDto {
   @Min(0)
   cantidadMuniciones?: number;
 
+  // Calibre de la MUNICIÓN, preguntado de forma independiente -- nunca
+  // se asume igual al calibre del arma.
   @IsOptional()
-  calibreMunicionCoincide?: boolean;
+  @IsString()
+  calibreMunicion?: string;
 
   @IsOptional()
   @IsInt()

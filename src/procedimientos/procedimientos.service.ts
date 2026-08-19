@@ -389,6 +389,7 @@ export class ProcedimientosService {
           tipoProcedimiento: true,
           estado: true,
           exoneradoPago: true,
+          edicionDesbloqueada: true,
           fechaCreacion: true,
           usuario: { select: { nombres: true, apellidos: true, correo: true } },
           pago: { select: { estadoPago: true } },
@@ -426,6 +427,37 @@ export class ProcedimientosService {
       tablaAfectada: 'procedimientos',
       registroAfectado: id,
       descripcionEvento: `${exonerado ? 'Exoneración' : 'Reversión de exoneración'} de pago para el procedimiento ${procedimiento.numeroInterno ?? id}`,
+    });
+
+    return actualizado;
+  }
+
+  /**
+   * Adenda 2026-08-13: un administrador puede desbloquear puntualmente
+   * la edición y regeneración de documentos de un procedimiento ya
+   * congelado (ver ProcedimientoAccesoService.verificarNoBloqueado y
+   * DocumentosService.verificarDocumentoNoGeneradoAntes) -- necesario
+   * cuando hace falta corregir o completar información para que los
+   * documentos queden completos. Interruptor manual, mismo criterio que
+   * exonerarPago.
+   */
+  async cambiarDesbloqueoEdicion(id: string, desbloqueada: boolean, correoAdministrador: string) {
+    const procedimiento = await this.prisma.procedimiento.findUnique({ where: { id } });
+    if (!procedimiento || !procedimiento.activo) {
+      throw new NotFoundException('Procedimiento no encontrado');
+    }
+
+    const actualizado = await this.prisma.procedimiento.update({
+      where: { id },
+      data: { edicionDesbloqueada: desbloqueada },
+    });
+
+    await this.auditoria.registrar({
+      usuario: correoAdministrador,
+      accion: 'Modificar',
+      tablaAfectada: 'procedimientos',
+      registroAfectado: id,
+      descripcionEvento: `${desbloqueada ? 'Desbloqueo' : 'Rebloqueo'} de edición y regeneración de documentos para el procedimiento ${procedimiento.numeroInterno ?? id}`,
     });
 
     return actualizado;

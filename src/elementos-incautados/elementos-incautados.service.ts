@@ -71,6 +71,21 @@ export class ElementosIncautadosService {
    * se incluye si el funcionario la diligenció -- una hechiza, por
    * ejemplo, normalmente no tiene marca ni modelo.
    */
+  /**
+   * Adenda 2026-08-13: no incluir en la descripción ningún campo vacío
+   * ni cuyo valor sea una de las variantes de "se desconoce" -- a
+   * solicitud del usuario, para que la descripción final del formato
+   * no arrastre campos sin información real.
+   */
+  private tieneValor(v?: string | null): boolean {
+    if (!v) return false;
+    const normalizado = v.trim().toLowerCase();
+    if (normalizado === '') return false;
+    return !['desconozco', 'desconocido', 'desconocida', 'no aporta', 'n/a', 'ninguno', 'ninguna'].includes(
+      normalizado,
+    );
+  }
+
   private construirDescripcionArma(dto: CrearElementoDto | ActualizarElementoDto): string {
     const ETIQUETAS_TIPO: Record<string, string> = {
       PISTOLA: 'pistola',
@@ -81,37 +96,60 @@ export class ElementosIncautadosService {
     };
     const ETIQUETAS_ESTADO: Record<string, string> = {
       BUEN_ESTADO: 'buen estado',
+      REGULAR_ESTADO: 'regular estado',
       MAL_ESTADO: 'mal estado',
     };
 
     const tipo = ETIQUETAS_TIPO[dto.tipoArma ?? ''] ?? 'arma de fuego';
-    const partes: string[] = [`Arma de fuego tipo ${tipo}`];
-    if (dto.marca) partes.push(`marca ${dto.marca}`);
-    if (dto.modelo) partes.push(`modelo ${dto.modelo}`);
-    if (dto.calibre) partes.push(`calibre ${dto.calibre}`);
-    if (dto.color) partes.push(`color ${dto.color}`);
+    // Adenda 2026-08-13: "01" fijo -- cada registro de elemento ARMA
+    // describe siempre una sola arma (a diferencia de SUSTANCIA, donde
+    // cantidadEmpaques sí varía).
+    const partes: string[] = [`01 arma de fuego tipo ${tipo}`];
+    if (this.tieneValor(dto.marca)) partes.push(`marca ${dto.marca}`);
+    if (this.tieneValor(dto.modelo)) partes.push(`modelo ${dto.modelo}`);
+    if (this.tieneValor(dto.calibre)) partes.push(`calibre ${dto.calibre}`);
+    if (this.tieneValor(dto.color)) partes.push(`color ${dto.color}`);
 
-    let descripcion = partes.join(', ') + '.';
+    if (this.tieneValor(dto.cachaMaterial) || this.tieneValor(dto.cachaColor)) {
+      const piezasCacha = [
+        this.tieneValor(dto.cachaMaterial) ? dto.cachaMaterial : null,
+        this.tieneValor(dto.cachaColor) ? `color ${dto.cachaColor}` : null,
+      ].filter(Boolean);
+      partes.push(`empuñadura ${piezasCacha.join(' ')}`);
+    }
 
-    descripcion +=
-      dto.serialLegible && dto.serial
-        ? ` Serial ${dto.serial}, legible.`
-        : ' Serial no legible o alterado.';
+    // Serial: NO_PRESENTA se omite por completo de la descripción (no
+    // hay nada que consignar); el resto de estados sí se menciona
+    // expresamente, sea legible o no.
+    switch (dto.estadoSerial) {
+      case 'LEGIBLE':
+        if (this.tieneValor(dto.serial)) partes.push(`de serial ${dto.serial}`);
+        break;
+      case 'BORRADO':
+        partes.push('de serial borrado');
+        break;
+      case 'ALTERADO':
+        partes.push('de serial alterado');
+        break;
+      case 'NO_LEGIBLE':
+        partes.push('de serial no legible');
+        break;
+      // NO_PRESENTA (o ausente): sin cláusula de serial.
+    }
 
     const estado = ETIQUETAS_ESTADO[dto.estadoArma ?? ''] ?? dto.estadoArma;
-    descripcion += ` Se encuentra en ${estado}.`;
+    let descripcion = `${partes.join(', ')}, en ${estado}.`;
 
+    const extras: string[] = [];
     if (dto.cantidadMuniciones != null && dto.cantidadMuniciones > 0) {
-      const coincide =
-        dto.calibreMunicionCoincide === true
-          ? 'de calibre correspondiente al arma'
-          : dto.calibreMunicionCoincide === false
-            ? 'de calibre distinto al del arma'
-            : '';
-      descripcion += ` Se hallaron ${dto.cantidadMuniciones} cartuchos de munición${coincide ? ' ' + coincide : ''}.`;
+      const calibreMunicion = this.tieneValor(dto.calibreMunicion) ? ` calibre ${dto.calibreMunicion}` : '';
+      extras.push(`${dto.cantidadMuniciones} cartuchos de munición${calibreMunicion}`);
     }
     if (dto.cantidadCargadores != null && dto.cantidadCargadores > 0) {
-      descripcion += ` Se hallaron ${dto.cantidadCargadores} proveedor(es)/cargador(es).`;
+      extras.push(`${dto.cantidadCargadores} proveedor(es)`);
+    }
+    if (extras.length > 0) {
+      descripcion += ` Además se hallaron ${extras.join(' y ')}.`;
     }
 
     return descripcion;
@@ -159,11 +197,13 @@ export class ElementosIncautadosService {
               modelo: dto.modelo,
               calibre: dto.calibre,
               color: dto.color,
+              cachaMaterial: dto.cachaMaterial,
+              cachaColor: dto.cachaColor,
               serial: dto.serial,
-              serialLegible: dto.serialLegible!,
+              estadoSerial: dto.estadoSerial!,
               estadoArma: dto.estadoArma!,
               cantidadMuniciones: dto.cantidadMuniciones,
-              calibreMunicionCoincide: dto.calibreMunicionCoincide,
+              calibreMunicion: dto.calibreMunicion,
               cantidadCargadores: dto.cantidadCargadores,
             },
           },

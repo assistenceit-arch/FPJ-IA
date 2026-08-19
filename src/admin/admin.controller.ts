@@ -3,6 +3,7 @@ import { ProcedimientosService } from '../procedimientos/procedimientos.service'
 import { PagosService } from '../pagos/pagos.service';
 import { UsuariosService } from '../usuarios/usuarios.service';
 import { ExonerarPagoDto } from './dto/exonerar-pago.dto';
+import { DesbloqueoEdicionDto } from './dto/desbloqueo-edicion.dto';
 import { CambiarRolDto } from './dto/cambiar-rol.dto';
 import { CambiarEstadoDto } from './dto/cambiar-estado.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
@@ -41,6 +42,17 @@ export class AdminController {
     @CurrentUser() usuario: JwtPayload,
   ) {
     return this.procedimientosService.exonerarPago(id, dto.exonerado, usuario.correo);
+  }
+
+  // Adenda 2026-08-13: desbloqueo puntual de edición y regeneración de
+  // documentos para un procedimiento ya congelado.
+  @Patch('procedimientos/:id/desbloqueo-edicion')
+  cambiarDesbloqueoEdicion(
+    @Param('id') id: string,
+    @Body() dto: DesbloqueoEdicionDto,
+    @CurrentUser() usuario: JwtPayload,
+  ) {
+    return this.procedimientosService.cambiarDesbloqueoEdicion(id, dto.desbloqueada, usuario.correo);
   }
 
   // RT-006/RI-005: eliminación lógica; el servicio ya rechaza si el

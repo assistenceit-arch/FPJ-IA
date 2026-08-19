@@ -81,6 +81,16 @@ model Procedimiento {
   // para poder generar documentos aunque no haya un pago Verificado.
   exoneradoPago Boolean @default(false)
 
+  // Adenda 2026-08-13: un administrador puede desbloquear puntualmente
+  // la edición y regeneración de documentos de un procedimiento que ya
+  // había quedado congelado (ver ProcedimientoAccesoService.
+  // verificarNoBloqueado y DocumentosService.
+  // verificarDocumentoNoGeneradoAntes) -- necesario cuando hace falta
+  // corregir o completar información para que los documentos queden
+  // completos. Interruptor manual, igual criterio que exoneradoPago: el
+  // administrador lo activa y lo desactiva cuando corresponda.
+  edicionDesbloqueada Boolean @default(false)
+
   usuarioId String // WF-AUT-005: cada usuario ve solo sus procedimientos
   usuario   Usuario @relation(fields: [usuarioId], references: [id])
 
@@ -350,18 +360,28 @@ model DetalleArma {
   calibre  String?
   color    String?
 
-  // El serial borrado/alterado es legalmente relevante (agravante) — se
-  // deja como verificación siempre explícita, no opcional.
+  // Adenda 2026-08-13: cacha/empuñadura -- material (madera, plástica,
+  // etc.) y color, a solicitud del usuario.
+  cachaMaterial String?
+  cachaColor    String?
+
+  // Adenda 2026-08-13: el serial borrado/alterado es legalmente
+  // relevante (agravante) -- se deja como verificación siempre
+  // explícita, no opcional. Reemplaza el booleano anterior por un
+  // estado categórico de 5 opciones (una de ellas, LEGIBLE, habilita el
+  // campo `serial` con el número transcrito).
   serial        String?
-  serialLegible Boolean
+  estadoSerial  String // LEGIBLE | NO_PRESENTA | BORRADO | ALTERADO | NO_LEGIBLE
 
-  // Estado del arma: únicamente estas 2 opciones (a solicitud del
+  // Estado del arma: únicamente estas 3 opciones (a solicitud del
   // usuario, no es texto libre).
-  estadoArma String // BUEN_ESTADO | MAL_ESTADO
+  estadoArma String // BUEN_ESTADO | REGULAR_ESTADO | MAL_ESTADO
 
-  cantidadMuniciones        Int?
-  calibreMunicionCoincide   Boolean?
-  cantidadCargadores        Int?
+  cantidadMuniciones Int?
+  // Adenda 2026-08-13: calibre de la MUNICIÓN, preguntado de forma
+  // independiente -- nunca debe asumirse igual al calibre del arma.
+  calibreMunicion    String?
+  cantidadCargadores Int?
 
   @@map("detalle_armas")
 }

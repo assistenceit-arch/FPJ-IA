@@ -65,14 +65,25 @@ export class ProcedimientoAccesoService {
    * (ej. el FPJ-6 de un segundo interviniente), ya que la información
    * de la que dependen quedó congelada y por lo tanto sigue siendo
    * consistente -- ver DocumentosService para esa segunda regla.
+   *
+   * Adenda 2026-08-13: un administrador puede desbloquear puntualmente
+   * este congelamiento (procedimiento.edicionDesbloqueada) cuando haga
+   * falta corregir o completar información -- en ese caso se omite el
+   * bloqueo por completo.
    */
   async verificarNoBloqueado(procedimientoId: string) {
+    const procedimiento = await this.prisma.procedimiento.findUnique({
+      where: { id: procedimientoId },
+      select: { edicionDesbloqueada: true },
+    });
+    if (procedimiento?.edicionDesbloqueada) return;
+
     const cantidadGenerados = await this.prisma.documentoGenerado.count({
       where: { procedimientoId },
     });
     if (cantidadGenerados > 0) {
       throw new ForbiddenException(
-        'Este procedimiento ya generó documentos oficiales y quedó bloqueado para edición. Solo se pueden descargar los documentos existentes.',
+        'Este procedimiento ya generó documentos oficiales y quedó bloqueado para edición. Solo se pueden descargar los documentos existentes. Un administrador puede desbloquearlo desde el panel si hace falta corregir información.',
       );
     }
   }
