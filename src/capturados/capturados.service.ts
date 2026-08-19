@@ -232,20 +232,27 @@ export class CapturadosService {
     correoUsuario: string,
     rol?: string,
   ) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
+    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
     await this.obtenerCapturadoOFallar(procedimientoId, capturadoId);
 
-    const [elementos, documentos] = await Promise.all([
-      this.prisma.elementoIncautado.count({ where: { capturadoId } }),
-      this.prisma.documentoGenerado.count({ where: { capturadoId } }),
-    ]);
+    // Adenda 2026-08-13: si un administrador desbloqueó la edición del
+    // procedimiento, se omite esta verificación -- permite eliminar un
+    // interviniente aunque ya tenga elementos o documentos generados
+    // asociados (los elementos se eliminan en cascada), para poder
+    // corregir la información y regenerar los documentos después.
+    if (!procedimiento.edicionDesbloqueada) {
+      const [elementos, documentos] = await Promise.all([
+        this.prisma.elementoIncautado.count({ where: { capturadoId } }),
+        this.prisma.documentoGenerado.count({ where: { capturadoId } }),
+      ]);
 
-    if (elementos > 0 || documentos > 0) {
-      throw new BadRequestException(
-        'No se puede eliminar este interviniente: ya tiene elementos incautados o documentos generados asociados.',
-      );
+      if (elementos > 0 || documentos > 0) {
+        throw new BadRequestException(
+          'No se puede eliminar este interviniente: ya tiene elementos incautados o documentos generados asociados. Un administrador puede desbloquear la edición desde el panel si hace falta corregirlo.',
+        );
+      }
     }
 
     await this.prisma.capturado.delete({ where: { id: capturadoId } });

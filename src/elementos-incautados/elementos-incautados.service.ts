@@ -307,20 +307,26 @@ export class ElementosIncautadosService {
     correoUsuario: string,
     rol?: string,
   ) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
+    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
     await this.verificarCapturado(procedimientoId, capturadoId);
     await this.obtenerElementoOFallar(capturadoId, elementoId);
 
-    const documentos = await this.prisma.documentoGenerado.count({
-      where: { elementoId },
-    });
+    // Adenda 2026-08-13: si un administrador desbloqueó la edición del
+    // procedimiento, se omite esta verificación -- permite eliminar un
+    // elemento aunque ya tenga documentos generados (FPJ 7 / FPJ 8),
+    // para poder corregir la información y regenerarlos después.
+    if (!procedimiento.edicionDesbloqueada) {
+      const documentos = await this.prisma.documentoGenerado.count({
+        where: { elementoId },
+      });
 
-    if (documentos > 0) {
-      throw new BadRequestException(
-        'No se puede eliminar este elemento: ya tiene documentos generados asociados (FPJ 7 / FPJ 8).',
-      );
+      if (documentos > 0) {
+        throw new BadRequestException(
+          'No se puede eliminar este elemento: ya tiene documentos generados asociados (FPJ 7 / FPJ 8). Un administrador puede desbloquear la edición desde el panel si hace falta corregirlo.',
+        );
+      }
     }
 
     await this.prisma.elementoIncautado.delete({ where: { id: elementoId } });
