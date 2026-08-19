@@ -50,6 +50,11 @@ export interface IntervinienteNarracion {
   centroAsistencial?: string | null;
   motivoTraslado?: string | null;
 
+  // Adenda 2026-08-12: exclusivo del módulo de Porte Ilegal de Armas de
+  // Fuego. PORTE | TENENCIA | NINGUNO | null (procedimiento de otro
+  // delito).
+  tipoPermisoArma?: string | null;
+
   // Adenda 2026-08-11: corrige un bug real -- este dato se diligenciaba
   // en el Bloque 2 (Contacto de notificación) pero nunca llegaba al
   // contexto de la narrativa IA, así que el sistema preguntaba por él

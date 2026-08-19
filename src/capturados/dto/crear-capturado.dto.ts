@@ -2,6 +2,7 @@ import {
   IsBoolean,
   IsDateString,
   IsEmail,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -203,4 +204,10 @@ export class CrearCapturadoDto {
   @ValidateIf((o) => o.trasladoCentroAsistencial === true)
   @IsString()
   motivoTraslado?: string;
+
+  // Adenda 2026-08-12: exclusivo del módulo de Porte Ilegal de Armas de
+  // Fuego -- individual por interviniente. PORTE | TENENCIA | NINGUNO.
+  @IsOptional()
+  @IsIn(['PORTE', 'TENENCIA', 'NINGUNO'])
+  tipoPermisoArma?: string;
 }

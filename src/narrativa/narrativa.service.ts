@@ -7,6 +7,7 @@ import {
   ContextoNarracionFpj5,
   ResultadoNarracion,
 } from './interfaces/contexto-narracion.interface';
+import { prefijoPromptPorDelito } from './delitos';
 
 const CARPETA_PROMPTS = path.join(process.cwd(), 'assets', 'prompts');
 const MARCADOR_ACLARACION = 'ACLARACION_NECESARIA:';
@@ -25,14 +26,17 @@ export class NarrativaService {
   private readonly logger = new Logger(NarrativaService.name);
   private readonly cliente: Anthropic;
   private readonly modelo: string;
-  private readonly systemPrompt: string;
+  // Adenda 2026-08-12: el system prompt ya no es fijo (antes se
+  // construía una sola vez en el constructor, siempre con los archivos
+  // de estupefacientes). Ahora se arma por delito y se cachea aquí para
+  // no releer los archivos en cada solicitud.
+  private readonly cachePromptsPorDelito = new Map<string, string>();
 
   constructor(private readonly config: ConfigService) {
     this.cliente = new Anthropic({
       apiKey: this.config.get<string>('anthropicApiKey'),
     });
     this.modelo = this.config.get<string>('anthropicModel') ?? 'claude-sonnet-5';
-    this.systemPrompt = this.construirSystemPrompt();
   }
 
   async generarNarracion(
@@ -40,6 +44,7 @@ export class NarrativaService {
     aclaraciones: string[] = [],
   ): Promise<ResultadoNarracion> {
     const mensajeUsuario = this.construirMensajeUsuario(contexto, aclaraciones);
+    const systemPrompt = this.obtenerSystemPrompt(contexto.procedimiento.delito);
 
     // Con max_tokens=24576 y un system prompt grande, el SDK exige
     // streaming (rechaza .create() con AnthropicError: "Streaming is
@@ -62,7 +67,7 @@ export class NarrativaService {
         // stop_reason fuera detectado). Ver:
         // https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-sonnet-5
         max_tokens: 24576,
-        system: this.systemPrompt,
+        system: systemPrompt,
         messages: [{ role: 'user', content: mensajeUsuario }],
       })
       .finalMessage();
@@ -129,15 +134,25 @@ export class NarrativaService {
    * (few-shot, para anclar tono/orden/terminología con máxima fidelidad),
    * más las capas propias de redacción y de formato técnico de respuesta.
    */
-  private construirSystemPrompt(): string {
+  private obtenerSystemPrompt(delito: string): string {
+    const cacheado = this.cachePromptsPorDelito.get(delito);
+    if (cacheado) return cacheado;
+
+    const prefijo = prefijoPromptPorDelito(delito);
+    const construido = this.construirSystemPrompt(prefijo);
+    this.cachePromptsPorDelito.set(delito, construido);
+    return construido;
+  }
+
+  private construirSystemPrompt(prefijoDelito: string): string {
     const leer = (nombre: string) =>
       fs.readFileSync(path.join(CARPETA_PROMPTS, nombre), 'utf8');
 
     const core = leer('core-transversal.md');
-    const especializado = leer('estupefacientes-prompt-especializado.md');
-    const validaciones = leer('estupefacientes-validaciones.md');
-    const flujo = leer('estupefacientes-flujo-operativo.md');
-    const plantillaInteligente = leer('estupefacientes-plantilla-inteligente.md');
+    const especializado = leer(`${prefijoDelito}-prompt-especializado.md`);
+    const validaciones = leer(`${prefijoDelito}-validaciones.md`);
+    const flujo = leer(`${prefijoDelito}-flujo-operativo.md`);
+    const plantillaInteligente = leer(`${prefijoDelito}-plantilla-inteligente.md`);
     const reglasAdultos = leer('reglas-adultos.md');
     const reglasSrpa = leer('reglas-srpa.md');
     const estiloObligatorio = leer('estilo-obligatorio.md');

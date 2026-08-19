@@ -48,6 +48,9 @@ export class ElementosIncautadosService {
           ? `Teléfono celular marca ${dto.marca} color ${dto.color} IMEI ${dto.imei}.`
           : `Teléfono celular marca ${dto.marca} color ${dto.color}.`;
 
+      case 'ARMA':
+        return this.construirDescripcionArma(dto);
+
       case 'OTRO':
         // REGLA INV-ACTA-007: la descripción es la registrada por el
         // funcionario, tal cual.
@@ -60,6 +63,58 @@ export class ElementosIncautadosService {
 
   private formatearValor(valor?: number): string {
     return new Intl.NumberFormat('es-CO').format(valor ?? 0);
+  }
+
+  /**
+   * Adenda 2026-08-12: descripción del arma de fuego. Cada parte
+   * opcional (marca, modelo, color, serial, munición, cargadores) solo
+   * se incluye si el funcionario la diligenció -- una hechiza, por
+   * ejemplo, normalmente no tiene marca ni modelo.
+   */
+  private construirDescripcionArma(dto: CrearElementoDto | ActualizarElementoDto): string {
+    const ETIQUETAS_TIPO: Record<string, string> = {
+      PISTOLA: 'pistola',
+      REVOLVER: 'revólver',
+      ESCOPETA: 'escopeta',
+      FUSIL: 'fusil',
+      HECHIZA: 'arma de fuego hechiza o artesanal',
+    };
+    const ETIQUETAS_ESTADO: Record<string, string> = {
+      BUEN_ESTADO: 'buen estado',
+      MAL_ESTADO: 'mal estado',
+    };
+
+    const tipo = ETIQUETAS_TIPO[dto.tipoArma ?? ''] ?? 'arma de fuego';
+    const partes: string[] = [`Arma de fuego tipo ${tipo}`];
+    if (dto.marca) partes.push(`marca ${dto.marca}`);
+    if (dto.modelo) partes.push(`modelo ${dto.modelo}`);
+    if (dto.calibre) partes.push(`calibre ${dto.calibre}`);
+    if (dto.color) partes.push(`color ${dto.color}`);
+
+    let descripcion = partes.join(', ') + '.';
+
+    descripcion +=
+      dto.serialLegible && dto.serial
+        ? ` Serial ${dto.serial}, legible.`
+        : ' Serial no legible o alterado.';
+
+    const estado = ETIQUETAS_ESTADO[dto.estadoArma ?? ''] ?? dto.estadoArma;
+    descripcion += ` Se encuentra en ${estado}.`;
+
+    if (dto.cantidadMuniciones != null && dto.cantidadMuniciones > 0) {
+      const coincide =
+        dto.calibreMunicionCoincide === true
+          ? 'de calibre correspondiente al arma'
+          : dto.calibreMunicionCoincide === false
+            ? 'de calibre distinto al del arma'
+            : '';
+      descripcion += ` Se hallaron ${dto.cantidadMuniciones} cartuchos de munición${coincide ? ' ' + coincide : ''}.`;
+    }
+    if (dto.cantidadCargadores != null && dto.cantidadCargadores > 0) {
+      descripcion += ` Se hallaron ${dto.cantidadCargadores} proveedor(es)/cargador(es).`;
+    }
+
+    return descripcion;
   }
 
   private construirDatosDetalle(dto: CrearElementoDto) {
@@ -92,6 +147,24 @@ export class ElementosIncautadosService {
               marca: dto.marca!,
               color: dto.color!,
               imei: dto.imei,
+            },
+          },
+        };
+      case 'ARMA':
+        return {
+          detalleArma: {
+            create: {
+              tipoArma: dto.tipoArma!,
+              marca: dto.marca,
+              modelo: dto.modelo,
+              calibre: dto.calibre,
+              color: dto.color,
+              serial: dto.serial,
+              serialLegible: dto.serialLegible!,
+              estadoArma: dto.estadoArma!,
+              cantidadMuniciones: dto.cantidadMuniciones,
+              calibreMunicionCoincide: dto.calibreMunicionCoincide,
+              cantidadCargadores: dto.cantidadCargadores,
             },
           },
         };

@@ -9,8 +9,11 @@ import {
   ValidateIf,
 } from 'class-validator';
 
-export const TIPOS_ELEMENTO = ['SUSTANCIA', 'DINERO', 'CELULAR', 'OTRO'] as const;
+export const TIPOS_ELEMENTO = ['SUSTANCIA', 'DINERO', 'CELULAR', 'ARMA', 'OTRO'] as const;
 export type TipoElemento = (typeof TIPOS_ELEMENTO)[number];
+
+export const TIPOS_ARMA = ['PISTOLA', 'REVOLVER', 'ESCOPETA', 'FUSIL', 'HECHIZA'] as const;
+export const ESTADOS_ARMA = ['BUEN_ESTADO', 'MAL_ESTADO'] as const;
 
 export class CrearElementoDto {
   @IsIn(TIPOS_ELEMENTO)
@@ -71,7 +74,7 @@ export class CrearElementoDto {
   @IsString()
   denominaciones?: string;
 
-  // ── Exclusivos de CELULAR ──
+  // ── Exclusivos de CELULAR (marca también aplica, opcional, a ARMA) ──
   @ValidateIf((o) => o.tipoElemento === 'CELULAR')
   @IsNotEmpty()
   @IsString()
@@ -81,6 +84,51 @@ export class CrearElementoDto {
   @IsOptional()
   @IsString()
   imei?: string;
+
+  // ── Exclusivos de ARMA (Adenda 2026-08-12) ──
+  // Alcance confirmado: solo armas de fuego (pistola, revólver,
+  // escopeta, fusil) y hechizas/artesanales, con su munición.
+  @ValidateIf((o) => o.tipoElemento === 'ARMA')
+  @IsIn(TIPOS_ARMA)
+  tipoArma?: string;
+
+  // modelo y calibre son opcionales de forma independiente (una
+  // hechiza normalmente no tiene modelo, pero sí puede tener calibre).
+  @IsOptional()
+  @IsString()
+  modelo?: string;
+
+  @IsOptional()
+  @IsString()
+  calibre?: string;
+
+  // El serial borrado/alterado es legalmente relevante -- se deja como
+  // verificación siempre explícita (booleano obligatorio), no opcional.
+  @IsOptional()
+  @IsString()
+  serial?: string;
+
+  @ValidateIf((o) => o.tipoElemento === 'ARMA')
+  @IsNotEmpty()
+  serialLegible?: boolean;
+
+  // Solo estas 2 opciones (a solicitud del usuario, no es texto libre).
+  @ValidateIf((o) => o.tipoElemento === 'ARMA')
+  @IsIn(ESTADOS_ARMA)
+  estadoArma?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  cantidadMuniciones?: number;
+
+  @IsOptional()
+  calibreMunicionCoincide?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  cantidadCargadores?: number;
 
   // ── Exclusivos de OTRO ──
   @ValidateIf((o) => o.tipoElemento === 'OTRO')

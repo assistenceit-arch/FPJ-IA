@@ -492,6 +492,7 @@ export class DocumentosService {
         trasladoCentroAsistencial: c.trasladoCentroAsistencial,
         centroAsistencial: c.centroAsistencial,
         motivoTraslado: c.motivoTraslado,
+        tipoPermisoArma: c.tipoPermisoArma,
         contacto: c.contactoNotificacion
           ? {
               nombre: c.contactoNotificacion.nombre,

@@ -240,6 +240,13 @@ model Capturado {
   contactoNotificacion ContactoNotificacion?
   elementosIncautados  ElementoIncautado[]
 
+  // Adenda 2026-08-12: exclusivo del módulo de Porte Ilegal de Armas de
+  // Fuego -- individual por interviniente, igual que esposas/lesiones.
+  // Distingue Porte de Tenencia porque en Colombia un permiso de
+  // Tenencia (guardar el arma en un lugar fijo) NO cubre el Porte
+  // (llevarla encima en la calle) -- son cosas legalmente distintas.
+  tipoPermisoArma String? // PORTE | TENENCIA | NINGUNO
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -284,7 +291,7 @@ model ElementoIncautado {
   capturadoId     String
   capturado       Capturado @relation(fields: [capturadoId], references: [id], onDelete: Cascade)
 
-  tipoElemento        String // SUSTANCIA | DINERO | CELULAR | OTRO
+  tipoElemento        String // SUSTANCIA | DINERO | CELULAR | ARMA | OTRO
   descripcionBase     String // RN-006/RN-007: única, generada automáticamente
   ubicacionHallazgo   String
   direccionIncautacion String
@@ -293,6 +300,7 @@ model ElementoIncautado {
   detalleSustancia DetalleSustancia?
   detalleDinero    DetalleDinero?
   detalleCelular   DetalleCelular?
+  detalleArma      DetalleArma?
   detalleOtro      DetalleOtroElemento?
 
   createdAt DateTime @default(now())
@@ -325,6 +333,37 @@ model DetalleDinero {
   denominaciones String
 
   @@map("detalle_dinero")
+}
+
+// Adenda 2026-08-12: módulo de Porte Ilegal de Armas de Fuego. Alcance
+// confirmado por el usuario: solo armas de fuego (pistola, revólver,
+// escopeta, fusil) y armas hechizas/artesanales, con su munición — NO
+// incluye armas blancas, traumáticas ni artefactos explosivos.
+model DetalleArma {
+  id         String            @id @default(uuid())
+  elementoId String            @unique
+  elemento   ElementoIncautado @relation(fields: [elementoId], references: [id], onDelete: Cascade)
+
+  tipoArma String // PISTOLA | REVOLVER | ESCOPETA | FUSIL | HECHIZA
+  marca    String?
+  modelo   String?
+  calibre  String?
+  color    String?
+
+  // El serial borrado/alterado es legalmente relevante (agravante) — se
+  // deja como verificación siempre explícita, no opcional.
+  serial        String?
+  serialLegible Boolean
+
+  // Estado del arma: únicamente estas 2 opciones (a solicitud del
+  // usuario, no es texto libre).
+  estadoArma String // BUEN_ESTADO | MAL_ESTADO
+
+  cantidadMuniciones        Int?
+  calibreMunicionCoincide   Boolean?
+  cantidadCargadores        Int?
+
+  @@map("detalle_armas")
 }
 
 model DetalleCelular {
