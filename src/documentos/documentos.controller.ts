@@ -34,6 +34,23 @@ export class DocumentosController {
     );
   }
 
+  // Adenda 2026-08-14: Acta de Incautación para elementos "sin
+  // individualizar" (hallados en un lugar común, sin poder atribuirse a
+  // una persona específica) -- a nivel de procedimiento, no de un
+  // capturado en particular.
+  @Post('procedimientos/:procedimientoId/documentos/acta-incautacion-colectiva')
+  generarActaIncautacionColectiva(
+    @Param('procedimientoId') procedimientoId: string,
+    @CurrentUser() usuario: JwtPayload,
+  ) {
+    return this.service.generarActaIncautacionColectiva(
+      procedimientoId,
+      usuario.sub,
+      usuario.correo,
+      usuario.rol,
+    );
+  }
+
   @Post('procedimientos/:procedimientoId/capturados/:capturadoId/documentos/fpj6-acta-derechos')
   generarFpj6(
     @Param('procedimientoId') procedimientoId: string,

@@ -100,6 +100,13 @@ export interface ContextoNarracionFpj5 {
     caracteristicas?: string | null;
   };
   intervinientes: IntervinienteNarracion[];
+  // Adenda 2026-08-14: elementos "sin individualizar" -- hallados en un
+  // lugar común (ej. interior de un vehículo) sin poder atribuirse a
+  // una persona específica, pero que dieron lugar a la captura de
+  // todos los intervinientes del procedimiento. Separado de la lista
+  // de `elementos` de cada interviniente porque, precisamente, no
+  // pertenecen a ninguno en particular.
+  elementosSinIndividualizar: ElementoNarracion[];
   actuaciones: {
     derechosLeidos: boolean;
     fechaDerechos: string;

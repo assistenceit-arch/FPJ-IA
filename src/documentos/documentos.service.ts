@@ -13,7 +13,10 @@ import { AuditoriaService } from '../auditoria/auditoria.service';
 import { ProcedimientoAccesoService } from '../procedimientos/procedimiento-acceso.service';
 import { NarrativaService } from '../narrativa/narrativa.service';
 import { calcularDemoraExistente } from '../actuaciones-procedimiento/demora.util';
-import { construirActaIncautacion } from './plantillas/acta-incautacion.plantilla';
+import {
+  construirActaIncautacion,
+  construirActaIncautacionColectiva,
+} from './plantillas/acta-incautacion.plantilla';
 import {
   rellenarPlantillaWord,
   rellenarPlantillaConBloqueRepetible,
@@ -216,6 +219,128 @@ export class DocumentosService {
     return documentoGenerado;
   }
 
+  /**
+   * Adenda 2026-08-14: Acta de Incautación para elementos "sin
+   * individualizar" (capturadoId null en ElementoIncautado) -- hallados
+   * en un lugar común (ej. interior de un vehículo) sin poder
+   * atribuirse a una persona específica, pero que dieron lugar a la
+   * captura de varios intervinientes a la vez. Un solo documento cubre
+   * TODOS los elementos colectivos del procedimiento (mismo criterio ya
+   * usado para el Acta individual: un Acta agrupa todos los elementos
+   * de su "dueño", sea una persona o, en este caso, el procedimiento
+   * completo), listando a todos los capturados como firmantes.
+   */
+  async generarActaIncautacionColectiva(
+    procedimientoId: string,
+    usuarioId: string,
+    correoUsuario: string,
+    rol?: string,
+  ) {
+    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
+    await this.verificarPagoAprobado(procedimiento);
+    await this.verificarDocumentoNoGeneradoAntes(
+      procedimientoId,
+      'ACTA_COLECTIVA',
+      {},
+      procedimiento.edicionDesbloqueada,
+    );
+
+    const [capturados, elementosColectivos, funcionarioActuante, lugarProcedimiento] = await Promise.all([
+      this.prisma.capturado.findMany({ where: { procedimientoId }, orderBy: { createdAt: 'asc' } }),
+      this.prisma.elementoIncautado.findMany({
+        where: { procedimientoId, capturadoId: null },
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.funcionarioActuante.findUnique({ where: { procedimientoId } }),
+      this.prisma.lugarProcedimiento.findUnique({ where: { procedimientoId } }),
+    ]);
+
+    if (elementosColectivos.length === 0) {
+      throw new BadRequestException(
+        'Este procedimiento no tiene elementos sin individualizar registrados; no hay nada que documentar en el Acta colectiva.',
+      );
+    }
+    if (capturados.length === 0) {
+      throw new BadRequestException(
+        'Este procedimiento no tiene intervinientes registrados; no hay a quién atribuir el Acta colectiva.',
+      );
+    }
+    if (!funcionarioActuante) {
+      throw new BadRequestException(
+        'Debe registrar el funcionario actuante antes de generar el Acta de Incautación.',
+      );
+    }
+    if (!lugarProcedimiento) {
+      throw new BadRequestException(
+        'Debe registrar el lugar del procedimiento antes de generar el Acta de Incautación.',
+      );
+    }
+
+    const documento = construirActaIncautacionColectiva({
+      estacionPolicia: funcionarioActuante.estacion,
+      ciudad: lugarProcedimiento.municipio,
+      fechaIncautacion: procedimiento.fechaCaptura,
+      horaIncautacion: procedimiento.horaCaptura,
+      barrio: lugarProcedimiento.barrio,
+      // Adenda: todos los elementos colectivos deberían compartir el
+      // mismo lugar físico de hallazgo en la práctica (es lo que los
+      // hace "colectivos"); se usa el del primero registrado.
+      ubicacionHallazgo: elementosColectivos[0].ubicacionHallazgo,
+      capturados: capturados.map((c) => ({
+        primerNombre: c.primerNombre,
+        segundoNombre: c.segundoNombre,
+        primerApellido: c.primerApellido,
+        segundoApellido: c.segundoApellido,
+        numeroDocumento: c.numeroDocumento,
+        expedicionDocumento: c.expedicionDocumento,
+      })),
+      elementos: elementosColectivos.map((e) => ({
+        descripcion: e.descripcionBase,
+        observaciones: e.observaciones,
+      })),
+      funcionario: {
+        nombreCompleto: funcionarioActuante.nombreCompleto,
+        placa: funcionarioActuante.placa,
+        cargo: funcionarioActuante.cargo,
+      },
+    });
+
+    const buffer = await Packer.toBuffer(documento);
+
+    const version =
+      (await this.prisma.documentoGenerado.count({
+        where: { procedimientoId, tipoDocumento: 'ACTA_COLECTIVA' },
+      })) + 1;
+
+    const carpetaDestino = path.join(CARPETA_ALMACENAMIENTO, procedimientoId);
+    fs.mkdirSync(carpetaDestino, { recursive: true });
+    const nombreArchivo = `ACTA-COLECTIVA-${procedimientoId}-v${version}.docx`;
+    const rutaArchivo = path.join(carpetaDestino, nombreArchivo);
+    fs.writeFileSync(rutaArchivo, buffer);
+
+    const documentoGenerado = await this.prisma.documentoGenerado.create({
+      data: {
+        procedimientoId,
+        tipoDocumento: 'ACTA_COLECTIVA',
+        fechaGeneracion: new Date(),
+        version,
+        procedimientoVersion: 1,
+        rutaArchivo,
+        estado: version > 1 ? 'Regenerado' : 'Generado',
+      },
+    });
+
+    await this.auditoria.registrar({
+      usuario: correoUsuario,
+      accion: version > 1 ? 'Regenerar' : 'Crear',
+      tablaAfectada: 'documentos_generados',
+      registroAfectado: documentoGenerado.id,
+      descripcionEvento: `Acta de Incautación colectiva generada (v${version}) para el procedimiento ${procedimientoId}, ${capturados.length} capturados`,
+    });
+
+    return documentoGenerado;
+  }
+
   async generarFpj6ActaDerechos(
     procedimientoId: string,
     capturadoId: string,
@@ -394,7 +519,7 @@ export class DocumentosService {
     await this.verificarPagoAprobado(procedimiento);
     await this.verificarDocumentoNoGeneradoAntes(procedimientoId, 'FPJ5', {}, procedimiento.edicionDesbloqueada);
 
-    const [funcionarioActuante, companeroPatrulla, lugarProcedimiento, actuaciones, capturados] =
+    const [funcionarioActuante, companeroPatrulla, lugarProcedimiento, actuaciones, capturados, elementosColectivos] =
       await Promise.all([
         this.prisma.funcionarioActuante.findUnique({ where: { procedimientoId } }),
         this.prisma.companeroPatrulla.findUnique({ where: { procedimientoId } }),
@@ -403,6 +528,12 @@ export class DocumentosService {
         this.prisma.capturado.findMany({
           where: { procedimientoId },
           include: { elementosIncautados: true, contactoNotificacion: true },
+          orderBy: { createdAt: 'asc' },
+        }),
+        // Adenda 2026-08-14: elementos "sin individualizar" -- ver
+        // comentario en ContextoNarracionFpj5.
+        this.prisma.elementoIncautado.findMany({
+          where: { procedimientoId, capturadoId: null },
           orderBy: { createdAt: 'asc' },
         }),
       ]);
@@ -512,6 +643,14 @@ export class DocumentosService {
               justificacionNoComunicacion: c.contactoNotificacion.justificacionNoComunicacion,
             }
           : null,
+      })),
+      // Adenda 2026-08-14: elementos "sin individualizar".
+      elementosSinIndividualizar: elementosColectivos.map((e) => ({
+        tipoElemento: e.tipoElemento,
+        descripcionBase: e.descripcionBase,
+        ubicacionHallazgo: e.ubicacionHallazgo,
+        direccionIncautacion: e.direccionIncautacion,
+        observaciones: e.observaciones,
       })),
       actuaciones: {
         derechosLeidos: actuaciones.derechosLeidos,
@@ -724,14 +863,17 @@ export class DocumentosService {
     const numeroEmpEf = `EMP-${String(indice + 1).padStart(3, '0')}`;
 
     const capturado = elemento.capturado;
-    const nombreCompleto = [
-      capturado.primerNombre,
-      capturado.segundoNombre,
-      capturado.primerApellido,
-      capturado.segundoApellido,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    // Adenda 2026-08-14: elemento "sin individualizar" (capturado ===
+    // null) -- hallado en un lugar común, sin poder atribuirse a una
+    // persona específica. A solicitud del usuario: en este campo del
+    // FPJ-7 se deja claridad del lugar exacto donde se halló (vehículo,
+    // suelo, etc. -- lo que el funcionario haya escrito en
+    // ubicacionHallazgo/direccionIncautacion), en vez de un nombre.
+    const nombrePersonaHallazgo = capturado
+      ? `${[capturado.primerNombre, capturado.segundoNombre, capturado.primerApellido, capturado.segundoApellido]
+          .filter(Boolean)
+          .join(' ')} (${oNoAporta(capturado.numeroDocumento)})`
+      : `No fue posible individualizar a una persona específica. Hallado en: ${oNoAporta(elemento.ubicacionHallazgo)}, ${elemento.direccionIncautacion}.`;
 
     // REGLA (Sección 1, Mapa Documental FPJ-7): fecha/hora = captura o
     // aprehensión oficial. NUNCA derechos, comunicación ni disposición.
@@ -747,7 +889,7 @@ export class DocumentosService {
       ),
       DIRECCION_HALLAZGO: elemento.direccionIncautacion,
       UBICACION_HALLAZGO: oNoAporta(elemento.ubicacionHallazgo),
-      NOMBRE_PERSONA_HALLAZGO: `${nombreCompleto} (${oNoAporta(capturado.numeroDocumento)})`,
+      NOMBRE_PERSONA_HALLAZGO: nombrePersonaHallazgo,
       DESCRIPCION_ELEMENTO: elemento.descripcionBase,
       FUNCIONARIO_NOMBRE: funcionarioActuante.nombreCompleto,
       FUNCIONARIO_DOCUMENTO: funcionarioActuante.documento,

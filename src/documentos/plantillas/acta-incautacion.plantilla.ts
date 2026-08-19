@@ -303,3 +303,129 @@ export function construirActaIncautacion(datos: DatosActaIncautacion): Document 
     ],
   });
 }
+
+// ════════════════════════════════════════
+// Adenda 2026-08-14: variante para elementos "sin individualizar" --
+// hallados en un lugar común (ej. interior de un vehículo) sin poder
+// atribuirse a una persona específica, pero que dieron lugar a la
+// captura de varios intervinientes a la vez. Mismo formato, misma
+// estructura, pero identificando a TODOS los capturados en vez de uno
+// solo, tanto en el párrafo narrativo como en el bloque de firmas.
+// ════════════════════════════════════════
+
+export interface DatosActaIncautacionColectiva {
+  estacionPolicia: string;
+  ciudad: string;
+  fechaIncautacion: Date;
+  horaIncautacion: string;
+  barrio: string;
+  ubicacionHallazgo: string;
+  capturados: {
+    primerNombre: string;
+    segundoNombre?: string | null;
+    primerApellido: string;
+    segundoApellido?: string | null;
+    numeroDocumento?: string | null;
+    expedicionDocumento?: string | null;
+  }[];
+  elementos: { descripcion: string; observaciones?: string | null }[];
+  funcionario: {
+    nombreCompleto: string;
+    placa: string;
+    cargo: string;
+  };
+}
+
+export function construirActaIncautacionColectiva(datos: DatosActaIncautacionColectiva): Document {
+  const fecha = datos.fechaIncautacion;
+
+  const listaElementos = datos.elementos.map(
+    (e, i) =>
+      new Paragraph({
+        children: [texto(`${i + 1}. ${e.descripcion}`)],
+        spacing: { after: 120 },
+        alignment: AlignmentType.JUSTIFIED,
+      }),
+  );
+
+  const nombresConDocumento = datos.capturados
+    .map((c) => `${nombreCompleto(c)}, identificado(a) con documento N.° ${c.numeroDocumento ?? '____________________'}`)
+    .join('; ');
+
+  return new Document({
+    styles: {
+      default: {
+        document: { run: { font: FUENTE, size: TAMANO_TEXTO } },
+      },
+    },
+    sections: [
+      {
+        properties: {
+          page: { size: { width: 12240, height: 15840 } }, // Carta (US Letter)
+        },
+        children: [
+          construirEncabezado(),
+
+          new Paragraph({ spacing: { before: 300, after: 200 } }),
+
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [texto('ACTA DE INCAUTACIÓN DE ELEMENTOS VARIOS', { bold: true })],
+            spacing: { after: 300 },
+          }),
+
+          parrafo(
+            `Acta que trata de la incautación de unos elementos por parte de personal de la Policía Nacional adscrito a la estación de policía ${datos.estacionPolicia}.`,
+          ),
+
+          parrafo(
+            `En la ciudad de ${datos.ciudad}, a los ${fecha.getUTCDate()} días del mes de ${nombreMes(fecha)} del año ${fecha.getUTCFullYear()}, siendo las ${datos.horaIncautacion} horas, se procede a realizar la incautación y recolección de los siguientes elementos hallados en el barrio ${datos.barrio}, en ${datos.ubicacionHallazgo}, sin haber sido posible individualizar a una persona específica entre los siguientes capturados: ${nombresConDocumento}. Los elementos se relacionan a continuación:`,
+          ),
+
+          ...listaElementos,
+
+          ...construirObservaciones(datos.elementos),
+
+          parrafo(
+            'No siendo otro el objeto de la presente diligencia, se da por terminada dejando constancia de la incautación realizada, sin individualización posible, respecto de los ciudadanos relacionados.',
+          ),
+
+          new Paragraph({ spacing: { before: 300 } }),
+
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({
+                    width: { size: 40, type: WidthType.PERCENTAGE },
+                    children: [
+                      parrafoCelda('Quien hace la incautación:', { bold: true }),
+                      parrafoCelda(`${datos.funcionario.cargo} ${datos.funcionario.nombreCompleto}`, { size: TAMANO_TEXTO }),
+                      parrafoCelda(`Placa ${datos.funcionario.placa}`, { size: TAMANO_TEXTO }),
+                      new Paragraph({ spacing: { before: 300 } }),
+                      parrafoCelda('Firma: ____________________'),
+                    ],
+                  }),
+                  new TableCell({
+                    width: { size: 60, type: WidthType.PERCENTAGE },
+                    children: [
+                      parrafoCelda('Capturados (sin individualización del elemento):', { bold: true }),
+                      new Paragraph({ spacing: { before: 100 } }),
+                      ...datos.capturados.flatMap((c) => [
+                        parrafoCelda(nombreCompleto(c)),
+                        parrafoCelda(`C.C. ${c.numeroDocumento ?? '____________________'} de ${c.expedicionDocumento ?? '____________________'}`),
+                        parrafoCelda('Firma: ____________________'),
+                        new Paragraph({ spacing: { before: 160 } }),
+                      ]),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      },
+    ],
+  });
+}

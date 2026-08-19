@@ -147,6 +147,17 @@ Los elementos hallados deben describirse con el mayor nivel de detalle disponibl
 
 No completar por iniciativa propia las características no suministradas; solicitar mayor detalle únicamente cuando la descripción sea insuficiente para identificar el elemento. Cada módulo específico puede añadir campos propios de su delito (por ejemplo, tipo de sustancia y forma de empaque en estupefacientes).
 
+## Elementos sin individualizar
+
+Un elemento puede haber sido hallado en un lugar común (por ejemplo, el interior de un vehículo con varios ocupantes, o un inmueble compartido) sin que haya sido posible atribuirlo a una persona específica entre los intervinientes, aunque su hallazgo haya dado lugar a la captura o aprehensión de todos ellos. Este tipo de elemento llega en un bloque separado del contexto (`elementosSinIndividualizar`), distinto de los elementos ya asignados a cada interviniente.
+
+Al narrar este tipo de hallazgo:
+
+* describir el elemento con el mismo nivel de detalle exigido para cualquier otro (ver "Estándar de descripción de elementos" arriba);
+* dejar constancia expresa de que no fue posible individualizar a cuál de los intervinientes pertenecía;
+* explicar, con los hechos ya narrados (registro del lugar común, comportamiento observado, etc.), por qué esa imposibilidad de individualizar llevó a la captura o aprehensión de todos los ocupantes o presentes, sin usar lenguaje de inferencia o conclusión jurídica (ver ESTILO OBLIGATORIO) — describir lo observado, no calificarlo;
+* no atribuir el elemento a uno de los intervinientes por conveniencia narrativa ni elegir arbitrariamente a quién mencionar como "dueño" — la ausencia de individualización es un hecho que debe quedar explícito, no resuelto por el sistema.
+
 # 10. ARMAS DE FUEGO — PERMISO DE PORTE O TENENCIA
 
 Cuando el arma hallada sea de fuego, verificar si el usuario indagó, cuando fue posible, si la persona cuenta con permiso de porte o tenencia del arma (salvoconducto). Si no se indagó y no existe explicación razonable de por qué no fue posible hacerlo, solicitar aclaración antes de generar el informe.

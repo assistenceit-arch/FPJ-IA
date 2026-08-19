@@ -298,8 +298,16 @@ model ElementoIncautado {
   id String @id @default(uuid())
 
   procedimientoId String
-  capturadoId     String
-  capturado       Capturado @relation(fields: [capturadoId], references: [id], onDelete: Cascade)
+  // Adenda 2026-08-14: capturadoId pasa a ser OPCIONAL. Cuando es null,
+  // el elemento quedó "sin individualizar" -- hallado en un lugar común
+  // (ej. el interior de un vehículo con varios ocupantes) sin poder
+  // atribuirse a una persona específica, pero que de todas formas dio
+  // lugar a la captura de todos los intervinientes del procedimiento.
+  // En ese caso, `ubicacionHallazgo` debe describir el lugar físico
+  // exacto (ej. "interior del vehículo, debajo del asiento del
+  // conductor"), no una ubicación corporal.
+  capturadoId     String?
+  capturado       Capturado? @relation(fields: [capturadoId], references: [id], onDelete: Cascade)
 
   tipoElemento        String // SUSTANCIA | DINERO | CELULAR | ARMA | OTRO
   descripcionBase     String // RN-006/RN-007: única, generada automáticamente

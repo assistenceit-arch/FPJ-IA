@@ -221,7 +221,7 @@ export class ElementosIncautadosService {
 
   async crear(
     procedimientoId: string,
-    capturadoId: string,
+    capturadoId: string | null,
     dto: CrearElementoDto,
     usuarioId: string,
     correoUsuario: string,
@@ -230,7 +230,7 @@ export class ElementosIncautadosService {
     await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
-    await this.verificarCapturado(procedimientoId, capturadoId);
+    if (capturadoId) await this.verificarCapturado(procedimientoId, capturadoId);
 
     const descripcionBase = this.construirDescripcionBase(dto);
     const detalle = this.construirDatosDetalle(dto);
@@ -250,6 +250,7 @@ export class ElementosIncautadosService {
         detalleSustancia: true,
         detalleDinero: true,
         detalleCelular: true,
+        detalleArma: true,
         detalleOtro: true,
       },
     });
@@ -259,22 +260,25 @@ export class ElementosIncautadosService {
       accion: 'Crear',
       tablaAfectada: 'elementos_incautados',
       registroAfectado: elemento.id,
-      descripcionEvento: `Registro de elemento (${dto.tipoElemento}) para el interviniente ${capturadoId}`,
+      descripcionEvento: capturadoId
+        ? `Registro de elemento (${dto.tipoElemento}) para el interviniente ${capturadoId}`
+        : `Registro de elemento colectivo (${dto.tipoElemento}, sin individualizar) para el procedimiento ${procedimientoId}`,
     });
 
     return elemento;
   }
 
-  async listar(procedimientoId: string, capturadoId: string, usuarioId: string, rol?: string) {
+  async listar(procedimientoId: string, capturadoId: string | null, usuarioId: string, rol?: string) {
     await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
-    await this.verificarCapturado(procedimientoId, capturadoId);
+    if (capturadoId) await this.verificarCapturado(procedimientoId, capturadoId);
 
     return this.prisma.elementoIncautado.findMany({
-      where: { capturadoId },
+      where: { procedimientoId, capturadoId },
       include: {
         detalleSustancia: true,
         detalleDinero: true,
         detalleCelular: true,
+        detalleArma: true,
         detalleOtro: true,
       },
       orderBy: { createdAt: 'asc' },
@@ -283,14 +287,14 @@ export class ElementosIncautadosService {
 
   async obtener(
     procedimientoId: string,
-    capturadoId: string,
+    capturadoId: string | null,
     elementoId: string,
     usuarioId: string,
     rol?: string,
   ) {
     await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
-    await this.verificarCapturado(procedimientoId, capturadoId);
-    return this.obtenerElementoOFallar(capturadoId, elementoId);
+    if (capturadoId) await this.verificarCapturado(procedimientoId, capturadoId);
+    return this.obtenerElementoOFallar(procedimientoId, capturadoId, elementoId);
   }
 
   /**
@@ -301,7 +305,7 @@ export class ElementosIncautadosService {
    */
   async eliminar(
     procedimientoId: string,
-    capturadoId: string,
+    capturadoId: string | null,
     elementoId: string,
     usuarioId: string,
     correoUsuario: string,
@@ -310,8 +314,8 @@ export class ElementosIncautadosService {
     const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
-    await this.verificarCapturado(procedimientoId, capturadoId);
-    await this.obtenerElementoOFallar(capturadoId, elementoId);
+    if (capturadoId) await this.verificarCapturado(procedimientoId, capturadoId);
+    await this.obtenerElementoOFallar(procedimientoId, capturadoId, elementoId);
 
     // Adenda 2026-08-13: si un administrador desbloqueó la edición del
     // procedimiento, se omite esta verificación -- permite eliminar un
@@ -356,18 +360,29 @@ export class ElementosIncautadosService {
     return capturado;
   }
 
-  private async obtenerElementoOFallar(capturadoId: string, elementoId: string) {
+  /**
+   * Adenda 2026-08-14: capturadoId ahora puede ser null (elemento "sin
+   * individualizar", asociado al procedimiento completo). La comparación
+   * `elemento.capturadoId !== capturadoId` funciona igual para ambos
+   * casos: cuando los dos son null, JavaScript los considera iguales.
+   */
+  private async obtenerElementoOFallar(
+    procedimientoId: string,
+    capturadoId: string | null,
+    elementoId: string,
+  ) {
     const elemento = await this.prisma.elementoIncautado.findUnique({
       where: { id: elementoId },
       include: {
         detalleSustancia: true,
         detalleDinero: true,
         detalleCelular: true,
+        detalleArma: true,
         detalleOtro: true,
       },
     });
 
-    if (!elemento || elemento.capturadoId !== capturadoId) {
+    if (!elemento || elemento.procedimientoId !== procedimientoId || elemento.capturadoId !== capturadoId) {
       throw new NotFoundException('Elemento no encontrado para este interviniente.');
     }
 
