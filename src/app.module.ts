@@ -13,6 +13,7 @@ import { FuncionarioActuanteModule } from './funcionario-actuante/funcionario-ac
 import { CompaneroPatrullaModule } from './companero-patrulla/companero-patrulla.module';
 import { LugarProcedimientoModule } from './lugar-procedimiento/lugar-procedimiento.module';
 import { CapturadosModule } from './capturados/capturados.module';
+import { TestigosModule } from './testigos/testigos.module';
 import { ElementosIncautadosModule } from './elementos-incautados/elementos-incautados.module';
 import { ActuacionesProcedimientoModule } from './actuaciones-procedimiento/actuaciones-procedimiento.module';
 import { ConfiguracionPagosModule } from './configuracion-pagos/configuracion-pagos.module';
@@ -39,6 +40,7 @@ import { AdminModule } from './admin/admin.module';
     CompaneroPatrullaModule,
     LugarProcedimientoModule,
     CapturadosModule,
+    TestigosModule,
     ElementosIncautadosModule,
     ActuacionesProcedimientoModule,
     ConfiguracionPagosModule,

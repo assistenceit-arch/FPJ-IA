@@ -519,7 +519,7 @@ export class DocumentosService {
     await this.verificarPagoAprobado(procedimiento);
     await this.verificarDocumentoNoGeneradoAntes(procedimientoId, 'FPJ5', {}, procedimiento.edicionDesbloqueada);
 
-    const [funcionarioActuante, companeroPatrulla, lugarProcedimiento, actuaciones, capturados, elementosColectivos] =
+    const [funcionarioActuante, companeroPatrulla, lugarProcedimiento, actuaciones, capturados, elementosColectivos, testigos] =
       await Promise.all([
         this.prisma.funcionarioActuante.findUnique({ where: { procedimientoId } }),
         this.prisma.companeroPatrulla.findUnique({ where: { procedimientoId } }),
@@ -534,6 +534,15 @@ export class DocumentosService {
         // comentario en ContextoNarracionFpj5.
         this.prisma.elementoIncautado.findMany({
           where: { procedimientoId, capturadoId: null },
+          orderBy: { createdAt: 'asc' },
+        }),
+        // Adenda 2026-08-20: testigos de los hechos -- ver comentario en
+        // ContextoNarracionFpj5. Se consultan sin importar el valor de
+        // actuaciones.existenTestigos: si el funcionario respondió "No"
+        // pero de todas formas hay registros huérfanos (p. ej. cambió de
+        // opinión sin borrarlos), igual deben reflejarse en el informe.
+        this.prisma.testigo.findMany({
+          where: { procedimientoId },
           orderBy: { createdAt: 'asc' },
         }),
       ]);
@@ -651,6 +660,16 @@ export class DocumentosService {
         ubicacionHallazgo: e.ubicacionHallazgo,
         direccionIncautacion: e.direccionIncautacion,
         observaciones: e.observaciones,
+      })),
+      // Adenda 2026-08-20: testigos de los hechos (Sección 5).
+      testigos: testigos.map((t) => ({
+        nombreCompleto: [t.primerNombre, t.segundoNombre, t.primerApellido, t.segundoApellido]
+          .filter(Boolean)
+          .join(' '),
+        tipoDocumento: t.tipoDocumento,
+        numeroDocumento: t.numeroDocumento,
+        edad: t.edad,
+        genero: t.genero,
       })),
       actuaciones: {
         derechosLeidos: actuaciones.derechosLeidos,

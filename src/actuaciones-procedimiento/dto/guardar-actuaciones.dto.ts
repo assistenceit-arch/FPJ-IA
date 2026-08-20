@@ -99,4 +99,13 @@ export class GuardarActuacionesDto {
   @ValidateIf((o) => o.tieneObservacionAdicional === true)
   @IsString()
   observacionAdicional?: string;
+
+  // Adenda 2026-08-20: existencia de testigos de los hechos (Sección 5
+  // del FPJ 5). Si es true, el listado de testigos se diligencia por
+  // separado (ver TestigosController) con la misma dinámica que
+  // Intervinientes; si es false o no se responde, la sección se genera
+  // en N/A tal como hasta ahora.
+  @IsOptional()
+  @IsBoolean()
+  existenTestigos?: boolean;
 }

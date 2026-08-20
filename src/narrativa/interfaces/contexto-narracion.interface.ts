@@ -70,6 +70,16 @@ export interface IntervinienteNarracion {
   } | null;
 }
 
+// Adenda 2026-08-20: Testigos de los hechos (Sección 5 del FPJ 5, hasta
+// ahora fija en N/A). Núcleo común, transversal a todos los delitos.
+export interface TestigoNarracion {
+  nombreCompleto: string;
+  tipoDocumento?: string | null;
+  numeroDocumento?: string | null;
+  edad?: number | null;
+  genero?: string | null;
+}
+
 export interface ContextoNarracionFpj5 {
   procedimiento: {
     delito: string;
@@ -107,6 +117,9 @@ export interface ContextoNarracionFpj5 {
   // de `elementos` de cada interviniente porque, precisamente, no
   // pertenecen a ninguno en particular.
   elementosSinIndividualizar: ElementoNarracion[];
+  // Adenda 2026-08-20: vacío = Sección 5 se genera en N/A (regla
+  // automática existente); con contenido, se listan en el informe.
+  testigos: TestigoNarracion[];
   actuaciones: {
     derechosLeidos: boolean;
     fechaDerechos: string;
