@@ -67,9 +67,10 @@ export class ElementosIncautadosService {
 
   /**
    * Adenda 2026-08-12: descripción del arma de fuego. Cada parte
-   * opcional (marca, modelo, color, serial, munición, cargadores) solo
-   * se incluye si el funcionario la diligenció -- una hechiza, por
-   * ejemplo, normalmente no tiene marca ni modelo.
+   * opcional (marca, color, serial, munición, cargadores) solo se
+   * incluye si el funcionario la diligenció -- una hechiza, por
+   * ejemplo, normalmente no tiene marca. (Adenda 2026-08-20: "modelo"
+   * se eliminó del formulario, no se usa operativamente en campo.)
    */
   /**
    * Adenda 2026-08-13: no incluir en la descripción ningún campo vacío
@@ -106,7 +107,6 @@ export class ElementosIncautadosService {
     // cantidadEmpaques sí varía).
     const partes: string[] = [`01 arma de fuego tipo ${tipo}`];
     if (this.tieneValor(dto.marca)) partes.push(`marca ${dto.marca}`);
-    if (this.tieneValor(dto.modelo)) partes.push(`modelo ${dto.modelo}`);
     if (this.tieneValor(dto.calibre)) partes.push(`calibre ${dto.calibre}`);
     if (this.tieneValor(dto.color)) partes.push(`color ${dto.color}`);
 
@@ -194,7 +194,6 @@ export class ElementosIncautadosService {
             create: {
               tipoArma: dto.tipoArma!,
               marca: dto.marca,
-              modelo: dto.modelo,
               calibre: dto.calibre,
               color: dto.color,
               cachaMaterial: dto.cachaMaterial,

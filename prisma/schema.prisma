@@ -364,7 +364,8 @@ model DetalleArma {
 
   tipoArma String // PISTOLA | REVOLVER | ESCOPETA | FUSIL | HECHIZA
   marca    String?
-  modelo   String?
+  // Adenda 2026-08-20: se elimina "modelo" -- a solicitud del usuario,
+  // no se utiliza operativamente en campo.
   calibre  String?
   color    String?
 
@@ -441,6 +442,16 @@ model ActuacionesProcedimiento {
   // mismo criterio ya aplicado a usoEsposas.
 
   autoridadReceptora String
+
+  // Adenda 2026-08-20: en procedimientos MIXTOS (adultos y adolescentes
+  // a la vez), la autoridad receptora puede ser distinta para cada
+  // grupo (ej. URI ordinaria para los mayores, URI de Infancia y
+  // Adolescencia para los menores) -- a solicitud del usuario. Cuando
+  // el procedimiento es mixto, el frontend pide estos dos campos en vez
+  // del campo único `autoridadReceptora` de arriba (que se sigue
+  // usando tal cual para procedimientos no mixtos).
+  autoridadReceptoraAdultos String?
+  autoridadReceptoraMenores String?
 
   // Adenda 2026-08-04: demoraExistente se quita de aquí — se calcula
   // siempre al vuelo (nunca como snapshot) en demora.util.ts, para que

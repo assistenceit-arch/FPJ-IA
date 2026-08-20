@@ -99,12 +99,8 @@ export class CrearElementoDto {
   @IsIn(TIPOS_ARMA)
   tipoArma?: string;
 
-  // modelo y calibre son opcionales de forma independiente (una
-  // hechiza normalmente no tiene modelo, pero sí puede tener calibre).
-  @IsOptional()
-  @IsString()
-  modelo?: string;
-
+  // Adenda 2026-08-20: "modelo" se elimina -- a solicitud del usuario,
+  // no se utiliza operativamente en campo.
   @IsOptional()
   @IsString()
   calibre?: string;

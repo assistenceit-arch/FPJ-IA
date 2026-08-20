@@ -11,7 +11,7 @@ Este documento debe leerse en conjunto con el CORE TRANSVERSAL, que ya cubre las
 Verificar, por cada interviniente:
 
 * tipo de arma (pistola, revólver, escopeta, fusil, o hechiza/artesanal);
-* marca y modelo, cuando existan (una hechiza normalmente no los tiene — no exigirlos en ese caso);
+* marca, cuando exista (una hechiza normalmente no la tiene — no exigirla en ese caso);
 * calibre;
 * color;
 * estado del arma (únicamente "buen estado" o "mal estado", tal como lo suministre el usuario);

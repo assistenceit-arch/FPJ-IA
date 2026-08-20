@@ -658,6 +658,8 @@ export class DocumentosService {
         horaDerechos: actuaciones.horaDerechos,
         comprendeDerechos: actuaciones.comprendeDerechos,
         autoridadReceptora: actuaciones.autoridadReceptora,
+        autoridadReceptoraAdultos: actuaciones.autoridadReceptoraAdultos,
+        autoridadReceptoraMenores: actuaciones.autoridadReceptoraMenores,
         demoraExistente: calcularDemoraExistente(procedimiento),
         justificacionDemora: actuaciones.justificacionDemora,
         observacionInicial: actuaciones.observacionInicial,
@@ -693,11 +695,33 @@ export class DocumentosService {
     const contarAnexo = (tipo: string) =>
       String(anexos.find((a) => a.tipoDocumento === tipo)?._count._all ?? 0);
 
-    const elementosGlobales = capturados.flatMap((c) => c.elementosIncautados);
+    // Adenda 2026-08-20: bug real encontrado por el usuario -- faltaban
+    // los elementos "sin individualizar" (ver Adenda 2026-08-14), que
+    // solo se estaban incluyendo en la narrativa (prosa de la IA) pero
+    // NO en este listado estructurado del punto 7 del formato oficial.
+    const elementosGlobales = [
+      ...capturados.flatMap((c) => c.elementosIncautados),
+      ...elementosColectivos,
+    ];
     const descripcionElementos =
       elementosGlobales.length > 0
         ? elementosGlobales.map((e, i) => `${i + 1}. ${e.descripcionBase}`).join('\n')
         : 'No se registraron elementos incautados.';
+
+    // Adenda 2026-08-20: en procedimientos mixtos (adultos y
+    // adolescentes a la vez), la autoridad receptora puede ser
+    // distinta para cada grupo -- a solicitud del usuario. Si el
+    // procedimiento tiene ambos tipos de interviniente Y se
+    // diligenciaron los dos campos individualizados, se combinan en un
+    // solo texto; si no, se usa el campo único de siempre
+    // (autoridadReceptora) sin cambios.
+    const hayAdultos = capturados.some((c) => c.tipoInterviniente === 'CAPTURADO');
+    const hayMenores = capturados.some((c) => c.tipoInterviniente === 'APREHENDIDO');
+    const esMixto = hayAdultos && hayMenores;
+    const destinoInforme =
+      esMixto && actuaciones.autoridadReceptoraAdultos && actuaciones.autoridadReceptoraMenores
+        ? `Mayores de edad: ${actuaciones.autoridadReceptoraAdultos}. Menores de edad: ${actuaciones.autoridadReceptoraMenores}.`
+        : actuaciones.autoridadReceptora;
 
     const digitosPrefijados = (
       obj: Record<string, string>,
@@ -711,7 +735,15 @@ export class DocumentosService {
       FECHA_INFORME_ANIO: String(hoy.getUTCFullYear()),
       FECHA_INFORME_MES: String(hoy.getUTCMonth() + 1).padStart(2, '0'),
       FECHA_INFORME_DIA: String(hoy.getUTCDate()).padStart(2, '0'),
-      DESTINO_INFORME: actuaciones.autoridadReceptora,
+      DESTINO_INFORME: destinoInforme,
+      // Adenda 2026-08-20: bug real encontrado por el usuario -- el
+      // texto de este campo estaba fijo en la plantilla como
+      // "1. Tráfico, Fabricación o Porte de Estupefacientes", sin
+      // importar el delito real del procedimiento. Ahora usa el delito
+      // real, sin un número de catálogo antepuesto (no se conoce la
+      // numeración oficial completa de delitos; si el usuario la
+      // suministra más adelante, se puede mapear aquí).
+      CONDUCTA_PUNIBLE: procedimiento.delito,
       DIRECCION: lugarProcedimiento.direccion,
       BARRIO: lugarProcedimiento.barrio,
       LOCALIDAD: oNoAporta(lugarProcedimiento.localidad),

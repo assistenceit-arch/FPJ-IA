@@ -86,7 +86,7 @@ REPETIR EL SIGUIENTE BLOQUE POR CADA PERSONA INTERVENIDA
 
 ● Tipo de arma: (Pistola / Revólver / Escopeta / Fusil / Hechiza o artesanal)
 
-● Marca y modelo:
+● Marca:
 
 (Cuando existan — una hechiza normalmente no los tiene)
 

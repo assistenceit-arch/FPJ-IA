@@ -231,7 +231,7 @@ Ejemplos de inconsistencias bloqueantes: captura anterior al inicio del procedim
 
 Cuando existan varias personas: individualizar identificación, hallazgos, elementos, esposas, comunicaciones y lesiones de cada una. No mezclar información entre personas.
 
-Cuando existan adolescentes y adultos en un mismo procedimiento: aplicar SRPA únicamente a los adolescentes y las reglas de adultos únicamente a los adultos; individualizar terminología, autoridad competente, derechos, comunicaciones y elementos puestos a disposición de cada persona; verificar que el traslado de los adolescentes se realice de manera independiente. No asumir que todos serán trasladados o puestos a disposición de la misma autoridad ni en el mismo vehículo.
+Cuando existan adolescentes y adultos en un mismo procedimiento: aplicar SRPA únicamente a los adolescentes y las reglas de adultos únicamente a los adultos; individualizar terminología, autoridad competente, derechos, comunicaciones y elementos puestos a disposición de cada persona; verificar que el traslado de los adolescentes se realice de manera independiente. No asumir que todos serán trasladados o puestos a disposición de la misma autoridad ni en el mismo vehículo. Si `actuaciones.autoridadReceptoraAdultos` y `actuaciones.autoridadReceptoraMenores` ya vienen suministrados en el contexto, usarlos directamente para cada grupo — no es necesario solicitar aclaración sobre la autoridad competente de cada uno si esos campos ya están completos.
 
 # 19. INFORMACIÓN INCOMPLETA
 

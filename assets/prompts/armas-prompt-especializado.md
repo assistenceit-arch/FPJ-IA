@@ -27,7 +27,7 @@ Generar informes policiales:
 El arma hallada debe describirse, de forma individualizada por cada interviniente (si hay más de uno), con el mayor detalle disponible:
 
 * tipo de arma (pistola, revólver, escopeta, fusil, o arma de fabricación hechiza/artesanal);
-* marca y modelo, cuando sean legibles o hayan sido suministrados (una hechiza normalmente no los tiene — no forzar el dato ni tratarlo como vacío crítico en ese caso);
+* marca, cuando sea legible o haya sido suministrada (una hechiza normalmente no la tiene — no forzar el dato ni tratarlo como vacío crítico en ese caso);
 * calibre;
 * color;
 * estado en que se encuentra el arma (buen estado o mal estado, exactamente como lo suministre el usuario — no calificar con otros términos);

@@ -198,11 +198,23 @@ export class ProcedimientosService {
     // 5. Actuaciones procedimentales
     let actuacionesOk = false;
     if (actuaciones) {
-      const requeridos = [
-        this.textoCompleto(actuaciones.autoridadReceptora),
+      // Adenda 2026-08-20: en procedimientos mixtos, la autoridad
+      // receptora se pide individualizada por grupo (mayores/menores)
+      // en vez del campo único.
+      const esMixto =
+        capturados.some((c) => c.tipoInterviniente === 'CAPTURADO') &&
+        capturados.some((c) => c.tipoInterviniente === 'APREHENDIDO');
+
+      const requeridos = esMixto
+        ? [
+            this.textoCompleto(actuaciones.autoridadReceptoraAdultos),
+            this.textoCompleto(actuaciones.autoridadReceptoraMenores),
+          ]
+        : [this.textoCompleto(actuaciones.autoridadReceptora)];
+      requeridos.push(
         procedimiento.fechaDisposicion != null,
         this.textoCompleto(procedimiento.horaDisposicion),
-      ];
+      );
       if (actuaciones.derechosLeidos) {
         requeridos.push(actuaciones.fechaDerechos != null, this.textoCompleto(actuaciones.horaDerechos));
       }

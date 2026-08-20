@@ -53,6 +53,16 @@ export class GuardarActuacionesDto {
   @IsString()
   autoridadReceptora?: string;
 
+  // Adenda 2026-08-20: para procedimientos mixtos -- ver comentario en
+  // el schema.
+  @IsOptional()
+  @IsString()
+  autoridadReceptoraAdultos?: string;
+
+  @IsOptional()
+  @IsString()
+  autoridadReceptoraMenores?: string;
+
   // demoraExistente ya no se recibe del cliente NI se persiste (Adenda
   // 2026-08-04): se calcula al vuelo cada vez que se consulta (ver
   // demora.util.ts), comparando la hora de captura (sincronizada con la

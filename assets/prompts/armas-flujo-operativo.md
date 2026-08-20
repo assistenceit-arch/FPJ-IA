@@ -15,7 +15,7 @@ Identificar:
 * lugar exacto del hallazgo, con su lateralidad o posición específica (pretina, bolsillo delantero derecho, interior del vehículo, guantera, debajo del asiento, interior de un bolso, etc.);
 * coherencia física entre el modo de ocultamiento descrito y el lugar/objeto involucrado (por ejemplo, un arma larga como un fusil o escopeta no cabe en un bolsillo de pantalón — si la descripción no es físicamente coherente, solicitar aclaración en vez de corregirla por iniciativa propia).
 
-Describir el arma con el estándar completo del PROMPT ESPECIALIZADO de este módulo (tipo, marca, modelo, calibre, color, estado, serial y su legibilidad, munición, cargadores).
+Describir el arma con el estándar completo del PROMPT ESPECIALIZADO de este módulo (tipo, marca, calibre, color, estado, serial y su legibilidad, munición, cargadores).
 
 Verificar de inmediato, en esta misma etapa, el permiso de Porte/Tenencia/Ninguno de la persona (ver PROMPT ESPECIALIZADO — es la verificación central de este módulo, siempre obligatoria).
 

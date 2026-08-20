@@ -113,6 +113,10 @@ export interface ContextoNarracionFpj5 {
     horaDerechos: string;
     comprendeDerechos: boolean;
     autoridadReceptora: string;
+    // Adenda 2026-08-20: en procedimientos mixtos, la autoridad
+    // receptora puede diferir para mayores y menores de edad.
+    autoridadReceptoraAdultos?: string | null;
+    autoridadReceptoraMenores?: string | null;
     demoraExistente: boolean;
     justificacionDemora?: string | null;
     // Adenda 2026-07-22 (Bloque 5/6):
