@@ -99,6 +99,7 @@ model Procedimiento {
   lugarProcedimiento   LugarProcedimiento?
   actuacionesProcedimiento ActuacionesProcedimiento?
   capturados           Capturado[]
+  testigos             Testigo[]
   documentosGenerados  DocumentoGenerado[]
   pago                 Pago?
 
@@ -264,6 +265,50 @@ model Capturado {
   // de documento dentro del mismo procedimiento.
   @@unique([procedimientoId, tipoDocumento, numeroDocumento])
   @@map("capturados")
+}
+
+// ════════════════════════════════════════
+// TESTIGOS DE LOS HECHOS (1:N con Procedimiento) — Adenda 2026-08-20
+// Núcleo común: transversal a todos los delitos, no se duplica por
+// módulo (AT-003). Sección 5 del FPJ 5, hasta ahora fija en N/A.
+// Misma dinámica de diligenciamiento que Capturado.
+// ════════════════════════════════════════
+model Testigo {
+  id String @id @default(uuid())
+
+  procedimientoId String
+  procedimiento   Procedimiento @relation(fields: [procedimientoId], references: [id], onDelete: Cascade)
+
+  primerNombre    String
+  segundoNombre   String?
+  primerApellido  String
+  segundoApellido String?
+
+  tipoDocumento       String?
+  numeroDocumento     String?
+  expedicionDocumento String?
+
+  fechaNacimiento DateTime?
+  edad            Int?
+  genero          String?
+
+  // Lugar de nacimiento dividido en país/departamento/municipio, a
+  // solicitud del usuario (Capturado solo tiene un campo libre
+  // `lugarNacimiento`; para testigos se pidió desglosado).
+  paisNacimiento         String?
+  departamentoNacimiento String?
+  municipioNacimiento    String?
+
+  profesionOficio String?
+  estadoCivil     String?
+  direccion       String?
+  telefono        String?
+  correo          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("testigos")
 }
 
 // ════════════════════════════════════════
@@ -469,6 +514,13 @@ model ActuacionesProcedimiento {
 
   tieneCircunstanciaRelevante Boolean @default(false)
   circunstanciaRelevante      String?
+
+  // Adenda 2026-08-20: existencia de testigos de los hechos (Sección 5
+  // del FPJ 5, hasta ahora fija en N/A) -- Sí/No a nivel de
+  // procedimiento, igual que tieneCircunstanciaRelevante/
+  // tieneObservacionAdicional. Si es Sí, se diligencia el listado de
+  // Testigo (ver modelo abajo), con la misma dinámica que Intervinientes.
+  existenTestigos Boolean?
 
   tieneObservacionAdicional Boolean @default(false)
   observacionAdicional      String?
