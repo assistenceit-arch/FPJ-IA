@@ -126,11 +126,85 @@ function finDeParrafo(xml: string, posicion: number): number {
  * `bloques` se combina con `datosGlobales` y se aplica a UNA copia del
  * fragmento repetible.
  */
+/**
+ * Inserta un bloque repetible ya delimitado por marcadores centinela
+ * dentro de un XML de documento (ver rellenarPlantillaConBloqueRepetible
+ * para el contrato completo). Función interna reutilizable para soportar
+ * más de un bloque repetible en la misma plantilla (ej. FPJ-5:
+ * intervinientes Y testigos).
+ */
+function insertarBloqueRepetible(
+  xml: string,
+  marcadorInicio: string,
+  marcadorFin: string,
+  datosGlobales: Record<string, string>,
+  bloques: Array<Record<string, string>>,
+): string {
+  const posInicioTexto = xml.indexOf(marcadorInicio);
+  const posFinTexto = xml.indexOf(marcadorFin);
+  if (posInicioTexto === -1 || posFinTexto === -1) {
+    throw new Error(
+      `No se encontraron los marcadores de bloque repetible ('${marcadorInicio}' / '${marcadorFin}') en la plantilla.`,
+    );
+  }
+
+  const inicioParrafoMarcadorInicio = inicioDeParrafo(xml, posInicioTexto);
+  const finParrafoMarcadorInicio = finDeParrafo(xml, posInicioTexto);
+  const inicioParrafoMarcadorFin = inicioDeParrafo(xml, posFinTexto);
+  const finParrafoMarcadorFin = finDeParrafo(xml, posFinTexto);
+
+  const fragmentoRepetible = xml.slice(finParrafoMarcadorInicio, inicioParrafoMarcadorFin);
+
+  const fragmentoFinal = bloques
+    .map((datosBloque) => rellenarFragmento(fragmentoRepetible, { ...datosGlobales, ...datosBloque }))
+    .join('');
+
+  return xml.slice(0, inicioParrafoMarcadorInicio) + fragmentoFinal + xml.slice(finParrafoMarcadorFin);
+}
+
+/**
+ * Un bloque repetible adicional a aplicar sobre la misma plantilla (ver
+ * `bloquesAdicionales` en rellenarPlantillaConBloqueRepetible).
+ */
+export interface BloqueRepetibleAdicional {
+  marcadorInicio: string;
+  marcadorFin: string;
+  bloques: Array<Record<string, string>>;
+}
+
+/**
+ * Rellena una plantilla .docx que contiene, además de marcadores simples
+ * {{TOKEN}}, un bloque de contenido que debe repetirse una vez por cada
+ * elemento de `bloques` (para el FPJ-5: la sección "4. INFORMACIÓN DEL
+ * CAPTURADO(s)", una vez por cada interviniente — REGLA INV-FPJ5-003).
+ *
+ * El bloque a repetir debe estar delimitado en la plantilla por dos
+ * párrafos "centinela" que contienen únicamente el texto de los marcadores
+ * `marcadorInicio` / `marcadorFin` (por defecto
+ * `%%%BLOQUE_INTERVINIENTE_INICIO%%%` / `%%%BLOQUE_INTERVINIENTE_FIN%%%`).
+ * Ambos párrafos centinela se eliminan del documento final; el contenido
+ * ubicado ESTRICTAMENTE ENTRE ellos es lo que se repite.
+ *
+ * `datosGlobales` se aplica a todo el documento (incluido el fragmento
+ * repetido, para tokens que no varían por interviniente). Cada objeto de
+ * `bloques` se combina con `datosGlobales` y se aplica a UNA copia del
+ * fragmento repetible.
+ *
+ * Adenda 2026-08-20: `bloquesAdicionales` permite repetir OTRAS secciones
+ * de la misma plantilla con sus propios marcadores centinela (ej. la
+ * Sección 5 de Testigos del FPJ-5), sin afectar el bloque principal de
+ * intervinientes. Se procesan en el orden dado, cada uno de forma
+ * independiente sobre el XML resultante del anterior.
+ */
 export function rellenarPlantillaConBloqueRepetible(
   rutaPlantilla: string,
   datosGlobales: Record<string, string>,
   bloques: Array<Record<string, string>>,
-  opciones: { marcadorInicio?: string; marcadorFin?: string } = {},
+  opciones: {
+    marcadorInicio?: string;
+    marcadorFin?: string;
+    bloquesAdicionales?: BloqueRepetibleAdicional[];
+  } = {},
 ): Buffer {
   const marcadorInicio = opciones.marcadorInicio ?? MARCADOR_INICIO_BLOQUE_DEFECTO;
   const marcadorFin = opciones.marcadorFin ?? MARCADOR_FIN_BLOQUE_DEFECTO;
@@ -142,36 +216,19 @@ export function rellenarPlantillaConBloqueRepetible(
   }
   const xmlOriginal = entrada.getData().toString('utf8');
 
-  const posInicioTexto = xmlOriginal.indexOf(marcadorInicio);
-  const posFinTexto = xmlOriginal.indexOf(marcadorFin);
-  if (posInicioTexto === -1 || posFinTexto === -1) {
-    throw new Error(
-      `No se encontraron los marcadores de bloque repetible ('${marcadorInicio}' / '${marcadorFin}') en la plantilla ${rutaPlantilla}.`,
+  let xml = insertarBloqueRepetible(xmlOriginal, marcadorInicio, marcadorFin, datosGlobales, bloques);
+
+  for (const adicional of opciones.bloquesAdicionales ?? []) {
+    xml = insertarBloqueRepetible(
+      xml,
+      adicional.marcadorInicio,
+      adicional.marcadorFin,
+      datosGlobales,
+      adicional.bloques,
     );
   }
 
-  const inicioParrafoMarcadorInicio = inicioDeParrafo(xmlOriginal, posInicioTexto);
-  const finParrafoMarcadorInicio = finDeParrafo(xmlOriginal, posInicioTexto);
-  const inicioParrafoMarcadorFin = inicioDeParrafo(xmlOriginal, posFinTexto);
-  const finParrafoMarcadorFin = finDeParrafo(xmlOriginal, posFinTexto);
-
-  const fragmentoRepetible = xmlOriginal.slice(
-    finParrafoMarcadorInicio,
-    inicioParrafoMarcadorFin,
-  );
-
-  const fragmentoFinal = bloques
-    .map((datosBloque) =>
-      rellenarFragmento(fragmentoRepetible, { ...datosGlobales, ...datosBloque }),
-    )
-    .join('');
-
-  let xml =
-    xmlOriginal.slice(0, inicioParrafoMarcadorInicio) +
-    fragmentoFinal +
-    xmlOriginal.slice(finParrafoMarcadorFin);
-
-  // Resto de marcadores globales fuera del bloque repetible.
+  // Resto de marcadores globales fuera de todos los bloques repetibles.
   xml = rellenarFragmento(xml, datosGlobales);
 
   zip.updateFile('word/document.xml', Buffer.from(xml, 'utf8'));

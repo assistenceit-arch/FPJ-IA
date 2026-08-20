@@ -827,10 +827,97 @@ export class DocumentosService {
       };
     });
 
+    // Adenda 2026-08-20: Sección 5 (Testigos de los Hechos). Si no hay
+    // testigos registrados, se usa un único bloque con los mismos
+    // valores fijos que ya traía la plantilla ("NO APLICA" / casillas en
+    // blanco) para no cambiar la apariencia de los informes existentes
+    // (Regla automática FPJ5 #4: "Testigos solo si existen").
+    const SIN_TESTIGOS_BLOQUE: Record<string, string> = {
+      TESTIGO_PRIMER_NOMBRE: 'NO APLICA',
+      TESTIGO_SEGUNDO_NOMBRE: 'NO APLICA',
+      TESTIGO_PRIMER_APELLIDO: 'NO APLICA',
+      TESTIGO_SEGUNDO_APELLIDO: 'NO APLICA',
+      TESTIGO_DOC_CHECK_CC: '',
+      TESTIGO_DOC_CHECK_OTRA: '',
+      TESTIGO_NUMERO_DOCUMENTO: '',
+      TESTIGO_LUGAR_EXPEDICION: '',
+      TESTIGO_EDAD_D1: '',
+      TESTIGO_EDAD_D2: '',
+      TESTIGO_GENERO_CHECK_M: '',
+      TESTIGO_GENERO_CHECK_F: '',
+      TESTIGO_FN_D1: '',
+      TESTIGO_FN_D2: '',
+      TESTIGO_FN_M1: '',
+      TESTIGO_FN_M2: '',
+      TESTIGO_FN_A1: '',
+      TESTIGO_FN_A2: '',
+      TESTIGO_FN_A3: '',
+      TESTIGO_FN_A4: '',
+      TESTIGO_PAIS_NACIMIENTO: 'NO APLICA',
+      TESTIGO_DEPARTAMENTO_NACIMIENTO: 'NO APLICA',
+      TESTIGO_MUNICIPIO_NACIMIENTO: 'NO APLICA',
+      TESTIGO_PROFESION_OFICIO: 'NO APLICA',
+      TESTIGO_ESTADO_CIVIL: 'NO APLICA',
+      TESTIGO_DIRECCION: 'NO APLICA',
+      TESTIGO_TELEFONO: 'NO APLICA',
+      TESTIGO_CORREO: 'NO APLICA',
+    };
+
+    const bloquesTestigos: Record<string, string>[] =
+      testigos.length > 0
+        ? testigos.map((t) => {
+            const tipoDocNormalizado = (t.tipoDocumento ?? '').toUpperCase();
+            const esCC = tipoDocNormalizado.includes('CC') || tipoDocNormalizado.includes('C.C');
+            const generoM = (t.genero ?? '').toUpperCase().startsWith('M');
+            const digitosEdad =
+              t.edad !== null && t.edad !== undefined
+                ? String(t.edad).padStart(2, '0')
+                : '  ';
+
+            return {
+              TESTIGO_PRIMER_NOMBRE: t.primerNombre,
+              TESTIGO_SEGUNDO_NOMBRE: oNoAporta(t.segundoNombre) === 'No aporta' ? '' : t.segundoNombre!,
+              TESTIGO_PRIMER_APELLIDO: t.primerApellido,
+              TESTIGO_SEGUNDO_APELLIDO: oNoAporta(t.segundoApellido) === 'No aporta' ? '' : t.segundoApellido!,
+              TESTIGO_DOC_CHECK_CC: t.tipoDocumento ? (esCC ? 'X' : '') : '',
+              TESTIGO_DOC_CHECK_OTRA: t.tipoDocumento ? (esCC ? '' : 'X') : '',
+              TESTIGO_NUMERO_DOCUMENTO: oNoAporta(t.numeroDocumento),
+              TESTIGO_LUGAR_EXPEDICION: oNoAporta(t.expedicionDocumento),
+              TESTIGO_EDAD_D1: digitosEdad[0] ?? '',
+              TESTIGO_EDAD_D2: digitosEdad[1] ?? '',
+              TESTIGO_GENERO_CHECK_M: t.genero ? (generoM ? 'X' : '') : '',
+              TESTIGO_GENERO_CHECK_F: t.genero ? (generoM ? '' : 'X') : '',
+              ...digitosPrefijados(
+                t.fechaNacimiento
+                  ? digitosFecha(t.fechaNacimiento)
+                  : { D1: '', D2: '', M1: '', M2: '', A1: '', A2: '', A3: '', A4: '' },
+                'TESTIGO_FN',
+              ),
+              TESTIGO_PAIS_NACIMIENTO: oNoAporta(t.paisNacimiento),
+              TESTIGO_DEPARTAMENTO_NACIMIENTO: oNoAporta(t.departamentoNacimiento),
+              TESTIGO_MUNICIPIO_NACIMIENTO: oNoAporta(t.municipioNacimiento),
+              TESTIGO_PROFESION_OFICIO: oNoAporta(t.profesionOficio),
+              TESTIGO_ESTADO_CIVIL: oNoAporta(t.estadoCivil),
+              TESTIGO_DIRECCION: oNoAporta(t.direccion),
+              TESTIGO_TELEFONO: oNoAporta(t.telefono),
+              TESTIGO_CORREO: oNoAporta(t.correo),
+            };
+          })
+        : [SIN_TESTIGOS_BLOQUE];
+
     const buffer = rellenarPlantillaConBloqueRepetible(
       plantilla,
       datosGlobales,
       bloquesIntervinientes,
+      {
+        bloquesAdicionales: [
+          {
+            marcadorInicio: '%%%BLOQUE_TESTIGO_INICIO%%%',
+            marcadorFin: '%%%BLOQUE_TESTIGO_FIN%%%',
+            bloques: bloquesTestigos,
+          },
+        ],
+      },
     );
 
     const version =
