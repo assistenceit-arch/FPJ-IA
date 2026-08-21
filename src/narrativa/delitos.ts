@@ -17,6 +17,7 @@ import { BadRequestException } from '@nestjs/common';
 export const DELITOS_SOPORTADOS: Record<string, string> = {
   'Tráfico, Fabricación o Porte de Estupefacientes': 'estupefacientes',
   'Porte Ilegal de Armas de Fuego': 'armas',
+  'Hurto': 'hurto',
 };
 
 export function prefijoPromptPorDelito(delito: string): string {

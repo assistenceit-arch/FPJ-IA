@@ -243,6 +243,12 @@ export class ElementosIncautadosService {
         ubicacionHallazgo: dto.ubicacionHallazgo?.trim() || NO_SUMINISTRADO,
         direccionIncautacion: dto.direccionIncautacion,
         observaciones: dto.observaciones?.trim() || null,
+        // Adenda 2026-08-21 (módulo Hurto): a quién se le hurtó y estado
+        // de recuperación. Opcionales -- indiferentes para delitos sin
+        // víctimas identificables.
+        victimaId: dto.victimaId ?? null,
+        recuperado: dto.recuperado ?? null,
+        recuperadoPor: dto.recuperado ? dto.recuperadoPor?.trim() || null : null,
         ...detalle,
       },
       include: {
@@ -251,6 +257,11 @@ export class ElementosIncautadosService {
         detalleCelular: true,
         detalleArma: true,
         detalleOtro: true,
+        // Adenda 2026-08-21: bug ya conocido con detalleArma faltando en
+        // el include (RESUMEN_TECNICO sección 6, bug #1) -- no repetir
+        // el patrón con victima: se agrega explícitamente en las 3
+        // consultas (crear/listar/obtener).
+        victima: true,
       },
     });
 
@@ -279,6 +290,7 @@ export class ElementosIncautadosService {
         detalleCelular: true,
         detalleArma: true,
         detalleOtro: true,
+        victima: true,
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -378,6 +390,7 @@ export class ElementosIncautadosService {
         detalleCelular: true,
         detalleArma: true,
         detalleOtro: true,
+        victima: true,
       },
     });
 

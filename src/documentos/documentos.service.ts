@@ -519,7 +519,7 @@ export class DocumentosService {
     await this.verificarPagoAprobado(procedimiento);
     await this.verificarDocumentoNoGeneradoAntes(procedimientoId, 'FPJ5', {}, procedimiento.edicionDesbloqueada);
 
-    const [funcionarioActuante, companeroPatrulla, lugarProcedimiento, actuaciones, capturados, elementosColectivos, testigos] =
+    const [funcionarioActuante, companeroPatrulla, lugarProcedimiento, actuaciones, capturados, elementosColectivos, testigos, victimas] =
       await Promise.all([
         this.prisma.funcionarioActuante.findUnique({ where: { procedimientoId } }),
         this.prisma.companeroPatrulla.findUnique({ where: { procedimientoId } }),
@@ -543,6 +543,14 @@ export class DocumentosService {
         // opinión sin borrarlos), igual deben reflejarse en el informe.
         this.prisma.testigo.findMany({
           where: { procedimientoId },
+          orderBy: { createdAt: 'asc' },
+        }),
+        // Adenda 2026-08-21 (módulo Hurto): víctimas -- mismo criterio
+        // que testigos, con sus elementos hurtados incluidos para poder
+        // narrar qué le sustrajeron a cada una y si fue recuperado.
+        this.prisma.victima.findMany({
+          where: { procedimientoId },
+          include: { elementosIncautados: true },
           orderBy: { createdAt: 'asc' },
         }),
       ]);
@@ -670,6 +678,22 @@ export class DocumentosService {
         numeroDocumento: t.numeroDocumento,
         edad: t.edad,
         genero: t.genero,
+      })),
+      // Adenda 2026-08-21 (módulo Hurto): víctimas (Sección 4).
+      victimas: victimas.map((v) => ({
+        nombreCompleto: [v.primerNombre, v.segundoNombre, v.primerApellido, v.segundoApellido]
+          .filter(Boolean)
+          .join(' '),
+        tipoDocumento: v.tipoDocumento,
+        numeroDocumento: v.numeroDocumento,
+        edad: v.edad,
+        genero: v.genero,
+        relacionIndiciado: v.relacionIndiciado,
+        elementosHurtados: v.elementosIncautados.map((e) => ({
+          descripcionBase: e.descripcionBase,
+          recuperado: e.recuperado,
+          recuperadoPor: e.recuperadoPor,
+        })),
       })),
       actuaciones: {
         derechosLeidos: actuaciones.derechosLeidos,
@@ -905,6 +929,88 @@ export class DocumentosService {
           })
         : [SIN_TESTIGOS_BLOQUE];
 
+    // Adenda 2026-08-21 (módulo Hurto): Sección 4 (Víctimas). Si no hay
+    // víctimas registradas, se usa un único bloque con los mismos
+    // valores fijos que ya traía la plantilla ("NO APLICA" / casillas en
+    // blanco) -- esto es lo que mantiene intacta la Regla automática de
+    // Estupefacientes ("la víctima corresponde al bien jurídico
+    // protegido Salud Pública"), ya que ese módulo nunca registra
+    // víctimas y por lo tanto siempre cae en este fallback.
+    const SIN_VICTIMAS_BLOQUE: Record<string, string> = {
+      VICTIMA_PRIMER_NOMBRE: 'NO APLICA',
+      VICTIMA_SEGUNDO_NOMBRE: 'NO APLICA',
+      VICTIMA_PRIMER_APELLIDO: 'NO APLICA',
+      VICTIMA_SEGUNDO_APELLIDO: 'NO APLICA',
+      VICTIMA_DOC_CHECK_CC: '',
+      VICTIMA_DOC_CHECK_OTRA: '',
+      VICTIMA_NUMERO_DOCUMENTO: '',
+      VICTIMA_LUGAR_EXPEDICION: '',
+      VICTIMA_EDAD_D1: '',
+      VICTIMA_EDAD_D2: '',
+      VICTIMA_GENERO_CHECK_M: '',
+      VICTIMA_GENERO_CHECK_F: '',
+      VICTIMA_FN_D1: '',
+      VICTIMA_FN_D2: '',
+      VICTIMA_FN_M1: '',
+      VICTIMA_FN_M2: '',
+      VICTIMA_FN_A1: '',
+      VICTIMA_FN_A2: '',
+      VICTIMA_FN_A3: '',
+      VICTIMA_FN_A4: '',
+      VICTIMA_PAIS_NACIMIENTO: 'NO APLICA',
+      VICTIMA_DEPARTAMENTO_NACIMIENTO: 'NO APLICA',
+      VICTIMA_MUNICIPIO_NACIMIENTO: 'NO APLICA',
+      VICTIMA_PROFESION_OFICIO: 'NO APLICA',
+      VICTIMA_ESTADO_CIVIL: 'NO APLICA',
+      VICTIMA_DIRECCION: 'NO APLICA',
+      VICTIMA_TELEFONO: 'NO APLICA',
+      VICTIMA_CORREO: 'NO APLICA',
+      VICTIMA_RELACION_INDICIADO: 'NO APLICA',
+    };
+
+    const bloquesVictimas: Record<string, string>[] =
+      victimas.length > 0
+        ? victimas.map((v) => {
+            const tipoDocNormalizado = (v.tipoDocumento ?? '').toUpperCase();
+            const esCC = tipoDocNormalizado.includes('CC') || tipoDocNormalizado.includes('C.C');
+            const generoM = (v.genero ?? '').toUpperCase().startsWith('M');
+            const digitosEdad =
+              v.edad !== null && v.edad !== undefined
+                ? String(v.edad).padStart(2, '0')
+                : '  ';
+
+            return {
+              VICTIMA_PRIMER_NOMBRE: v.primerNombre,
+              VICTIMA_SEGUNDO_NOMBRE: oNoAporta(v.segundoNombre) === 'No aporta' ? '' : v.segundoNombre!,
+              VICTIMA_PRIMER_APELLIDO: v.primerApellido,
+              VICTIMA_SEGUNDO_APELLIDO: oNoAporta(v.segundoApellido) === 'No aporta' ? '' : v.segundoApellido!,
+              VICTIMA_DOC_CHECK_CC: v.tipoDocumento ? (esCC ? 'X' : '') : '',
+              VICTIMA_DOC_CHECK_OTRA: v.tipoDocumento ? (esCC ? '' : 'X') : '',
+              VICTIMA_NUMERO_DOCUMENTO: oNoAporta(v.numeroDocumento),
+              VICTIMA_LUGAR_EXPEDICION: oNoAporta(v.expedicionDocumento),
+              VICTIMA_EDAD_D1: digitosEdad[0] ?? '',
+              VICTIMA_EDAD_D2: digitosEdad[1] ?? '',
+              VICTIMA_GENERO_CHECK_M: v.genero ? (generoM ? 'X' : '') : '',
+              VICTIMA_GENERO_CHECK_F: v.genero ? (generoM ? '' : 'X') : '',
+              ...digitosPrefijados(
+                v.fechaNacimiento
+                  ? digitosFecha(v.fechaNacimiento)
+                  : { D1: '', D2: '', M1: '', M2: '', A1: '', A2: '', A3: '', A4: '' },
+                'VICTIMA_FN',
+              ),
+              VICTIMA_PAIS_NACIMIENTO: oNoAporta(v.paisNacimiento),
+              VICTIMA_DEPARTAMENTO_NACIMIENTO: oNoAporta(v.departamentoNacimiento),
+              VICTIMA_MUNICIPIO_NACIMIENTO: oNoAporta(v.municipioNacimiento),
+              VICTIMA_PROFESION_OFICIO: oNoAporta(v.profesionOficio),
+              VICTIMA_ESTADO_CIVIL: oNoAporta(v.estadoCivil),
+              VICTIMA_DIRECCION: oNoAporta(v.direccion),
+              VICTIMA_TELEFONO: oNoAporta(v.telefono),
+              VICTIMA_CORREO: oNoAporta(v.correo),
+              VICTIMA_RELACION_INDICIADO: oNoAporta(v.relacionIndiciado),
+            };
+          })
+        : [SIN_VICTIMAS_BLOQUE];
+
     const buffer = rellenarPlantillaConBloqueRepetible(
       plantilla,
       datosGlobales,
@@ -915,6 +1021,11 @@ export class DocumentosService {
             marcadorInicio: '%%%BLOQUE_TESTIGO_INICIO%%%',
             marcadorFin: '%%%BLOQUE_TESTIGO_FIN%%%',
             bloques: bloquesTestigos,
+          },
+          {
+            marcadorInicio: '%%%BLOQUE_VICTIMA_INICIO%%%',
+            marcadorFin: '%%%BLOQUE_VICTIMA_FIN%%%',
+            bloques: bloquesVictimas,
           },
         ],
       },

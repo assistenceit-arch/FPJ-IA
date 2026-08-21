@@ -100,6 +100,7 @@ model Procedimiento {
   actuacionesProcedimiento ActuacionesProcedimiento?
   capturados           Capturado[]
   testigos             Testigo[]
+  victimas             Victima[]
   documentosGenerados  DocumentoGenerado[]
   pago                 Pago?
 
@@ -312,6 +313,61 @@ model Testigo {
 }
 
 // ════════════════════════════════════════
+// VÍCTIMAS (1:N con Procedimiento) — Adenda 2026-08-21 (módulo Hurto)
+// Núcleo común: transversal a todos los delitos, no se duplica por
+// módulo (AT-003). Sección 4 del FPJ 5 -- para Estupefacientes se
+// mantiene la Regla automática (N/A, "la víctima corresponde al bien
+// jurídico protegido Salud Pública"); para Hurto y futuros delitos que
+// sí tengan víctimas identificables, se diligencia este listado.
+// Misma dinámica de diligenciamiento que Capturado/Testigo.
+// ════════════════════════════════════════
+model Victima {
+  id String @id @default(uuid())
+
+  procedimientoId String
+  procedimiento   Procedimiento @relation(fields: [procedimientoId], references: [id], onDelete: Cascade)
+
+  primerNombre    String
+  segundoNombre   String?
+  primerApellido  String
+  segundoApellido String?
+
+  tipoDocumento       String?
+  numeroDocumento     String?
+  expedicionDocumento String?
+
+  fechaNacimiento DateTime?
+  edad            Int?
+  genero          String?
+
+  paisNacimiento         String?
+  departamentoNacimiento String?
+  municipioNacimiento    String?
+
+  profesionOficio String?
+  estadoCivil     String?
+  direccion       String?
+  telefono        String?
+  correo          String?
+
+  // Único campo que Víctima tiene y Testigo no: relación con el
+  // indiciado/interviniente (ej. "desconocido", "conocido de vista",
+  // "cliente de la aplicación", "conductor de la plataforma"). Texto
+  // libre -- no un FK al Capturado, porque describe el TIPO de
+  // relación, no necesariamente a un interviniente identificado
+  // (puede haber varios intervinientes o ninguno plenamente
+  // identificado todavía).
+  relacionIndiciado String?
+
+  elementosIncautados ElementoIncautado[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("victimas")
+}
+
+// ════════════════════════════════════════
 // CONTACTO DE NOTIFICACIÓN (1:1 con Capturado)
 // ════════════════════════════════════════
 model ContactoNotificacion {
@@ -353,6 +409,22 @@ model ElementoIncautado {
   // conductor"), no una ubicación corporal.
   capturadoId     String?
   capturado       Capturado? @relation(fields: [capturadoId], references: [id], onDelete: Cascade)
+
+  // Adenda 2026-08-21 (módulo Hurto): a qué víctima le fue hurtado este
+  // elemento -- opcional porque no todos los delitos ni todos los
+  // elementos tienen una víctima asociada (ej. sustancias en
+  // Estupefacientes). Uso operativo exclusivo de Hurto, pero se agrega
+  // a nivel de ElementoIncautado (y no de un modelo aparte) porque ya
+  // es la entidad transversal de elementos del Núcleo Común -- mismo
+  // criterio que capturadoId opcional para "sin individualizar".
+  victimaId String?
+  victima   Victima? @relation(fields: [victimaId], references: [id], onDelete: SetNull)
+
+  // Adenda 2026-08-21 (módulo Hurto): si el bien hurtado fue recuperado
+  // y por quién (policía/víctima/comunidad, texto libre). Uso operativo
+  // exclusivo de Hurto.
+  recuperado    Boolean?
+  recuperadoPor String?
 
   tipoElemento        String // SUSTANCIA | DINERO | CELULAR | ARMA | OTRO
   descripcionBase     String // RN-006/RN-007: única, generada automáticamente
@@ -521,6 +593,12 @@ model ActuacionesProcedimiento {
   // tieneObservacionAdicional. Si es Sí, se diligencia el listado de
   // Testigo (ver modelo abajo), con la misma dinámica que Intervinientes.
   existenTestigos Boolean?
+
+  // Adenda 2026-08-21 (módulo Hurto): existencia de víctimas
+  // identificables (Sección 4 del FPJ 5). Mismo patrón que
+  // existenTestigos. No aplica a Estupefacientes (regla automática N/A
+  // ya vigente en ese módulo se mantiene sin cambios).
+  existenVictimas Boolean?
 
   tieneObservacionAdicional Boolean @default(false)
   observacionAdicional      String?

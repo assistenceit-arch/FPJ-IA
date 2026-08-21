@@ -108,4 +108,11 @@ export class GuardarActuacionesDto {
   @IsOptional()
   @IsBoolean()
   existenTestigos?: boolean;
+
+  // Adenda 2026-08-21 (módulo Hurto): existencia de víctimas
+  // identificables (Sección 4 del FPJ 5). Mismo patrón que
+  // existenTestigos.
+  @IsOptional()
+  @IsBoolean()
+  existenVictimas?: boolean;
 }

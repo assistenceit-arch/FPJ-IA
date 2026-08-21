@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsIn,
   IsInt,
   IsNotEmpty,
@@ -39,6 +40,23 @@ export class CrearElementoDto {
   @IsOptional()
   @IsString()
   observaciones?: string;
+
+  // Adenda 2026-08-21 (módulo Hurto): a qué víctima se le hurtó este
+  // elemento. Opcional -- no aplica a delitos sin víctimas
+  // identificables (ej. Estupefacientes).
+  @IsOptional()
+  @IsString()
+  victimaId?: string;
+
+  // Adenda 2026-08-21 (módulo Hurto): estado de recuperación del bien.
+  @IsOptional()
+  @IsBoolean()
+  recuperado?: boolean;
+
+  @ValidateIf((o) => o.recuperado === true)
+  @IsNotEmpty()
+  @IsString()
+  recuperadoPor?: string;
 
   // ── Exclusivos de SUSTANCIA ──
   @ValidateIf((o) => o.tipoElemento === 'SUSTANCIA')

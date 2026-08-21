@@ -14,6 +14,7 @@ import { CompaneroPatrullaModule } from './companero-patrulla/companero-patrulla
 import { LugarProcedimientoModule } from './lugar-procedimiento/lugar-procedimiento.module';
 import { CapturadosModule } from './capturados/capturados.module';
 import { TestigosModule } from './testigos/testigos.module';
+import { VictimasModule } from './victimas/victimas.module';
 import { ElementosIncautadosModule } from './elementos-incautados/elementos-incautados.module';
 import { ActuacionesProcedimientoModule } from './actuaciones-procedimiento/actuaciones-procedimiento.module';
 import { ConfiguracionPagosModule } from './configuracion-pagos/configuracion-pagos.module';
@@ -41,6 +42,7 @@ import { AdminModule } from './admin/admin.module';
     LugarProcedimientoModule,
     CapturadosModule,
     TestigosModule,
+    VictimasModule,
     ElementosIncautadosModule,
     ActuacionesProcedimientoModule,
     ConfiguracionPagosModule,

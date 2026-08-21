@@ -72,6 +72,27 @@ export interface IntervinienteNarracion {
 
 // Adenda 2026-08-20: Testigos de los hechos (Sección 5 del FPJ 5, hasta
 // ahora fija en N/A). Núcleo común, transversal a todos los delitos.
+// Adenda 2026-08-21 (módulo Hurto): Víctimas (Sección 4 del FPJ 5).
+// Núcleo común, transversal. Para Estupefacientes se mantiene la regla
+// automática N/A existente (no se le pasa este campo a la IA en ese
+// caso, o llega vacío).
+export interface VictimaNarracion {
+  nombreCompleto: string;
+  tipoDocumento?: string | null;
+  numeroDocumento?: string | null;
+  edad?: number | null;
+  genero?: string | null;
+  relacionIndiciado?: string | null;
+  // Elementos que le fueron hurtados a esta víctima específica, con su
+  // estado de recuperación -- para que la IA pueda narrar con claridad
+  // qué le sustrajeron a cada quien y si fue recuperado.
+  elementosHurtados: {
+    descripcionBase: string;
+    recuperado: boolean | null;
+    recuperadoPor: string | null;
+  }[];
+}
+
 export interface TestigoNarracion {
   nombreCompleto: string;
   tipoDocumento?: string | null;
@@ -120,6 +141,9 @@ export interface ContextoNarracionFpj5 {
   // Adenda 2026-08-20: vacío = Sección 5 se genera en N/A (regla
   // automática existente); con contenido, se listan en el informe.
   testigos: TestigoNarracion[];
+  // Adenda 2026-08-21 (módulo Hurto): vacío = Sección 4 se genera en N/A
+  // (regla automática existente para Estupefacientes se mantiene igual).
+  victimas: VictimaNarracion[];
   actuaciones: {
     derechosLeidos: boolean;
     fechaDerechos: string;
