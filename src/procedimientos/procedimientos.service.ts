@@ -9,7 +9,7 @@ import { AuditoriaService } from '../auditoria/auditoria.service';
 
 import { CreateProcedimientoDto } from './dto/create-procedimiento.dto';
 import { UpdateProcedimientoDto } from './dto/update-procedimiento.dto';
-import { calcularDemoraExistente, validarOrdenFechas } from '../actuaciones-procedimiento/demora.util';
+import { calcularDemoraExistente, obtenerCapturaMasAntigua, validarOrdenFechas } from '../actuaciones-procedimiento/demora.util';
 
 @Injectable()
 export class ProcedimientosService {
@@ -215,12 +215,29 @@ export class ProcedimientosService {
         procedimiento.fechaDisposicion != null,
         this.textoCompleto(procedimiento.horaDisposicion),
       );
-      if (actuaciones.derechosLeidos) {
-        requeridos.push(actuaciones.fechaDerechos != null, this.textoCompleto(actuaciones.horaDerechos));
-      }
-      if (calcularDemoraExistente(procedimiento)) {
+      // Adenda 2026-08-21: la hora de captura ya no es un solo valor del
+      // procedimiento -- se usa la más antigua entre los intervinientes,
+      // con el valor de creación del procedimiento como respaldo (ver
+      // demora.util.ts).
+      const capturaMasAntigua = obtenerCapturaMasAntigua(procedimiento, capturados);
+      if (calcularDemoraExistente({ ...procedimiento, ...capturaMasAntigua })) {
         requeridos.push(this.textoCompleto(actuaciones.justificacionDemora));
       }
+
+      // Adenda 2026-08-21: lectura de derechos individual por
+      // interviniente (antes era una sola respuesta en Actuaciones para
+      // todo el procedimiento) -- bug real reportado tras caso en vivo:
+      // no permitía capturas/aprehensiones en horas distintas dentro de
+      // un mismo procedimiento. Mismo criterio de "sin responder" que
+      // esposas/lesiones.
+      const derechosOk = capturados.every((c) => {
+        if (c.derechosLeidos === null || c.derechosLeidos === undefined) return false;
+        if (c.derechosLeidos === true) {
+          if (c.fechaCaptura === null || !this.textoCompleto(c.horaCaptura)) return false;
+          return c.comprendeDerechos !== null && c.comprendeDerechos !== undefined;
+        }
+        return true;
+      });
 
       const aprehendidos = capturados.filter((c) => c.tipoInterviniente === 'APREHENDIDO');
       const esposasOk = aprehendidos.every((a) => {
@@ -244,7 +261,7 @@ export class ProcedimientosService {
         return true;
       });
 
-      actuacionesOk = requeridos.every(Boolean) && esposasOk && lesionesOk;
+      actuacionesOk = requeridos.every(Boolean) && derechosOk && esposasOk && lesionesOk;
     }
 
     // 6. Relato de los hechos (comparte registro con Actuaciones)
