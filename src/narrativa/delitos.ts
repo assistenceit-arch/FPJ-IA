@@ -18,6 +18,7 @@ export const DELITOS_SOPORTADOS: Record<string, string> = {
   'Tráfico, Fabricación o Porte de Estupefacientes': 'estupefacientes',
   'Porte Ilegal de Armas de Fuego': 'armas',
   'Hurto': 'hurto',
+  'Lesiones Personales': 'lesiones-personales',
 };
 
 export function prefijoPromptPorDelito(delito: string): string {

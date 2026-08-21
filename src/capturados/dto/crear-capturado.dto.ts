@@ -214,6 +214,16 @@ export class CrearCapturadoDto {
   @IsString()
   motivoLesion?: string;
 
+  // Adenda 2026-08-22 (módulo Lesiones Personales): quién causó la
+  // lesión y con qué -- transversal a todos los delitos.
+  @ValidateIf((o) => o.presentaLesiones === true)
+  @IsString()
+  causanteLesion?: string;
+
+  @ValidateIf((o) => o.presentaLesiones === true)
+  @IsString()
+  elementoCausante?: string;
+
   @IsOptional()
   @IsBoolean()
   trasladoCentroAsistencial?: boolean;

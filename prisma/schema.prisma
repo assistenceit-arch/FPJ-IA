@@ -245,6 +245,15 @@ model Capturado {
   descripcionLesiones       String?
   parteCuerpoLesion         String?
   motivoLesion              String?
+  // Adenda 2026-08-22 (módulo Lesiones Personales): quién causó la
+  // lesión y con qué -- transversal a todos los delitos (a solicitud
+  // del usuario), no exclusivo de Lesiones Personales. Texto libre en
+  // ambos casos: "quién" puede ser un tercero no identificado o la
+  // comunidad, no necesariamente otro interviniente del procedimiento;
+  // "con qué" no se vincula a un elemento incautado aunque exista uno
+  // (ej. "golpes de puño" no tiene elemento que incautar).
+  causanteLesion            String?
+  elementoCausante          String?
   trasladoCentroAsistencial Boolean?
   centroAsistencial         String?
   motivoTraslado            String?
@@ -378,6 +387,23 @@ model Victima {
   // (puede haber varios intervinientes o ninguno plenamente
   // identificado todavía).
   relacionIndiciado String?
+
+  // Adenda 2026-08-22 (módulo Lesiones Personales): estado físico de la
+  // víctima -- mismo criterio y mismos campos que ya existen en
+  // Capturado (individual, no una sola respuesta compartida), salvo
+  // motivoLesion (esa pregunta tiene sentido para un interviniente que
+  // pudo lesionarse por su propia resistencia; para una víctima el
+  // delito mismo es la causa, así que no aplica). Núcleo común --
+  // cualquier delito con víctimas identificables puede necesitar este
+  // bloque, no exclusivo de Lesiones Personales.
+  presentaLesiones          Boolean?
+  descripcionLesiones       String?
+  parteCuerpoLesion         String?
+  causanteLesion            String?
+  elementoCausante          String?
+  trasladoCentroAsistencial Boolean?
+  centroAsistencial         String?
+  motivoTraslado            String?
 
   elementosIncautados ElementoIncautado[]
 

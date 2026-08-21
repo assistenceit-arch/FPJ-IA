@@ -56,6 +56,10 @@ export interface IntervinienteNarracion {
   descripcionLesiones?: string | null;
   parteCuerpoLesion?: string | null;
   motivoLesion?: string | null;
+  // Adenda 2026-08-22 (módulo Lesiones Personales): quién causó la
+  // lesión y con qué -- transversal a todos los delitos.
+  causanteLesion?: string | null;
+  elementoCausante?: string | null;
   trasladoCentroAsistencial?: boolean | null;
   centroAsistencial?: string | null;
   motivoTraslado?: string | null;
@@ -101,6 +105,17 @@ export interface VictimaNarracion {
     recuperado: boolean | null;
     recuperadoPor: string | null;
   }[];
+  // Adenda 2026-08-22 (módulo Lesiones Personales): estado físico de la
+  // víctima -- mismo criterio que IntervinienteNarracion, sin
+  // motivoLesion (no aplica a víctimas). Núcleo común.
+  presentaLesiones?: boolean | null;
+  descripcionLesiones?: string | null;
+  parteCuerpoLesion?: string | null;
+  causanteLesion?: string | null;
+  elementoCausante?: string | null;
+  trasladoCentroAsistencial?: boolean | null;
+  centroAsistencial?: string | null;
+  motivoTraslado?: string | null;
 }
 
 export interface TestigoNarracion {

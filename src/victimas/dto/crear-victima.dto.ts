@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsDateString,
   IsEmail,
   IsInt,
@@ -110,4 +111,40 @@ export class CrearVictimaDto {
   @IsOptional()
   @IsString()
   relacionIndiciado?: string;
+
+  // Adenda 2026-08-22 (módulo Lesiones Personales): estado físico de la
+  // víctima -- mismo criterio y campos que CrearCapturadoDto, salvo
+  // motivoLesion (no aplica a víctimas). Núcleo común, no exclusivo de
+  // este módulo.
+  @IsOptional()
+  @IsBoolean()
+  presentaLesiones?: boolean;
+
+  @ValidateIf((o) => o.presentaLesiones === true)
+  @IsString()
+  descripcionLesiones?: string;
+
+  @ValidateIf((o) => o.presentaLesiones === true)
+  @IsString()
+  parteCuerpoLesion?: string;
+
+  @ValidateIf((o) => o.presentaLesiones === true)
+  @IsString()
+  causanteLesion?: string;
+
+  @ValidateIf((o) => o.presentaLesiones === true)
+  @IsString()
+  elementoCausante?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  trasladoCentroAsistencial?: boolean;
+
+  @ValidateIf((o) => o.trasladoCentroAsistencial === true)
+  @IsString()
+  centroAsistencial?: string;
+
+  @ValidateIf((o) => o.trasladoCentroAsistencial === true)
+  @IsString()
+  motivoTraslado?: string;
 }
