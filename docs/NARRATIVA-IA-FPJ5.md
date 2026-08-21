@@ -1,29 +1,32 @@
-# Narrativa IA — FPJ-5 (Fase 4)
+# Narrativa IA — FPJ-5
 
-## Estado
+## Estado (actualizado)
 
-- ✅ `src/narrativa` (`NarrativaService`): arma el system prompt con el
-  Prompt CORE (`assets/prompts/`) y llama a la API de Anthropic. Devuelve
-  `{ tipo: 'narracion', texto }` o `{ tipo: 'aclaracion_requerida', pregunta }`.
-- ✅ `DocumentosService.generarFpj5Informe`: arma el contexto completo del
-  procedimiento (funcionario, compañero, lugar, intervinientes, elementos,
-  actuaciones) únicamente con variables ya persistidas en el Modelo de
-  Datos V1, invoca la narrativa y traduce `aclaracion_requerida` a `409`
-  (`AclaracionRequeridaException`).
-- ✅ `rellenarPlantillaConBloqueRepetible`: función genérica para repetir
-  un bloque de la plantilla (sección "Información del capturado(s)") una
-  vez por interviniente.
-- ✅ **2026-07-25**: se integraron 3 archivos del repo GENERADOR-INFORMES
-  que existían pero nunca se habían cargado al system prompt:
-  `PLANTILLA_INTELIGENTE.md` (cuestionario detallado con ejemplos de
-  redacción por campo) y `REGLAS-ADULTOS.md` / `REGLAS-SRPA.md` (reglas
-  diferenciadas mayor/menor de edad: terminología obligatoria, uso de
-  esposas, acudientes, autoridad competente, procedimientos mixtos).
-  Esto resuelve el pendiente de "reglas diferenciadas mayor/menor de
-  edad" que se había dejado para después.
-- ⛔ **Bloqueado**: el ensamblado final del `.docx` no está implementado.
-  Faltan `assets/documentos/fpj5-plantilla-capturado.docx` y
-  `fpj5-plantilla-aprehendido.docx`. Ver sección "Pendiente" abajo.
+El motor de narrativa está completo y en producción, y ya soporta
+múltiples delitos (no solo estupefacientes).
+
+- `src/narrativa` (`NarrativaService`): arma el system prompt combinando
+  `core-transversal.md` (siempre se carga) + los 4 archivos
+  `{prefijo}-*.md` propios del delito del procedimiento (mapa en
+  `src/narrativa/delitos.ts`) + `reglas-adultos.md`/`reglas-srpa.md` +
+  `estilo-obligatorio.md`/`ejemplos-redaccion-aprobados.md`, y llama a la
+  API de Anthropic. Devuelve `{ tipo: 'narracion', texto }` o
+  `{ tipo: 'aclaracion_requerida', pregunta }`.
+- `DocumentosService.generarFpj5Informe`: arma el contexto completo del
+  procedimiento (funcionario, compañero, lugar, intervinientes —con
+  lectura de derechos individual—, elementos, testigos, víctimas,
+  actuaciones) y lo envía a la narrativa.
+- `rellenarPlantillaConBloqueRepetible`: rellena la plantilla `.docx` con
+  los tokens `{{TOKEN}}` y soporta múltiples bloques repetibles en el
+  mismo documento (intervinientes, testigos, víctimas), cada uno
+  delimitado por sus propios marcadores centinela
+  `%%%BLOQUE_X_INICIO/FIN%%%`.
+- Delitos soportados actualmente: Tráfico/Fabricación/Porte de
+  Estupefacientes, Porte Ilegal de Armas de Fuego, Hurto. Agregar uno
+  nuevo sigue el checklist de `RESUMEN_TECNICO_FUNCIONAL` más reciente
+  del proyecto (registrar en `delitos.ts`, escribir los 4 archivos de
+  prompt propios sin duplicar el CORE, migración si el delito necesita
+  un tipo de elemento propio).
 
 ## Configuración requerida
 
@@ -39,39 +42,10 @@ La clave se crea en console.anthropic.com. El uso tiene costo por token;
 el tamaño del prompt (CORE + contexto del caso) ronda ~15-20k tokens de
 entrada por llamada, más las rondas de aclaración si las hay.
 
-## Pendiente antes de poder generar el FPJ-5 completo
-
-1. **Subir el FPJ-5 oficial original** (Word) para reconstruir
-   `fpj5-plantilla-capturado.docx` y `fpj5-plantilla-aprehendido.docx` con
-   `python-docx`, igual que se hizo con `fpj6-plantilla-*.docx`:
-   insertar los marcadores `{{TOKEN}}` de 8.2 MAPA-DOCUMENTAL-FPJ5-V1,
-   el marcador `{{NARRACION_HECHOS}}` en la sección 9 (tabla 34), y los
-   párrafos centinela `%%%BLOQUE_INTERVINIENTE_INICIO%%%` /
-   `%%%BLOQUE_INTERVINIENTE_FIN%%%` alrededor de la sección 4.
-2. **Decidir el diseño de captura de datos para la narrativa** (ver nota
-   de gobernanza abajo): el Prompt CORE (VALIDACIONES/FLUJO_OPERATIVO)
-   espera información que hoy no se persiste en el Modelo de Datos V1
-   (qué observó el funcionario, desarrollo de la intervención,
-   comportamiento, participación, lateralidad exacta del hallazgo, etc.).
-   Con el diseño actual, el ciclo de aclaración (409) probablemente se
-   activará en la mayoría de los casos pidiendo esta información por
-   texto libre en cada ronda. Alternativa: ampliar el Modelo de Datos con
-   los campos de los Bloques 5/6 del Formulario Maestro (requiere
-   migración y actualización formal de la documentación, siguiendo el
-   proceso de la Parte 8 de la EFS).
-3. Una vez existan las plantillas, completar `generarFpj5Informe`
-   reemplazando el `throw new NotImplementedException(...)` por el
-   armado de `datosGlobales` + `bloques` y la llamada a
-   `rellenarPlantillaConBloqueRepetible`, siguiendo el mismo patrón que
-   `generarFpj6ActaDerechos`.
-
 ## Nota de gobernanza (Jerarquía Documental)
 
-El Modelo de Datos V1 tiene prioridad sobre el Formulario Maestro. Por
-eso `generarFpj5Informe` NO agrega campos nuevos a `actuaciones_procedimiento`
-por iniciativa propia: el contexto enviado a la IA usa exclusivamente las
-variables ya definidas en el Modelo de Datos V1 (REGLA INV-FPJ5-002:
-Servicio Prestado, Lugar, Intervinientes, Elementos Hallados, Actuaciones
-Realizadas). Cualquier información adicional que el Prompt CORE necesite
-se solicita mediante el ciclo de aclaración, no mediante persistencia
-nueva, hasta que el usuario decida formalmente ampliar el modelo.
+El Modelo de Datos tiene prioridad sobre el Formulario Maestro. El
+contexto que se envía a la IA usa exclusivamente variables ya
+persistidas; cualquier información adicional que el Prompt CORE necesite
+se solicita mediante el ciclo de aclaración (409), no inventándola ni
+asumiéndola.

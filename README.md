@@ -1,98 +1,90 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# FPJ IA — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API de **FPJ IA**, plataforma para la gestión documental de
+procedimientos de Policía Judicial (Colombia). Un funcionario diligencia
+un formulario por bloques y el sistema genera automáticamente los
+documentos oficiales de captura/aprehensión en flagrancia (FPJ 5, FPJ 6,
+Acta de Incautación, FPJ 7, FPJ 8), incluida una narrativa de los hechos
+redactada por IA.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Stack
 
-## Description
+NestJS + Prisma + PostgreSQL. Autenticación con JWT (`@nestjs/passport`
++ `passport-jwt`). Documentos Word generados por reemplazo de tokens
+`{{TOKEN}}` sobre plantillas `.docx` reales (ver `assets/documentos/`),
+con la narrativa de los hechos generada por la API de Anthropic (ver
+`docs/NARRATIVA-IA-FPJ5.md`).
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Requisitos
 
-## Project setup
+- Node.js
+- PostgreSQL
+- Una API key de Anthropic (para la generación de narrativa del FPJ-5)
+
+## Puesta en marcha
 
 ```bash
-$ npm install
+npm install
 ```
 
-## Compile and run the project
+Crear un archivo `.env` en la raíz con:
+
+```
+DATABASE_URL=postgresql://usuario:password@localhost:5432/fpj_ia
+JWT_SECRET=...
+ANTHROPIC_API_KEY=sk-ant-...
+FRONTEND_URL=http://localhost:3001
+PORT=3000
+NODE_ENV=development
+# Envío de correos (verificación de cuenta, notificaciones)
+SMTP_HOST=...
+SMTP_PORT=...
+SMTP_USER=...
+SMTP_PASS=...
+SMTP_FROM=...
+```
+
+Luego:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npx prisma migrate deploy
+npx prisma generate
+npm run start:dev
 ```
 
-## Run tests
+El servidor arranca en el puerto configurado en `.env` (por defecto
+`3000`). El frontend (repositorio separado, `FPJ-IA-frontend`) corre en
+paralelo en otro puerto (por defecto `3001`).
+
+## Estructura
+
+- `src/` — un módulo de NestJS por entidad/funcionalidad (funcionario,
+  intervinientes/capturados, testigos, víctimas, elementos incautados,
+  actuaciones, documentos, narrativa, pagos, admin, auth).
+- `prisma/schema.prisma` — modelo de datos. Las migraciones en
+  `prisma/migrations/` son el historial real aplicado a la base de
+  datos; no se editan ni se eliminan, incluso si quedan obsoletas.
+- `assets/documentos/` — plantillas `.docx` reales que se rellenan por
+  tokens para generar los documentos oficiales.
+- `assets/prompts/` — el Prompt CORE de la narrativa IA:
+  `core-transversal.md` (transversal a todos los delitos) más 4
+  archivos `{prefijo}-*.md` por cada delito soportado.
+- `docs/NARRATIVA-IA-FPJ5.md` — cómo funciona el motor de narrativa.
+
+## Agregar un delito nuevo
+
+Ver el checklist en el resumen técnico más reciente del proyecto:
+registrar el delito en `src/narrativa/delitos.ts`, escribir los 4
+archivos de prompt propios del delito (sin duplicar lo que ya cubre
+`core-transversal.md`), y si el delito necesita un tipo de elemento
+incautado propio, seguir el patrón de `ElementoIncautado.tipoElemento` +
+modelo de detalle 1:1.
+
+## Comandos útiles
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run build          # compila con nest build
+npm run start:dev      # desarrollo con recarga automática
+npx prisma studio       # explorar la base de datos visualmente
+npx prisma migrate dev  # crear una migración nueva en desarrollo
 ```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
