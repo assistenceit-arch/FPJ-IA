@@ -29,6 +29,16 @@ export interface IntervinienteNarracion {
   // el Bloque 2 pero nunca llegaba al contexto que se le manda a la IA,
   // así que el FPJ-5 nunca lo mencionaba.
   escolaridad?: string | null;
+  // Adenda 2026-08-21: lectura de derechos (y la hora de captura que de
+  // ahí se deriva) pasa a ser individual por interviniente -- antes
+  // vivía en `actuaciones`, general para todo el procedimiento, lo que
+  // impedía capturas/aprehensiones en momentos distintos dentro del
+  // mismo procedimiento (bug real reportado tras caso en vivo). Mismo
+  // criterio ya aplicado a esposas/lesiones.
+  derechosLeidos?: boolean | null;
+  fechaCaptura?: string | null;
+  horaCaptura?: string | null;
+  comprendeDerechos?: boolean | null;
   // Adenda 2026-08-03: uso de esposas pasa a ser individual por
   // interviniente (antes vivía en `actuaciones`, general para todo el
   // procedimiento).
@@ -145,10 +155,10 @@ export interface ContextoNarracionFpj5 {
   // (regla automática existente para Estupefacientes se mantiene igual).
   victimas: VictimaNarracion[];
   actuaciones: {
-    derechosLeidos: boolean;
-    fechaDerechos: string;
-    horaDerechos: string;
-    comprendeDerechos: boolean;
+    // Adenda 2026-08-21: derechosLeidos/fechaDerechos/horaDerechos/
+    // comprendeDerechos se quitan de aquí -- pasan a ser individuales por
+    // interviniente (ver IntervinienteNarracion), mismo criterio ya
+    // aplicado a esposas/lesiones.
     autoridadReceptora: string;
     // Adenda 2026-08-20: en procedimientos mixtos, la autoridad
     // receptora puede diferir para mayores y menores de edad.

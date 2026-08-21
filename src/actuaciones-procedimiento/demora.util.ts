@@ -13,6 +13,15 @@ interface FechasProcedimiento {
   horaDisposicion: string | null;
 }
 
+// Adenda 2026-08-21: lectura de derechos (y por tanto fechaCaptura/
+// horaCaptura) ahora es individual por interviniente -- ver Capturado en
+// el schema. Este es el shape mínimo que necesitan las funciones de este
+// archivo por cada interviniente.
+interface CapturaInterviniente {
+  fechaCaptura: Date | null;
+  horaCaptura: string | null;
+}
+
 export function combinarFechaHora(fecha: Date, hora: string): Date {
   const [horas, minutos] = hora.split(':').map(Number);
   const combinada = new Date(fecha);
@@ -22,6 +31,37 @@ export function combinarFechaHora(fecha: Date, hora: string): Date {
   // horaria en la que corriera el proceso.
   combinada.setUTCHours(horas || 0, minutos || 0, 0, 0);
   return combinada;
+}
+
+/**
+ * Adenda 2026-08-21: con la lectura de derechos individual por
+ * interviniente, ya no hay una única "hora de captura" del procedimiento
+ * -- cada persona tiene la suya. Para efectos de demora se usa la más
+ * antigua entre todos los intervinientes que ya la tengan diligenciada
+ * (criterio conservador: protege a quien lleva más tiempo capturado). Si
+ * ningún interviniente la ha diligenciado todavía, se usa
+ * Procedimiento.fechaCaptura/horaCaptura -- el valor estimado que se
+ * captura obligatoriamente al crear el procedimiento, antes de que
+ * existan intervinientes (WF-M1-001/002).
+ */
+export function obtenerCapturaMasAntigua(
+  procedimiento: { fechaCaptura: Date; horaCaptura: string },
+  intervinientes: CapturaInterviniente[],
+): { fechaCaptura: Date; horaCaptura: string } {
+  const conCaptura = intervinientes.filter(
+    (i): i is { fechaCaptura: Date; horaCaptura: string } =>
+      i.fechaCaptura !== null && i.horaCaptura !== null,
+  );
+
+  if (conCaptura.length === 0) {
+    return { fechaCaptura: procedimiento.fechaCaptura, horaCaptura: procedimiento.horaCaptura };
+  }
+
+  return conCaptura.reduce((masAntigua, actual) => {
+    const momentoMasAntigua = combinarFechaHora(masAntigua.fechaCaptura, masAntigua.horaCaptura);
+    const momentoActual = combinarFechaHora(actual.fechaCaptura, actual.horaCaptura);
+    return momentoActual < momentoMasAntigua ? actual : masAntigua;
+  });
 }
 
 /**
@@ -37,9 +77,12 @@ export function combinarFechaHora(fecha: Date, hora: string): Date {
  *
  * Ahora demoraExistente YA NO se persiste en ninguna parte: se calcula
  * aquí, en caliente, cada vez que se necesita (al leer las actuaciones
- * para el frontend, y al generar el FPJ-5) a partir de las 4 fechas/horas
- * vigentes en ese momento. Así nunca puede quedar desactualizado sin
- * importar cuál de los dos bloques se edite primero o después.
+ * para el frontend, y al generar el FPJ-5) a partir de las fechas/horas
+ * vigentes en ese momento.
+ *
+ * Adenda 2026-08-21: la hora de captura ya no es un solo valor del
+ * procedimiento -- se recibe ya resuelta (ver obtenerCapturaMasAntigua)
+ * como `fechaCaptura`/`horaCaptura` de este mismo parámetro.
  */
 export function calcularDemoraExistente(procedimiento: FechasProcedimiento): boolean {
   if (!procedimiento.fechaDisposicion || !procedimiento.horaDisposicion) {
@@ -59,10 +102,10 @@ export function calcularDemoraExistente(procedimiento: FechasProcedimiento): boo
 
 /**
  * Valida que la puesta a disposición no sea anterior a la captura. Se usa
- * tanto al guardar Actuaciones (si ahí se edita la hora de derechos, que
- * sincroniza la captura) como al guardar la puesta a disposición del
- * procedimiento directamente — para que la regla se cumpla sin importar
- * cuál de los dos se edite primero.
+ * tanto al guardar la lectura de derechos de un interviniente (que fija
+ * su propia fechaCaptura/horaCaptura) como al guardar la puesta a
+ * disposición del procedimiento directamente — para que la regla se
+ * cumpla sin importar cuál de los dos se edite primero.
  */
 export function validarOrdenFechas(procedimiento: FechasProcedimiento): void {
   if (!procedimiento.fechaDisposicion || !procedimiento.horaDisposicion) return;
@@ -79,3 +122,4 @@ export function validarOrdenFechas(procedimiento: FechasProcedimiento): void {
     );
   }
 }
+

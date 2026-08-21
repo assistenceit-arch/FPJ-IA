@@ -252,6 +252,26 @@ model Capturado {
   contactoNotificacion ContactoNotificacion?
   elementosIncautados  ElementoIncautado[]
 
+  // Adenda 2026-08-21: lectura de derechos pasa de ser una sola respuesta
+  // a nivel de procedimiento (antes en ActuacionesProcedimiento) a
+  // individual por interviniente -- mismo criterio ya aplicado a
+  // esposas/lesiones. Motivo: cada persona puede haber sido capturada o
+  // aprehendida en un momento distinto, así que la lectura de derechos
+  // (y la hora de captura que de ahí se deriva) no puede ser una sola
+  // respuesta compartida para todo el procedimiento.
+  //
+  // fechaCaptura/horaCaptura AQUÍ es el momento real en que ESTA persona
+  // fue capturada/aprehendida (se informan los derechos en ese momento).
+  // Para el cálculo de demora del procedimiento se usa la más antigua
+  // entre todos los intervinientes (ver demora.util.ts), con
+  // Procedimiento.fechaCaptura/horaCaptura (capturados en la creación,
+  // antes de que existan intervinientes) como respaldo mientras ningún
+  // interviniente la haya diligenciado todavía.
+  derechosLeidos    Boolean?
+  fechaCaptura      DateTime?
+  horaCaptura       String?
+  comprendeDerechos Boolean?
+
   // Adenda 2026-08-12: exclusivo del módulo de Porte Ilegal de Armas de
   // Fuego -- individual por interviniente, igual que esposas/lesiones.
   // Distingue Porte de Tenencia porque en Colombia un permiso de
@@ -541,10 +561,11 @@ model ActuacionesProcedimiento {
   procedimientoId String        @unique
   procedimiento   Procedimiento @relation(fields: [procedimientoId], references: [id], onDelete: Cascade)
 
-  derechosLeidos     Boolean
-  fechaDerechos      DateTime? // Adenda 2026-08-03: nullable — permite guardado parcial (borrador) mientras el funcionario aún no ha diligenciado este campo.
-  horaDerechos       String
-  comprendeDerechos  Boolean
+  // Adenda 2026-08-21: derechosLeidos/fechaDerechos/horaDerechos/
+  // comprendeDerechos se quitan de aquí (eran una sola respuesta para
+  // todo el procedimiento) y pasan a Capturado, individual por
+  // interviniente -- mismo criterio ya aplicado a esposas/lesiones/
+  // permiso de arma. Ver el modelo Capturado (fechaCaptura/horaCaptura).
 
   // Adenda 2026-08-03: usoEsposas/justificacionEsposas se quitan de aquí
   // (eran una sola respuesta para todo el procedimiento) y pasan a

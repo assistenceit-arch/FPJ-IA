@@ -136,6 +136,27 @@ export class CrearCapturadoDto {
   @IsString()
   alias?: string;
 
+  // Adenda 2026-08-21: lectura de derechos individual por interviniente
+  // (antes era una sola respuesta en Actuaciones para todo el
+  // procedimiento) -- bug real reportado tras caso en vivo: no permitía
+  // capturas/aprehensiones en horas distintas dentro de un mismo
+  // procedimiento. Mismo criterio que esposas/lesiones.
+  @IsOptional()
+  @IsBoolean()
+  derechosLeidos?: boolean;
+
+  @ValidateIf((o) => o.fechaCaptura !== undefined && o.fechaCaptura !== null && o.fechaCaptura !== '')
+  @IsDateString()
+  fechaCaptura?: string;
+
+  @IsOptional()
+  @IsString()
+  horaCaptura?: string; // formato 24h, ej. "14:35" (RT-004)
+
+  @IsOptional()
+  @IsBoolean()
+  comprendeDerechos?: boolean;
+
   // ── Bloque 5/6: datos individuales para la narrativa IA (Adenda 2026-07-22) ──
   @IsOptional()
   @IsString()

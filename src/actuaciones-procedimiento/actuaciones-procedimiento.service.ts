@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { ProcedimientoAccesoService } from '../procedimientos/procedimiento-acceso.service';
 import { GuardarActuacionesDto } from './dto/guardar-actuaciones.dto';
-import { calcularDemoraExistente, validarOrdenFechas } from './demora.util';
+import { calcularDemoraExistente, obtenerCapturaMasAntigua, validarOrdenFechas } from './demora.util';
 
 @Injectable()
 export class ActuacionesProcedimientoService {
@@ -20,18 +20,26 @@ export class ActuacionesProcedimientoService {
       rol,
     );
 
-    const actuaciones = await this.prisma.actuacionesProcedimiento.findUnique({
-      where: { procedimientoId },
-    });
+    const [actuaciones, capturados] = await Promise.all([
+      this.prisma.actuacionesProcedimiento.findUnique({ where: { procedimientoId } }),
+      this.prisma.capturado.findMany({
+        where: { procedimientoId },
+        select: { fechaCaptura: true, horaCaptura: true },
+      }),
+    ]);
 
     if (!actuaciones) return null;
 
     // Adenda 2026-08-04: demoraExistente ya no se persiste — se calcula
     // aquí, en caliente, con las fechas/horas vigentes del procedimiento
     // en este momento. Ver demora.util.ts para el porqué.
+    // Adenda 2026-08-21: la hora de captura ahora es individual por
+    // interviniente (lectura de derechos) -- se usa la más antigua entre
+    // todos, con el valor de creación del procedimiento como respaldo.
+    const captura = obtenerCapturaMasAntigua(procedimiento, capturados);
     return {
       ...actuaciones,
-      demoraExistente: calcularDemoraExistente(procedimiento),
+      demoraExistente: calcularDemoraExistente({ ...procedimiento, ...captura }),
     };
   }
 
@@ -50,59 +58,35 @@ export class ActuacionesProcedimientoService {
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
 
-    // La captura/aprehensión se materializa en el momento en que se leen
-    // los derechos: la hora de captura del procedimiento se sincroniza
-    // automáticamente con la hora de derechos registrada aquí. Adenda
-    // 2026-08-03: si el usuario todavía no ha diligenciado fecha y hora
-    // de derechos (borrador), se omite la sincronización — no bloquea el
-    // guardado del resto del bloque.
-    const fechaDerechos = dto.fechaDerechos ? new Date(dto.fechaDerechos) : null;
-    let procedimientoVigente = procedimiento;
-
-    if (fechaDerechos && dto.horaDerechos) {
-      procedimientoVigente = await this.prisma.procedimiento.update({
-        where: { id: procedimientoId },
-        data: {
-          fechaCaptura: fechaDerechos,
-          horaCaptura: dto.horaDerechos,
-        },
-      });
-
-      if (
-        procedimiento.fechaCaptura.getTime() !== fechaDerechos.getTime() ||
-        procedimiento.horaCaptura !== dto.horaDerechos
-      ) {
-        await this.auditoria.registrar({
-          usuario: correoUsuario,
-          accion: 'Modificar',
-          tablaAfectada: 'procedimientos',
-          registroAfectado: procedimientoId,
-          descripcionEvento:
-            'Hora de captura sincronizada automáticamente con la hora de lectura de derechos.',
-        });
-      }
-    }
+    // Adenda 2026-08-21: la lectura de derechos (y la hora de captura que
+    // de ahí se deriva) ya no se sincroniza aquí -- ahora es individual
+    // por interviniente y se guarda directamente en Capturado (ver
+    // CapturadosService). Este bloque conserva únicamente autoridad
+    // receptora, demora, relato y las secciones de testigos/víctimas.
+    const capturados = await this.prisma.capturado.findMany({
+      where: { procedimientoId },
+      select: { fechaCaptura: true, horaCaptura: true },
+    });
+    const captura = obtenerCapturaMasAntigua(procedimiento, capturados);
 
     // Valida que la puesta a disposición (si ya está diligenciada) no sea
-    // anterior a la captura recién sincronizada. La demora en sí ya NO se
+    // anterior a la captura más antigua vigente. La demora en sí ya NO se
     // calcula ni se guarda aquí — ver obtener() y documentos.service.ts,
     // que la calculan al vuelo con demora.util.ts.
-    validarOrdenFechas(procedimientoVigente);
+    validarOrdenFechas({ ...procedimiento, ...captura });
 
     const existente = await this.prisma.actuacionesProcedimiento.findUnique({
       where: { procedimientoId },
     });
 
-    // horaDerechos y autoridadReceptora son String NOT NULL en la base de
-    // datos (aceptan cadena vacía, pero no "undefined"); se normalizan
-    // aquí porque el dto ya las admite opcionales (borrador parcial).
-    // justificacionDemora se guarda tal cual la escriba el usuario, sin
-    // importar si en este momento aplica o no demora — así no se borra
-    // en silencio un texto ya escrito si las fechas cambian después.
+    // autoridadReceptora es String NOT NULL en la base de datos (acepta
+    // cadena vacía, pero no "undefined"); se normaliza aquí porque el dto
+    // ya la admite opcional (borrador parcial). justificacionDemora se
+    // guarda tal cual la escriba el usuario, sin importar si en este
+    // momento aplica o no demora — así no se borra en silencio un texto
+    // ya escrito si las fechas cambian después.
     const datos = {
       ...dto,
-      fechaDerechos,
-      horaDerechos: dto.horaDerechos ?? '',
       autoridadReceptora: dto.autoridadReceptora ?? '',
     };
 
@@ -122,7 +106,7 @@ export class ActuacionesProcedimientoService {
 
     return {
       ...resultado,
-      demoraExistente: calcularDemoraExistente(procedimientoVigente),
+      demoraExistente: calcularDemoraExistente({ ...procedimiento, ...captura }),
     };
   }
 }

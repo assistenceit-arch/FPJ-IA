@@ -9,6 +9,7 @@ import { ProcedimientoAccesoService } from '../procedimientos/procedimiento-acce
 import { CrearCapturadoDto } from './dto/crear-capturado.dto';
 import { ActualizarCapturadoDto } from './dto/actualizar-capturado.dto';
 import { GuardarContactoNotificacionDto } from './dto/guardar-contacto-notificacion.dto';
+import { validarOrdenFechas } from '../actuaciones-procedimiento/demora.util';
 
 const NO_APORTO = 'No aportó';
 
@@ -96,9 +97,17 @@ export class CapturadosService {
     // por "Unknown argument").
     const { edadManual: _edadManual, ...resto } = dto as T & { edadManual?: number };
 
+    // Adenda 2026-08-21: fechaCaptura llega como string ISO desde el DTO
+    // (igual que fechaNacimiento) -- se convierte a Date antes de
+    // persistir. undefined se conserva tal cual (actualización parcial
+    // que no toca este campo); no se fuerza a null.
+    const fechaCaptura =
+      resto.fechaCaptura !== undefined ? new Date(resto.fechaCaptura as unknown as string) : undefined;
+
     return {
       ...resto,
       fechaNacimiento,
+      fechaCaptura,
       edad,
       tipoInterviniente,
       nombrePadres: dto.nombrePadres?.trim() || NO_APORTO,
@@ -113,7 +122,7 @@ export class CapturadosService {
     correoUsuario: string,
     rol?: string,
   ) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
+    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
 
@@ -132,6 +141,18 @@ export class CapturadosService {
       resuelto.edad,
       resuelto.fechaNacimiento,
     );
+
+    // Adenda 2026-08-21: si esta persona ya tiene fecha/hora de captura
+    // (lectura de derechos), valida que la puesta a disposición del
+    // procedimiento (si ya está diligenciada) no sea anterior a ELLA.
+    if (datos.fechaCaptura && datos.horaCaptura) {
+      validarOrdenFechas({
+        fechaCaptura: datos.fechaCaptura,
+        horaCaptura: datos.horaCaptura,
+        fechaDisposicion: procedimiento.fechaDisposicion,
+        horaDisposicion: procedimiento.horaDisposicion,
+      });
+    }
 
     try {
       const capturado = await this.prisma.capturado.create({
@@ -176,7 +197,7 @@ export class CapturadosService {
     correoUsuario: string,
     rol?: string,
   ) {
-    await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
+    const procedimiento = await this.acceso.verificarPropiedad(procedimientoId, usuarioId, rol);
     await this.acceso.verificarNoBloqueado(procedimientoId);
     await this.acceso.verificarPagoComplejoAprobado(procedimientoId);
     const existente = await this.obtenerCapturadoOFallar(procedimientoId, capturadoId);
@@ -198,6 +219,21 @@ export class CapturadosService {
       resuelto.edad,
       resuelto.fechaNacimiento,
     );
+
+    // Adenda 2026-08-21: si esta actualización toca fecha/hora de captura
+    // (lectura de derechos), o si la persona ya las tenía, valida contra
+    // la puesta a disposición vigente del procedimiento.
+    const fechaCapturaVigente = datos.fechaCaptura ?? existente.fechaCaptura;
+    const horaCapturaVigente =
+      datos.horaCaptura !== undefined ? datos.horaCaptura : existente.horaCaptura;
+    if (fechaCapturaVigente && horaCapturaVigente) {
+      validarOrdenFechas({
+        fechaCaptura: fechaCapturaVigente,
+        horaCaptura: horaCapturaVigente,
+        fechaDisposicion: procedimiento.fechaDisposicion,
+        horaDisposicion: procedimiento.horaDisposicion,
+      });
+    }
 
     try {
       const actualizado = await this.prisma.capturado.update({

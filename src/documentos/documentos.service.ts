@@ -12,7 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { ProcedimientoAccesoService } from '../procedimientos/procedimiento-acceso.service';
 import { NarrativaService } from '../narrativa/narrativa.service';
-import { calcularDemoraExistente } from '../actuaciones-procedimiento/demora.util';
+import { calcularDemoraExistente, obtenerCapturaMasAntigua } from '../actuaciones-procedimiento/demora.util';
 import {
   construirActaIncautacion,
   construirActaIncautacionColectiva,
@@ -360,10 +360,9 @@ export class DocumentosService {
       throw new NotFoundException('Interviniente no encontrado en este procedimiento.');
     }
 
-    const [funcionarioActuante, lugarProcedimiento, actuaciones] = await Promise.all([
+    const [funcionarioActuante, lugarProcedimiento] = await Promise.all([
       this.prisma.funcionarioActuante.findUnique({ where: { procedimientoId } }),
       this.prisma.lugarProcedimiento.findUnique({ where: { procedimientoId } }),
-      this.prisma.actuacionesProcedimiento.findUnique({ where: { procedimientoId } }),
     ]);
     if (!funcionarioActuante) {
       throw new BadRequestException('Debe registrar el funcionario actuante antes de generar el FPJ-6.');
@@ -371,17 +370,14 @@ export class DocumentosService {
     if (!lugarProcedimiento) {
       throw new BadRequestException('Debe registrar el lugar del procedimiento antes de generar el FPJ-6.');
     }
-    if (!actuaciones) {
+    // Adenda 2026-08-21: la lectura de derechos (y su fecha/hora) ahora es
+    // individual por interviniente -- ver Capturado en el schema. Antes
+    // vivía en `actuaciones`, compartida para todo el procedimiento, lo
+    // que impedía capturas/aprehensiones en momentos distintos dentro del
+    // mismo procedimiento (bug real reportado tras caso en vivo).
+    if (!capturado.fechaCaptura || !capturado.horaCaptura) {
       throw new BadRequestException(
-        'Debe registrar las actuaciones procedimentales (lectura de derechos) antes de generar el FPJ-6.',
-      );
-    }
-    // Adenda 2026-08-03: fechaDerechos/horaDerechos ahora pueden faltar
-    // (el registro admite guardado parcial/borrador), así que la mera
-    // existencia de `actuaciones` ya no garantiza que estén diligenciadas.
-    if (!actuaciones.fechaDerechos || !actuaciones.horaDerechos) {
-      throw new BadRequestException(
-        'Debe completar la fecha y hora de lectura de derechos antes de generar el FPJ-6.',
+        'Debe completar la fecha y hora de lectura de derechos de este interviniente antes de generar el FPJ-6.',
       );
     }
 
@@ -396,7 +392,13 @@ export class DocumentosService {
       .join(' ');
 
     // Contacto: si no se logró obtener NINGÚN dato del acudiente/representante,
-    // la hora queda en blanco y se deja la constancia automática en Observaciones.
+    // la hora queda en blanco y se deja la constancia en Observaciones.
+    // Adenda 2026-08-21: bug real reportado tras caso en vivo -- antes se
+    // usaba siempre una frase genérica fija, ignorando la justificación
+    // específica que el funcionario efectivamente escribió
+    // (justificacionNoComunicacion). Ahora se usa esa justificación
+    // cuando existe, y solo se cae a la frase genérica si no se escribió
+    // ninguna (constancia mínima, mejor que dejarlo vacío).
     const contacto = capturado.contactoNotificacion;
     const contactoDesconocido =
       !contacto ||
@@ -405,12 +407,13 @@ export class DocumentosService {
         oNoAporta(contacto.telefono) === 'No aporta');
 
     const observaciones = contactoDesconocido
-      ? `Se deja constancia de que no fue posible informar de la situación jurídica del ${esAprehendido ? 'aprehendido' : 'capturado'}(a) al no lograr obtener información del acudiente, representante o persona indicada por él/ella.`
+      ? contacto?.justificacionNoComunicacion?.trim() ||
+        `Se deja constancia de que no fue posible informar de la situación jurídica del ${esAprehendido ? 'aprehendido' : 'capturado'}(a) al no lograr obtener información del acudiente, representante o persona indicada por él/ella.`
       : OBSERVACIONES_VACIAS;
 
-    const fechaDig = digitosFecha(actuaciones.fechaDerechos);
-    const horaDig = digitosHora(actuaciones.horaDerechos);
-    const fechaBt = actuaciones.fechaDerechos;
+    const fechaDig = digitosFecha(capturado.fechaCaptura);
+    const horaDig = digitosHora(capturado.horaCaptura);
+    const fechaBt = capturado.fechaCaptura;
 
     const datos: Record<string, string> = {
       ...fechaDig,
@@ -426,6 +429,13 @@ export class DocumentosService {
         : 'No aporta',
       LUGAR_NAC: oNoAporta(capturado.lugarNacimiento),
       PADRES: oNoAporta(capturado.nombrePadres),
+      // Adenda 2026-08-21: teléfono de los padres, faltaba por completo en
+      // este documento (bug real reportado tras caso en vivo) -- el
+      // token PADRES solo traía el nombre.
+      PADRES_TELEFONO: oNoAporta(capturado.telefonoPadres),
+      // Adenda 2026-08-21: escolaridad, faltaba por completo en este
+      // documento.
+      ESCOLARIDAD: oNoAporta(capturado.escolaridad),
       ESTADO_CIVIL: oNoAporta(capturado.estadoCivil),
       OCUPACION: oNoAporta(capturado.ocupacion),
       DIR_TEL_INTERVINIENTE: oNoAporta(
@@ -433,7 +443,7 @@ export class DocumentosService {
       ),
       CORREO: oNoAporta(capturado.correo),
       REDES: oNoAporta(capturado.redesSociales),
-      COMPRENDE: actuaciones.comprendeDerechos ? '(SÍ)' : '(NO)',
+      COMPRENDE: capturado.comprendeDerechos ? '(SÍ)' : '(NO)',
       C_NOMBRES: oNoAporta(contacto?.nombre),
       C_IDENTIFICACION: oNoAporta(contacto?.identificacion),
       C_TELEFONO: oNoAporta(contacto?.telefono),
@@ -444,7 +454,7 @@ export class DocumentosService {
       BT_DIA: String(fechaBt.getUTCDate()),
       BT_MES: fechaBt.toLocaleDateString('es-CO', { month: 'long' }),
       BT_ANIO: String(fechaBt.getUTCFullYear()),
-      BT_HORA: actuaciones.horaDerechos,
+      BT_HORA: capturado.horaCaptura,
       BT_NOMBRE: nombreCompletoCapturado,
       BT_CEDULA: oNoAporta(capturado.numeroDocumento),
       BT_FECHA_NAC: capturado.fechaNacimiento
@@ -566,12 +576,15 @@ export class DocumentosService {
         'Debe registrar las actuaciones procedimentales antes de generar el FPJ-5.',
       );
     }
-    // Adenda 2026-08-03: fechaDerechos/horaDerechos ahora pueden faltar
-    // (el registro admite guardado parcial/borrador), así que la mera
-    // existencia de `actuaciones` ya no garantiza que estén diligenciadas.
-    if (!actuaciones.fechaDerechos || !actuaciones.horaDerechos) {
+    // Adenda 2026-08-21: la lectura de derechos (y su fecha/hora) ahora es
+    // individual por interviniente -- ver Capturado en el schema. Antes
+    // vivía en `actuaciones`, compartida para todo el procedimiento, lo
+    // que impedía capturas/aprehensiones en momentos distintos dentro del
+    // mismo procedimiento (bug real reportado tras caso en vivo).
+    const intervinienteSinDerechos = capturados.find((c) => !c.fechaCaptura || !c.horaCaptura);
+    if (intervinienteSinDerechos) {
       throw new BadRequestException(
-        'Debe completar la fecha y hora de lectura de derechos (Bloque 5) antes de generar el FPJ-5.',
+        `Debe completar la fecha y hora de lectura de derechos de ${intervinienteSinDerechos.primerNombre} ${intervinienteSinDerechos.primerApellido} antes de generar el FPJ-5.`,
       );
     }
     if (capturados.length === 0) {
@@ -587,12 +600,18 @@ export class DocumentosService {
       );
     }
 
+    // Adenda 2026-08-21: la hora de captura ya no es un solo valor del
+    // procedimiento -- se usa la más antigua entre los intervinientes,
+    // con el valor de creación del procedimiento como respaldo (ver
+    // demora.util.ts).
+    const capturaMasAntigua = obtenerCapturaMasAntigua(procedimiento, capturados);
+
     const contexto: ContextoNarracionFpj5 = {
       procedimiento: {
         delito: procedimiento.delito,
         tipoProcedimiento: procedimiento.tipoProcedimiento,
-        fechaCaptura: procedimiento.fechaCaptura.toISOString(),
-        horaCaptura: procedimiento.horaCaptura,
+        fechaCaptura: capturaMasAntigua.fechaCaptura.toISOString(),
+        horaCaptura: capturaMasAntigua.horaCaptura,
         fechaDisposicion: procedimiento.fechaDisposicion.toISOString(),
         horaDisposicion: procedimiento.horaDisposicion,
       },
@@ -638,6 +657,10 @@ export class DocumentosService {
         identificacionPlena: c.identificacionPlena,
         formaIdentificacion: c.formaIdentificacion,
         escolaridad: c.escolaridad,
+        derechosLeidos: c.derechosLeidos,
+        fechaCaptura: c.fechaCaptura ? c.fechaCaptura.toISOString() : null,
+        horaCaptura: c.horaCaptura,
+        comprendeDerechos: c.comprendeDerechos,
         usoEsposas: c.usoEsposas,
         justificacionEsposas: c.justificacionEsposas,
         tiempoEsposado: c.tiempoEsposado,
@@ -696,14 +719,10 @@ export class DocumentosService {
         })),
       })),
       actuaciones: {
-        derechosLeidos: actuaciones.derechosLeidos,
-        fechaDerechos: actuaciones.fechaDerechos.toISOString(),
-        horaDerechos: actuaciones.horaDerechos,
-        comprendeDerechos: actuaciones.comprendeDerechos,
         autoridadReceptora: actuaciones.autoridadReceptora,
         autoridadReceptoraAdultos: actuaciones.autoridadReceptoraAdultos,
         autoridadReceptoraMenores: actuaciones.autoridadReceptoraMenores,
-        demoraExistente: calcularDemoraExistente(procedimiento),
+        demoraExistente: calcularDemoraExistente({ ...procedimiento, ...capturaMasAntigua }),
         justificacionDemora: actuaciones.justificacionDemora,
         observacionInicial: actuaciones.observacionInicial,
         desarrolloIntervencion: actuaciones.desarrolloIntervencion,

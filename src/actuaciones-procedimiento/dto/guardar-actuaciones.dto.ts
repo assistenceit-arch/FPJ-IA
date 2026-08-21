@@ -1,7 +1,5 @@
 import {
   IsBoolean,
-  IsDateString,
-  IsNotEmpty,
   IsOptional,
   IsString,
   ValidateIf,
@@ -18,31 +16,17 @@ import {
 // únicamente en el frontend (ver estadoActuaciones/estadoRelato en
 // src/lib/estados.ts del frontend).
 //
-// usoEsposas/justificacionEsposas se removieron de este DTO por completo
-// el mismo día: pasaron a ser una pregunta individual por interviniente
+// usoEsposas/justificacionEsposas se removieron de este DTO el
+// 2026-08-03: pasaron a ser una pregunta individual por interviniente
 // (ver CrearCapturadoDto), no una respuesta general del procedimiento.
+//
+// Adenda 2026-08-21: derechosLeidos/fechaDerechos/horaDerechos/
+// comprendeDerechos se remueven de aquí por el mismo motivo -- pasan a
+// ser individuales por interviniente (ver CrearCapturadoDto), porque
+// cada persona puede haber sido capturada/aprehendida en un momento
+// distinto dentro del mismo procedimiento.
 export class GuardarActuacionesDto {
-  // ── Lectura de derechos ──
-  @IsNotEmpty()
-  @IsBoolean()
-  derechosLeidos!: boolean;
-
-  @ValidateIf((o) => o.fechaDerechos !== undefined && o.fechaDerechos !== null && o.fechaDerechos !== '')
-  @IsDateString()
-  fechaDerechos?: string;
-
-  @IsOptional()
-  @IsString()
-  horaDerechos?: string; // formato 24h, ej. "14:35" (RT-004)
-
-  @IsNotEmpty()
-  @IsBoolean()
-  comprendeDerechos!: boolean;
-
-  // Adenda 2026-08-03: usoEsposas/justificacionEsposas se quitan de aquí
-  // — pasan a ser una pregunta individual por interviniente en
-  // CrearCapturadoDto/ActualizarCapturadoDto (ver ese archivo).
-  //
+  // ── Autoridad receptora / puesta a disposición ──
   // Adenda 2026-08-11: presentaLesiones/descripcionLesiones/
   // trasladoCentroAsistencial/centroAsistencial/motivoTraslado se
   // quitan de aquí por el mismo motivo -- pasan a ser individuales por
