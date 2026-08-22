@@ -147,4 +147,51 @@ export class CrearVictimaDto {
   @ValidateIf((o) => o.trasladoCentroAsistencial === true)
   @IsString()
   motivoTraslado?: string;
+
+  // Adenda 2026-08-22 (módulo Violencia contra Servidor Público):
+  // exclusivo de este delito. Toda víctima registrada bajo este delito
+  // es, por definición, un servidor público -- no hay un booleano
+  // "esServidorPublico" separado.
+  @IsOptional()
+  @IsString()
+  entidadServidorPublico?: string;
+
+  @IsOptional()
+  @IsString()
+  cargoServidorPublico?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  uniformado?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  enEjercicioFunciones?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  indiciadoConocioCalidad?: boolean;
+
+  // Adenda 2026-08-22 (módulo Violencia Intrafamiliar): exclusivo de
+  // este delito. relacionFamiliar es texto libre, sin selector de
+  // categorías fijas (a solicitud del usuario).
+  @IsOptional()
+  @IsString()
+  relacionFamiliar?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  existenMedidasProteccion?: boolean;
+
+  @ValidateIf((o) => o.existenMedidasProteccion === true)
+  @IsString()
+  descripcionMedidasProteccion?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  existenAntecedentesViolencia?: boolean;
+
+  @ValidateIf((o) => o.existenAntecedentesViolencia === true)
+  @IsString()
+  descripcionAntecedentesViolencia?: string;
 }

@@ -405,6 +405,28 @@ model Victima {
   centroAsistencial         String?
   motivoTraslado            String?
 
+  // Adenda 2026-08-22 (módulo Violencia contra Servidor Público):
+  // exclusivo de este delito -- toda víctima registrada bajo este
+  // delito es, por definición, un servidor público, por eso no hay un
+  // booleano "esServidorPublico" separado: si el procedimiento es de
+  // este delito, el frontend siempre solicita estos campos. Entidad en
+  // texto libre (no fija en "Policía Nacional") porque el tipo penal
+  // protege a cualquier servidor público, no solo a la Policía.
+  entidadServidorPublico   String?
+  cargoServidorPublico     String?
+  uniformado               Boolean?
+  enEjercicioFunciones     Boolean?
+  indiciadoConocioCalidad  Boolean?
+
+  // Adenda 2026-08-22 (módulo Violencia Intrafamiliar): exclusivo de
+  // este delito. relacionFamiliar es texto libre (a solicitud del
+  // usuario, sin selector de categorías fijas).
+  relacionFamiliar                   String?
+  existenMedidasProteccion           Boolean?
+  descripcionMedidasProteccion       String?
+  existenAntecedentesViolencia       Boolean?
+  descripcionAntecedentesViolencia   String?
+
   elementosIncautados ElementoIncautado[]
 
   createdAt DateTime @default(now())

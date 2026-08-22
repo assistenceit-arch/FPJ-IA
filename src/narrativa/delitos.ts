@@ -19,6 +19,8 @@ export const DELITOS_SOPORTADOS: Record<string, string> = {
   'Porte Ilegal de Armas de Fuego': 'armas',
   'Hurto': 'hurto',
   'Lesiones Personales': 'lesiones-personales',
+  'Violencia contra Servidor Público': 'violencia-servidor-publico',
+  'Violencia Intrafamiliar': 'violencia-intrafamiliar',
 };
 
 export function prefijoPromptPorDelito(delito: string): string {

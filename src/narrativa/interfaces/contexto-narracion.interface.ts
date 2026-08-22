@@ -116,6 +116,20 @@ export interface VictimaNarracion {
   trasladoCentroAsistencial?: boolean | null;
   centroAsistencial?: string | null;
   motivoTraslado?: string | null;
+  // Adenda 2026-08-22 (módulo Violencia contra Servidor Público):
+  // exclusivo de este delito.
+  entidadServidorPublico?: string | null;
+  cargoServidorPublico?: string | null;
+  uniformado?: boolean | null;
+  enEjercicioFunciones?: boolean | null;
+  indiciadoConocioCalidad?: boolean | null;
+  // Adenda 2026-08-22 (módulo Violencia Intrafamiliar): exclusivo de
+  // este delito.
+  relacionFamiliar?: string | null;
+  existenMedidasProteccion?: boolean | null;
+  descripcionMedidasProteccion?: string | null;
+  existenAntecedentesViolencia?: boolean | null;
+  descripcionAntecedentesViolencia?: string | null;
 }
 
 export interface TestigoNarracion {

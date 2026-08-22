@@ -728,6 +728,18 @@ export class DocumentosService {
         trasladoCentroAsistencial: v.trasladoCentroAsistencial,
         centroAsistencial: v.centroAsistencial,
         motivoTraslado: v.motivoTraslado,
+        // Adenda 2026-08-22 (módulo Violencia contra Servidor Público).
+        entidadServidorPublico: v.entidadServidorPublico,
+        cargoServidorPublico: v.cargoServidorPublico,
+        uniformado: v.uniformado,
+        enEjercicioFunciones: v.enEjercicioFunciones,
+        indiciadoConocioCalidad: v.indiciadoConocioCalidad,
+        // Adenda 2026-08-22 (módulo Violencia Intrafamiliar).
+        relacionFamiliar: v.relacionFamiliar,
+        existenMedidasProteccion: v.existenMedidasProteccion,
+        descripcionMedidasProteccion: v.descripcionMedidasProteccion,
+        existenAntecedentesViolencia: v.existenAntecedentesViolencia,
+        descripcionAntecedentesViolencia: v.descripcionAntecedentesViolencia,
       })),
       actuaciones: {
         autoridadReceptora: actuaciones.autoridadReceptora,
