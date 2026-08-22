@@ -636,6 +636,8 @@ export class DocumentosService {
         barrio: lugarProcedimiento.barrio,
         direccion: lugarProcedimiento.direccion,
         caracteristicas: lugarProcedimiento.caracteristicas,
+        existenCamaras: lugarProcedimiento.existenCamaras,
+        descripcionCamaras: lugarProcedimiento.descripcionCamaras,
       },
       intervinientes: capturados.map((c) => ({
         tipoInterviniente: c.tipoInterviniente,

@@ -136,27 +136,11 @@ CORE TRANSVERSAL #12 sobre lesiones.
 
 **8-B. REINCIDENCIA — PROCEDIMIENTOS ANTERIORES CONOCIDOS**
 
-Verificar siempre, de forma explícita, si el funcionario interviniente
-tiene conocimiento de procedimientos anteriores con el mismo
-adolescente. El informe debe dejar una respuesta explícita al
-respecto: afirmativa (indicando lo que se conozca al respecto),
-negativa, o manifestando no contar con esa información. No generar el
-informe sin esta verificación resuelta — a diferencia de otras
-ausencias de información de este módulo, esta no admite generarse
-simplemente dejando constancia de la falta de dato: debe solicitarse
-la respuesta explícita al usuario antes de generar el informe si no
-fue suministrada.
+Adenda 2026-08-22: este dato ya NO se pregunta en cada generación de narrativa — se diligencia como campo estructurado (`tieneProcedimientosAnteriores`/`descripcionProcedimientosAnteriores`), disponible para cualquier interviniente, no exclusivo de adolescentes. Usa directamente el valor ya capturado. Si el campo fue diligenciado como verdadero, dejar constancia afirmativa con lo que se haya descrito; si fue diligenciado como falso, dejar constancia negativa; si el campo no fue diligenciado en absoluto (ni verdadero ni falso), ahí sí solicitar la respuesta explícita al usuario antes de generar el informe — no se puede generar el informe con esta verificación completamente ausente.
 
 **8-C. PERTENENCIA A ORGANIZACIÓN DELINCUENCIAL**
 
-Verificar siempre, de forma explícita, si el funcionario interviniente
-tiene conocimiento de que el adolescente pertenece a alguna
-organización o grupo delincuencial. El informe debe dejar una
-respuesta explícita al respecto: afirmativa (indicando lo que se
-conozca al respecto), negativa, o manifestando no contar con esa
-información. No generar el informe sin esta verificación resuelta —
-igual que en el numeral 8-B, debe solicitarse la respuesta explícita
-al usuario antes de generar el informe si no fue suministrada.
+Adenda 2026-08-22: este dato ya NO se pregunta en cada generación de narrativa — se diligencia como campo estructurado (`perteneceGrupoDelincuencial`/`descripcionGrupoDelincuencial`), disponible para cualquier interviniente, no exclusivo de adolescentes. Usa directamente el valor ya capturado. Mismo criterio que 8-B: si el campo no fue diligenciado en absoluto, solicitar la respuesta explícita al usuario antes de generar el informe.
 
 **8-D. DISTANCIA DE PERSECUCIÓN**
 

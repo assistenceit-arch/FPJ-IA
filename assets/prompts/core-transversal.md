@@ -33,11 +33,9 @@ Verificar:
 * dirección exacta;
 * barrio;
 * ciudad;
-* lugar específico de los hechos;
-* existencia o ausencia de cámaras;
-* existencia o ausencia de testigos.
+* lugar específico de los hechos.
 
-La ausencia de cámaras o testigos es válida siempre que exista manifestación expresa.
+**Existencia de cámaras y de testigos**: estos dos datos ya NO se preguntan en esta etapa — se diligencian como campos estructurados en el formulario (existencia de cámaras en el Bloque 3 - Lugar del Procedimiento; existencia de testigos en el Bloque 5 - Actuaciones, con el listado de Testigo si los hay). Adenda 2026-08-22: antes la IA los preguntaba en cada generación de narrativa aunque ya se conociera la respuesta — bug real reportado tras caso en vivo. Usa directamente los valores ya capturados (`lugar.existenCamaras`/`lugar.descripcionCamaras` y el listado de testigos) sin volver a solicitarlos al usuario.
 
 La información relacionada con cámaras y testigos deberá integrarse preferiblemente al final de la narración, salvo que tenga relevancia directa durante el procedimiento (por ejemplo, cuando la ubicación del sospechoso se logró a partir de una cámara).
 

@@ -23,6 +23,15 @@ export interface IntervinienteNarracion {
   // dependencia del ciclo de aclaraciones.
   participacionHechos?: string | null;
   comportamientoAbordaje?: string | null;
+  // Adenda 2026-08-22: antecedentes y pertenencia a organización
+  // delincuencial -- transversal, ya no exclusivo de SRPA ni preguntado
+  // por la IA en cada narrativa (bug real reportado tras caso en vivo:
+  // la IA lo preguntaba repetidamente aunque ya se supiera la
+  // respuesta).
+  tieneProcedimientosAnteriores?: boolean | null;
+  descripcionProcedimientosAnteriores?: string | null;
+  perteneceGrupoDelincuencial?: boolean | null;
+  descripcionGrupoDelincuencial?: string | null;
   identificacionPlena: boolean;
   formaIdentificacion?: string | null;
   // Adenda 2026-08-06: faltaba por completo -- el dato se capturaba en
@@ -168,6 +177,11 @@ export interface ContextoNarracionFpj5 {
     barrio: string;
     direccion: string;
     caracteristicas?: string | null;
+    // Adenda 2026-08-22: existencia de cámaras -- transversal, ya no
+    // preguntado por la IA en cada narrativa (bug real reportado tras
+    // caso en vivo).
+    existenCamaras?: boolean | null;
+    descripcionCamaras?: string | null;
   };
   intervinientes: IntervinienteNarracion[];
   // Adenda 2026-08-14: elementos "sin individualizar" -- hallados en un

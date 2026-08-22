@@ -110,8 +110,6 @@ export class CapturadosService {
       fechaCaptura,
       edad,
       tipoInterviniente,
-      nombrePadres: dto.nombrePadres?.trim() || NO_APORTO,
-      telefonoPadres: dto.telefonoPadres?.trim() || NO_APORTO,
     };
   }
 

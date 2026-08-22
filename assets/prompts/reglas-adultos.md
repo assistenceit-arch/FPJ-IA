@@ -100,6 +100,10 @@ Ejemplos:
 
 El sistema deberá dejar constancia de estas circunstancias sin bloquear innecesariamente la elaboración del informe.
 
+**7-B. ANTECEDENTES Y PERTENENCIA A ORGANIZACIÓN DELINCUENCIAL (INFORMATIVO, NO BLOQUEANTE)**
+
+Adenda 2026-08-22: a diferencia de adolescentes (ver reglas-srpa.md 8-B/8-C, donde sí es obligatorio solicitar la respuesta si no fue diligenciada), para adultos estos dos campos estructurados (`tieneProcedimientosAnteriores`/`descripcionProcedimientosAnteriores` y `perteneceGrupoDelincuencial`/`descripcionGrupoDelincuencial`) son puramente informativos: si fueron diligenciados, se incorporan a la narración con naturalidad; si no fueron diligenciados, no se solicitan ni bloquean el informe.
+
 **8. PROCEDIMIENTOS CON MÚLTIPLES ADULTOS**
 
 Cuando existan varias personas capturadas:

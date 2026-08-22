@@ -173,6 +173,14 @@ model LugarProcedimiento {
   direccion       String
   caracteristicas String?
 
+  // Adenda 2026-08-22: existencia de cámaras en el lugar de los hechos
+  // -- antes era una pregunta que la IA hacía en cada generación de
+  // narrativa (core-transversal.md), ahora es un campo estructurado que
+  // se diligencia una sola vez, igual que testigos/víctimas. Transversal
+  // a todos los delitos (vive en el CORE, no en un prompt de delito).
+  existenCamaras     Boolean?
+  descripcionCamaras String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -220,6 +228,18 @@ model Capturado {
   // ActuacionesProcedimiento que son generales del procedimiento).
   participacionHechos  String? // qué hizo esta persona específicamente (portaba, consumía, comercializaba, ocultaba, etc.)
   comportamientoAbordaje String? // colaboración, resistencia, intento de fuga, agresividad, etc.
+
+  // Adenda 2026-08-22: antecedentes y pertenencia a organización
+  // delincuencial -- antes eran preguntas obligatorias que la IA hacía
+  // en cada generación de narrativa exclusivamente para adolescentes
+  // (reglas-srpa.md 8-B/8-C). Ahora son campos estructurados que se
+  // diligencian una sola vez, igual que esposas, y quedan disponibles
+  // para cualquier interviniente (no exclusivos de SRPA) -- a solicitud
+  // del usuario, transversal a todos los delitos.
+  tieneProcedimientosAnteriores       Boolean?
+  descripcionProcedimientosAnteriores String?
+  perteneceGrupoDelincuencial         Boolean?
+  descripcionGrupoDelincuencial       String?
 
   // Adenda 2026-08-03: uso de esposas pasa de una sola respuesta a nivel
   // de procedimiento (ActuacionesProcedimiento) a una pregunta individual

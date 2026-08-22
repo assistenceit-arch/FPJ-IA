@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, ValidateIf } from 'class-validator';
 
 // Adenda 2026-08-03: todos los campos pasan a opcionales para permitir
 // guardado parcial (borrador) mientras el funcionario aún no ha terminado
@@ -32,4 +32,15 @@ export class GuardarLugarProcedimientoDto {
   @IsOptional()
   @IsString()
   caracteristicas?: string;
+
+  // Adenda 2026-08-22: existencia de cámaras en el lugar de los hechos
+  // -- antes la preguntaba la IA en cada narrativa (core-transversal.md),
+  // ahora es un campo estructurado.
+  @IsOptional()
+  @IsBoolean()
+  existenCamaras?: boolean;
+
+  @ValidateIf((o) => o.existenCamaras === true)
+  @IsString()
+  descripcionCamaras?: string;
 }

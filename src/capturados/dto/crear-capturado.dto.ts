@@ -166,6 +166,24 @@ export class CrearCapturadoDto {
   @IsString()
   comportamientoAbordaje?: string;
 
+  // Adenda 2026-08-22: antecedentes y pertenencia a organización
+  // delincuencial -- transversal, ya no exclusivo de SRPA.
+  @IsOptional()
+  @IsBoolean()
+  tieneProcedimientosAnteriores?: boolean;
+
+  @ValidateIf((o) => o.tieneProcedimientosAnteriores === true)
+  @IsString()
+  descripcionProcedimientosAnteriores?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  perteneceGrupoDelincuencial?: boolean;
+
+  @ValidateIf((o) => o.perteneceGrupoDelincuencial === true)
+  @IsString()
+  descripcionGrupoDelincuencial?: string;
+
   // Adenda 2026-08-03: uso de esposas pasa a ser individual por
   // interviniente (antes era una sola respuesta en Actuaciones para todo
   // el procedimiento). El frontend solo la muestra para Aprehendidos.
